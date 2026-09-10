@@ -38,7 +38,7 @@ export const FeedbackModal: React.FC = () => {
               {t('feedback.title')}
             </h2>
             <p className="text-xs font-semibold text-[#545860] dark:text-slate-400">
-              Help us improve DGE GeoVision GIS experience
+              Help us improve GeoVision GIS experience
             </p>
           </div>
         </div>

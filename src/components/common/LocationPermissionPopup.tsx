@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import { ensureAbuDhabiLocation } from '../../utils/locationUtils';
 import { MapPin, X } from 'lucide-react';
@@ -10,26 +10,7 @@ export const LocationPermissionPopup: React.FC = () => {
   const displayDomain =
     typeof window !== 'undefined' && window.location.host
       ? window.location.host
-      : 'smart-map-phase2-v-design.vercel.app';
-
-  // Automatically trigger browser's native location permission request when link is opened
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const validLoc = ensureAbuDhabiLocation(pos.coords.latitude, pos.coords.longitude);
-          setUserLocation(validLoc);
-          setMapCenterAndZoom(validLoc, 14);
-          showToast(language === 'ar' ? 'تم تحديد موقعك في أبوظبي بنجاح' : 'Abu Dhabi location active');
-          setIsOpen(false);
-        },
-        () => {
-          // Native request failed or denied, prompt card stays visible for user to retry/click
-        },
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    }
-  }, []);
+      : 'smartmap-phase2-s.vercel.app';
 
   const requestLocationPermission = (isJustOnce: boolean = false) => {
     if ('geolocation' in navigator) {

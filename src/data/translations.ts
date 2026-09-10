@@ -182,8 +182,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'feedback.success': 'Thank you! Your feedback has been submitted to the GeoVision product team.',
 
     // About & Help
-    'about.title': 'About DGE GeoVision',
-    'about.body': 'GeoVision is Abu Dhabi’s premier AI-enabled spatial intelligence platform, developed for the Department of Government Enablement (DGE). It bridges ordinary citizens, urban planners, and GIS specialists through natural language geospatial AI.',
+    'about.title': 'About GeoVision',
+    'about.body': 'GeoVision is Abu Dhabi’s premier AI-enabled spatial intelligence platform, developed for the Department of Government Enablement. It bridges ordinary citizens, urban planners, and GIS specialists through natural language geospatial AI.',
     'help.title': 'GeoVision Help & Support Center',
     'help.searchPlaceholder': 'Search help topics and tutorials...',
     'help.faq1Q': 'How do I search for spatial data using natural language?',
@@ -381,8 +381,8 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'feedback.success': 'شكراً لك! تم إرسال ملاحظاتك إلى فريق عمل منصة GeoVision.',
 
     // About & Help
-    'about.title': 'عن منصة GeoVision - تمكين',
-    'about.body': 'منصة GeoVision هي المنصة الذكية الرائدة للمعلومات الجغرافية والمكانية في إمارة أبوظبي، طُورت لصالح دائرة تمكين الحكومي (DGE). تدمج المنصة الذكاء الاصطناعي التفاعلي مع نظم المعلومات الجغرافية لتقديم تجربة استكشاف مكانية سلسة.',
+    'about.title': 'عن منصة GeoVision',
+    'about.body': 'منصة GeoVision هي المنصة الذكية الرائدة للمعلومات الجغرافية والمكانية في إمارة أبوظبي، طُورت لصالح دائرة التمكين الحكومي. تدمج المنصة الذكاء الاصطناعي التفاعلي مع نظم المعلومات الجغرافية لتقديم تجربة استكشاف مكانية سلسة.',
     'help.title': 'مركز المساعدة والدعم الفني',
     'help.searchPlaceholder': 'البحث في مواضيع المساعدة والإرشادات...',
     'help.faq1Q': 'كيف يمكنني البحث عن البيانات الجغرافية باللغة الطبيعية؟',

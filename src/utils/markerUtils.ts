@@ -21,7 +21,7 @@ export const getCategorySvgIcon = (category: string, subcategory?: string): stri
       if (subcategory === 'clinics') {
         return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 0 0 4.5 2.6v5.8a4.5 4.5 0 0 0 9 0V2.6a.3.3 0 0 0-.3-.3"/><path d="M9 12.9v7.6a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5V14"/></svg>`;
       }
-      return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v12M6 12h12"/></svg>`;
+      return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12h12M6 7h12M6 17h12"/><path d="M10 22v-4h4v4"/></svg>`;
 
     case 'education':
       if (subcategory === 'universities') {

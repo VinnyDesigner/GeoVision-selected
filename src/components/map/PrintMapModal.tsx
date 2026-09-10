@@ -25,18 +25,58 @@ export const PrintMapModal: React.FC = () => {
 
     let sectionHtml = '';
     if (layoutMode === 'map') {
+      const mapSvgUri = `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' width='100%25' height='100%25'%3E%3Crect width='800' height='500' fill='%23e0f2fe'/%3E%3Cpath d='M 0 60 Q 200 45 400 65 T 800 55 L 800 0 L 0 0 Z' fill='%23bae6fd' opacity='0.6'/%3E%3Cpath d='M 520 20 C 580 10 650 30 700 60 C 660 100 600 110 540 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 440 60 C 490 50 530 70 540 100 C 490 120 450 100 430 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 260 90 C 340 60 440 70 470 130 C 410 210 330 230 250 170 C 230 140 240 110 260 90 Z' fill='%23fef9c3' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 0 210 C 180 190 360 210 560 140 C 660 110 760 130 800 150 L 800 500 L 0 500 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 370 130 C 410 120 440 140 420 170 C 390 180 360 160 370 130 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 200 290 C 280 270 330 310 300 350 C 240 370 190 330 200 290 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 480 230 C 560 210 610 250 570 290 C 500 310 460 270 480 230 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23f59e0b' stroke-width='6' opacity='0.95'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-dasharray='10 6'/%3E%3Cpath d='M 290 170 C 410 180 540 200 800 230' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cpath d='M 270 340 C 390 360 540 390 750 440' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='160' y1='250' x2='360' y2='390'/%3E%3Cline x1='200' y1='230' x2='400' y2='370'/%3E%3Cline x1='240' y1='210' x2='440' y2='350'/%3E%3Cline x1='180' y1='350' x2='380' y2='230'/%3E%3Cline x1='220' y1='370' x2='420' y2='250'/%3E%3Cline x1='260' y1='390' x2='460' y2='270'/%3E%3C/g%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='470' y1='250' x2='670' y2='390'/%3E%3Cline x1='510' y1='230' x2='710' y2='370'/%3E%3Cline x1='550' y1='210' x2='750' y2='350'/%3E%3Cline x1='490' y1='370' x2='690' y2='250'/%3E%3Cline x1='530' y1='390' x2='730' y2='270'/%3E%3C/g%3E%3Ctext x='280' y='135' font-family='system-ui, sans-serif' font-weight='900' font-size='13' fill='%231e3a8a' opacity='0.75'%3EABU DHABI CITY%3C/text%3E%3Ctext x='250' y='310' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EKHALIFA CITY%3C/text%3E%3Ctext x='550' y='300' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EZAYED CITY%3C/text%3E%3Ctext x='580' y='175' font-family='system-ui, sans-serif' font-weight='900' font-size='12' fill='%23215A9E'%3EAL RAHA BEACH%3C/text%3E%3Ctext x='580' y='55' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3ESAADIYAT ISLAND%3C/text%3E%3Ctext x='450' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3EAL REEM ISLAND%3C/text%3E%3Ctext x='100' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='15' fill='%230284c7' opacity='0.8'%3EARABIAN GULF%3C/text%3E%3Ctext x='430' y='235' font-family='system-ui, sans-serif' font-weight='800' font-size='11' fill='%23b45309' transform='rotate(-12 430 235)'%3ESheikh Zayed Highway (E11)%3C/text%3E%3C/svg%3E`;
+
       sectionHtml = `
-        <div class="map-frame">
-          <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; font-weight: 900; margin-bottom: 25px;">
-            <span>📍 Active Spatial Extent Canvas [Khalifa City / Zayed City Bounding Box]</span>
-            <span style="color: #60a5fa; font-family: monospace;">Center: 24.4539° N, 54.3773° E</span>
+        <div class="map-frame" style="position: relative; overflow: hidden; border-radius: 14px; border: 2px solid #1e293b; background: #0f172a; padding: 0; margin-bottom: 20px;">
+          <!-- Map Top Header Bar -->
+          <div style="background: #0f172a; color: #ffffff; padding: 10px 16px; font-size: 11px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%;"></span>
+              <span>📍 Active Spatial Extent Canvas [Abu Dhabi SDI GIS Layer Map]</span>
+            </div>
+            <span style="font-family: monospace; color: #60a5fa;">Center: 24.4539° N, 54.3773° E</span>
           </div>
-          <div style="text-align: center; padding: 40px 0; background: rgba(30, 41, 59, 0.7); border-radius: 10px; border: 1px dashed #475569; margin-bottom: 25px;">
-            <div style="font-size: 28px; margin-bottom: 8px;">🗺️</div>
-            <div style="font-weight: 900; font-size: 15px; color: #93c5fd;">High-Resolution SDI Multi-Sector Layer Render</div>
-            <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Authoritative Spatial Data Infrastructure • Layer Resolution 100m</div>
+
+          <!-- Real Basemap Imagery & Pins Canvas -->
+          <div style="position: relative; width: 100%; height: 340px; background-image: url('${mapSvgUri}'); background-size: cover; background-position: center; border-top: 1px solid #334155; border-bottom: 1px solid #334155;">
+
+            <!-- Compass Rose -->
+            <div style="position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: rgba(15, 23, 42, 0.9); border: 2px solid #60a5fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 11px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+              N ⬆
+            </div>
+
+            <!-- Scale Bar -->
+            <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid #475569; padding: 6px 12px; border-radius: 8px; color: #ffffff; font-size: 10px; font-weight: 900;">
+              <div style="border-bottom: 2px solid #60a5fa; margin-bottom: 2px; width: 60px; text-align: center; font-size: 9px;">2 km</div>
+              <span>Scale 1:25,000</span>
+            </div>
+
+            <!-- Map Pins Spread Out Across Landmass -->
+            <div style="position: absolute; top: 48%; left: 28%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
+              <div style="background: #1e3a8a; color: white; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 2px solid #60a5fa;">
+                📍 Khalifa City Sector 1
+              </div>
+              <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #60a5fa;"></div>
+            </div>
+
+            <div style="position: absolute; top: 30%; left: 52%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
+              <div style="background: #064e3b; color: white; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 2px solid #34d399;">
+                🏥 Cleveland Clinic Abu Dhabi
+              </div>
+              <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #34d399;"></div>
+            </div>
+
+            <div style="position: absolute; top: 62%; left: 65%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
+              <div style="background: #581c87; color: white; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 2px solid #c084fc;">
+                🏥 Sheikh Shakhbout Medical City
+              </div>
+              <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #c084fc;"></div>
+            </div>
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 10px; color: #cbd5e1; font-weight: bold; background: rgba(15, 23, 42, 0.9); padding: 8px 12px; border-radius: 8px;">
+
+          <!-- Bottom Coordinates Bar -->
+          <div style="background: #0f172a; color: #cbd5e1; font-size: 10px; font-weight: bold; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;">
             <span>Grid Reference: UAE EPSG:32639</span>
             <span>Cartographic Clearance: Grade A</span>
             <span>Security: Unclassified Public Spatial Record</span>
@@ -157,7 +197,7 @@ export const PrintMapModal: React.FC = () => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
 
-      showToast(`DGE GeoVision Map Report downloaded as ${format.toUpperCase()}`);
+      showToast(`GeoVision Map Report downloaded as ${format.toUpperCase()}`);
       setPrintModalOpen(false);
       setPrintState('idle');
     }
@@ -308,26 +348,59 @@ export const PrintMapModal: React.FC = () => {
             {/* Map Canvas Preview Container */}
             {layoutMode === 'map' && (
               <div className="space-y-4">
-                <div className="h-56 sm:h-64 rounded-2xl bg-slate-800 border border-slate-700 relative overflow-hidden flex flex-col justify-between p-4 shadow-inner">
-                  <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none" />
-                  
+                <div
+                  className="h-72 sm:h-84 rounded-2xl border-2 border-slate-300 dark:border-slate-700 relative overflow-hidden flex flex-col justify-between p-4 shadow-xl bg-cover bg-center"
+                  style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' width='100%25' height='100%25'%3E%3Crect width='800' height='500' fill='%23e0f2fe'/%3E%3Cpath d='M 0 60 Q 200 45 400 65 T 800 55 L 800 0 L 0 0 Z' fill='%23bae6fd' opacity='0.6'/%3E%3Cpath d='M 520 20 C 580 10 650 30 700 60 C 660 100 600 110 540 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 440 60 C 490 50 530 70 540 100 C 490 120 450 100 430 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 260 90 C 340 60 440 70 470 130 C 410 210 330 230 250 170 C 230 140 240 110 260 90 Z' fill='%23fef9c3' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 0 210 C 180 190 360 210 560 140 C 660 110 760 130 800 150 L 800 500 L 0 500 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 370 130 C 410 120 440 140 420 170 C 390 180 360 160 370 130 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 200 290 C 280 270 330 310 300 350 C 240 370 190 330 200 290 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 480 230 C 560 210 610 250 570 290 C 500 310 460 270 480 230 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23f59e0b' stroke-width='6' opacity='0.95'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-dasharray='10 6'/%3E%3Cpath d='M 290 170 C 410 180 540 200 800 230' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cpath d='M 270 340 C 390 360 540 390 750 440' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='160' y1='250' x2='360' y2='390'/%3E%3Cline x1='200' y1='230' x2='400' y2='370'/%3E%3Cline x1='240' y1='210' x2='440' y2='350'/%3E%3Cline x1='180' y1='350' x2='380' y2='230'/%3E%3Cline x1='220' y1='370' x2='420' y2='250'/%3E%3Cline x1='260' y1='390' x2='460' y2='270'/%3E%3C/g%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='470' y1='250' x2='670' y2='390'/%3E%3Cline x1='510' y1='230' x2='710' y2='370'/%3E%3Cline x1='550' y1='210' x2='750' y2='350'/%3E%3Cline x1='490' y1='370' x2='690' y2='250'/%3E%3C/g%3E%3Ctext x='280' y='135' font-family='system-ui, sans-serif' font-weight='900' font-size='13' fill='%231e3a8a' opacity='0.75'%3EABU DHABI CITY%3C/text%3E%3Ctext x='250' y='310' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EKHALIFA CITY%3C/text%3E%3Ctext x='550' y='300' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EZAYED CITY%3C/text%3E%3Ctext x='580' y='175' font-family='system-ui, sans-serif' font-weight='900' font-size='12' fill='%23215A9E'%3EAL RAHA BEACH%3C/text%3E%3Ctext x='580' y='55' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3ESAADIYAT ISLAND%3C/text%3E%3Ctext x='450' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3EAL REEM ISLAND%3C/text%3E%3Ctext x='100' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='15' fill='%230284c7' opacity='0.8'%3EARABIAN GULF%3C/text%3E%3Ctext x='430' y='235' font-family='system-ui, sans-serif' font-weight='800' font-size='11' fill='%23b45309' transform='rotate(-12 430 235)'%3ESheikh Zayed Highway (E11)%3C/text%3E%3C/svg%3E")` }}
+                >
+                  {/* Overlay for contrast */}
+                  <div className="absolute inset-0 bg-slate-950/15 pointer-events-none" />
+
+                  {/* Top Bar */}
                   <div className="relative z-10 flex items-center justify-between text-white text-xs">
-                    <span className="px-3 py-1 rounded-xl bg-slate-900/90 border border-slate-700 font-bold">
-                      Active Spatial Bounds: Khalifa City Hub [24.45N, 54.37E]
-                    </span>
-                    <Compass className="w-5 h-5 text-blue-400" />
+                    <div className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700 font-black flex items-center gap-2 shadow-lg">
+                      <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+                      <span>📍 Active Spatial Extent Canvas [Abu Dhabi SDI GIS Map]</span>
+                    </div>
+                    <div className="w-9 h-9 rounded-full bg-slate-900/90 border-2 border-blue-400 flex items-center justify-center text-blue-400 font-black text-xs shadow-lg backdrop-blur-md">
+                      N ⬆
+                    </div>
                   </div>
 
-                  <div className="relative z-10 flex items-center justify-center my-auto">
-                    <span className="px-4 py-2 rounded-2xl bg-slate-900/95 border border-blue-500/50 text-blue-300 font-black text-xs shadow-2xl">
-                      📍 DGE High-Resolution GIS Map Extent Render
-                    </span>
+                  {/* Absolute Positioned Map Pins */}
+                  <div className="absolute inset-0 z-10 pointer-events-none">
+                    <div className="absolute top-[48%] left-[28%] transform -translate-x-1/2 -translate-y-full flex flex-col items-center">
+                      <div className="bg-blue-900/95 text-white px-3 py-1.5 rounded-xl border-2 border-blue-400 text-xs font-black shadow-2xl backdrop-blur-md whitespace-nowrap flex items-center gap-1.5">
+                        <span>📍</span>
+                        <span>Khalifa City Sector 1</span>
+                      </div>
+                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-blue-400"></div>
+                    </div>
+
+                    <div className="absolute top-[30%] left-[52%] transform -translate-x-1/2 -translate-y-full flex flex-col items-center">
+                      <div className="bg-emerald-900/95 text-white px-3 py-1.5 rounded-xl border-2 border-emerald-400 text-xs font-black shadow-2xl backdrop-blur-md whitespace-nowrap flex items-center gap-1.5">
+                        <span>🏥</span>
+                        <span>Cleveland Clinic Abu Dhabi</span>
+                      </div>
+                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-emerald-400"></div>
+                    </div>
+
+                    <div className="absolute top-[62%] left-[65%] transform -translate-x-1/2 -translate-y-full flex flex-col items-center">
+                      <div className="bg-purple-900/95 text-white px-3 py-1.5 rounded-xl border-2 border-purple-400 text-xs font-black shadow-2xl backdrop-blur-md whitespace-nowrap flex items-center gap-1.5">
+                        <span>🏫</span>
+                        <span>Sheikh Shakhbout Medical City</span>
+                      </div>
+                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-purple-400"></div>
+                    </div>
                   </div>
 
-                  <div className="relative z-10 flex items-center justify-between text-[10px] text-white font-bold bg-slate-900/90 px-3 py-1.5 rounded-xl border border-slate-700">
-                    <span>Scale: 1:25,000</span>
-                    <span>Projection: WGS 84 / UTM Zone 39N</span>
-                    <span>Grid: 100m Spacing</span>
+                  {/* Bottom Bar */}
+                  <div className="relative z-10 flex items-center justify-between text-[10px] text-white font-bold bg-slate-900/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-700 shadow-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-12 h-1 bg-blue-400 rounded-full"></div>
+                      <span>Scale 1:25,000 (2 km)</span>
+                    </div>
+                    <span>Grid Datum: WGS 84 / UTM Zone 39N</span>
+                    <span>Coordinates: 24.4539° N, 54.3773° E</span>
                   </div>
                 </div>
               </div>

@@ -6,6 +6,13 @@ import {
   ChevronDown,
   Check,
   Building,
+  Building2,
+  GraduationCap,
+  Trees,
+  Landmark,
+  Star,
+  CheckCircle2,
+  Clock,
   MapPin,
   Search,
   Layers,
@@ -25,6 +32,103 @@ import {
 } from 'lucide-react';
 import { triggerPrintDocument } from '../../utils/printUtils';
 import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
+
+// Category Visual Styling Helper - Ensures UAE Hospital Icon compliance (Building2 with status dot, NEVER plain + cross)
+const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
+  const catLower = (category || '').toLowerCase();
+  const subLower = (subcategory || '').toLowerCase();
+
+  // UAE-compliant healthcare icon (Building2 + active dot, never plain + cross)
+  if (
+    catLower.includes('health') ||
+    catLower.includes('hospital') ||
+    subLower.includes('clinic') ||
+    subLower.includes('medical') ||
+    subLower.includes('hospital')
+  ) {
+    return {
+      icon: (
+        <div className="relative flex items-center justify-center">
+          <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <span className="absolute -top-1 -right-1 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+        </div>
+      ),
+      bgGradient: 'bg-emerald-50 dark:bg-emerald-950/70 border-emerald-200/90 dark:border-emerald-800/80',
+      badgeBg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/90 dark:text-emerald-300 border-emerald-300/80 dark:border-emerald-700/80',
+      accentColor: 'from-emerald-500 via-teal-500 to-cyan-500',
+    };
+  }
+
+  if (
+    catLower.includes('edu') ||
+    catLower.includes('school') ||
+    catLower.includes('university') ||
+    subLower.includes('school') ||
+    subLower.includes('academy')
+  ) {
+    return {
+      icon: <GraduationCap className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
+      bgGradient: 'bg-amber-50 dark:bg-amber-950/70 border-amber-200/90 dark:border-amber-800/80',
+      badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-950/90 dark:text-amber-300 border-amber-300/80 dark:border-amber-700/80',
+      accentColor: 'from-amber-500 via-orange-500 to-yellow-500',
+    };
+  }
+
+  if (
+    catLower.includes('park') ||
+    catLower.includes('env') ||
+    catLower.includes('rec') ||
+    subLower.includes('park') ||
+    subLower.includes('garden')
+  ) {
+    return {
+      icon: <Trees className="w-4 h-4 text-green-600 dark:text-green-400" />,
+      bgGradient: 'bg-green-50 dark:bg-green-950/70 border-green-200/90 dark:border-green-800/80',
+      badgeBg: 'bg-green-100 text-green-800 dark:bg-green-950/90 dark:text-green-300 border-green-300/80 dark:border-green-700/80',
+      accentColor: 'from-green-500 via-emerald-500 to-teal-500',
+    };
+  }
+
+  if (
+    catLower.includes('gov') ||
+    catLower.includes('public_safety') ||
+    catLower.includes('safety') ||
+    subLower.includes('police') ||
+    subLower.includes('civil')
+  ) {
+    return {
+      icon: <Landmark className="w-4 h-4 text-blue-600 dark:text-blue-400" />,
+      bgGradient: 'bg-blue-50 dark:bg-blue-950/70 border-blue-200/90 dark:border-blue-800/80',
+      badgeBg: 'bg-blue-100 text-blue-800 dark:bg-blue-950/90 dark:text-blue-300 border-blue-300/80 dark:border-blue-700/80',
+      accentColor: 'from-blue-600 via-indigo-600 to-sky-500',
+    };
+  }
+
+  if (
+    catLower.includes('tour') ||
+    catLower.includes('culture') ||
+    catLower.includes('mall') ||
+    subLower.includes('mall') ||
+    subLower.includes('hotel')
+  ) {
+    return {
+      icon: <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
+      bgGradient: 'bg-purple-50 dark:bg-purple-950/70 border-purple-200/90 dark:border-purple-800/80',
+      badgeBg: 'bg-purple-100 text-purple-800 dark:bg-purple-950/90 dark:text-purple-300 border-purple-300/80 dark:border-purple-700/80',
+      accentColor: 'from-purple-500 via-fuchsia-500 to-pink-500',
+    };
+  }
+
+  return {
+    icon: <Building className="w-4 h-4 text-sky-600 dark:text-sky-400" />,
+    bgGradient: 'bg-sky-50 dark:bg-sky-950/70 border-sky-200/90 dark:border-sky-800/80',
+    badgeBg: 'bg-sky-100 text-sky-800 dark:bg-sky-950/90 dark:text-sky-300 border-sky-300/80 dark:border-sky-700/80',
+    accentColor: 'from-sky-500 via-blue-500 to-indigo-500',
+  };
+};
 
 interface AIMessageSearchResultsProps {
   features?: GeoFeature[];
@@ -122,6 +226,18 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     }
   }, [appState.selectedFeature]);
 
+  // Auto-sync selectedCategories with query features or appState.selectedCategoryIds
+  useEffect(() => {
+    if (appState.selectedCategoryIds && appState.selectedCategoryIds.length > 0) {
+      setSelectedCategories(appState.selectedCategoryIds);
+    } else if (features && features.length > 0) {
+      const featCats = Array.from(new Set(features.map((f) => f.category).filter(Boolean)));
+      if (featCats.length > 0) {
+        setSelectedCategories(featCats);
+      }
+    }
+  }, [features, appState.selectedCategoryIds]);
+
   // Close menus when clicking anywhere outside of their respective containers
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -137,12 +253,25 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
   }, []);
 
   const toggleCategory = (catId: string) => {
-    if (selectedCategories.includes(catId)) {
-      setSelectedCategories(selectedCategories.filter(c => c !== catId));
+    let nextCats: string[];
+    if (catId === 'ALL') {
+      nextCats = ALL_LAYER_IDS;
     } else {
-      setSelectedCategories([...selectedCategories, catId]);
+      if (selectedCategories.length === ALL_LAYER_IDS.length) {
+        nextCats = [catId];
+      } else if (selectedCategories.includes(catId)) {
+        const remaining = selectedCategories.filter((c) => c !== catId);
+        nextCats = remaining.length === 0 ? ALL_LAYER_IDS : remaining;
+      } else {
+        nextCats = [...selectedCategories, catId];
+      }
+    }
+    setSelectedCategories(nextCats);
+    if (appState.setSelectedCategoryIds) {
+      appState.setSelectedCategoryIds(nextCats.length === ALL_LAYER_IDS.length ? [] : nextCats);
     }
   };
+
 
   const handleExportCSV = () => {
     if (!filteredFeatures || filteredFeatures.length === 0) return;
@@ -182,17 +311,23 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
       const q = searchFilter.toLowerCase();
       const matchName = (feat.nameEn || '').toLowerCase().includes(q) || (feat.nameAr || '').includes(q);
       const matchSub = (feat.subcategory || '').toLowerCase().includes(q);
-      if (!matchName && !matchSub) return false;
+      const matchCat = (feat.category || '').toLowerCase().includes(q);
+      const matchAddr = (feat.addressEn || '').toLowerCase().includes(q) || (feat.addressAr || '').includes(q);
+      if (!matchName && !matchSub && !matchCat && !matchAddr) return false;
     }
 
     return true;
   });
 
   const getLayerButtonLabel = () => {
-    if (selectedCategories.length === LAYER_OPTIONS.length) {
+    if (selectedCategories.length === ALL_LAYER_IDS.length) {
       return language === 'ar' ? 'جميع الفئات' : 'All Categories';
     }
     if (selectedCategories.length === 0) return language === 'ar' ? 'لا يوجد' : 'None';
+    if (selectedCategories.length === 1) {
+      const match = LAYER_OPTIONS.find((opt) => opt.id === selectedCategories[0]);
+      if (match) return language === 'ar' ? match.labelAr : match.labelEn;
+    }
     return `${selectedCategories.length} ${language === 'ar' ? 'محدد' : 'Selected'}`;
   };
 
@@ -212,6 +347,9 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     setSearchFilter('');
     setSelectedCategories(ALL_LAYER_IDS);
     setSelectedType('all');
+    if (appState.setSelectedCategoryIds) {
+      appState.setSelectedCategoryIds([]);
+    }
     showToast(language === 'ar' ? 'تمت إعادة تعيين الفلاتر' : 'Result filters cleared');
   };
 
@@ -309,21 +447,68 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
         </table>
       `;
     } else {
+      const mapSvgUri = `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' width='100%25' height='100%25'%3E%3Crect width='800' height='500' fill='%23e0f2fe'/%3E%3Cpath d='M 0 60 Q 200 45 400 65 T 800 55 L 800 0 L 0 0 Z' fill='%23bae6fd' opacity='0.6'/%3E%3Cpath d='M 520 20 C 580 10 650 30 700 60 C 660 100 600 110 540 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 440 60 C 490 50 530 70 540 100 C 490 120 450 100 430 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 260 90 C 340 60 440 70 470 130 C 410 210 330 230 250 170 C 230 140 240 110 260 90 Z' fill='%23fef9c3' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 0 210 C 180 190 360 210 560 140 C 660 110 760 130 800 150 L 800 500 L 0 500 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 370 130 C 410 120 440 140 420 170 C 390 180 360 160 370 130 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 200 290 C 280 270 330 310 300 350 C 240 370 190 330 200 290 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 480 230 C 560 210 610 250 570 290 C 500 310 460 270 480 230 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23f59e0b' stroke-width='6' opacity='0.95'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-dasharray='10 6'/%3E%3Cpath d='M 290 170 C 410 180 540 200 800 230' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cpath d='M 270 340 C 390 360 540 390 750 440' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='160' y1='250' x2='360' y2='390'/%3E%3Cline x1='200' y1='230' x2='400' y2='370'/%3E%3Cline x1='240' y1='210' x2='440' y2='350'/%3E%3Cline x1='180' y1='350' x2='380' y2='230'/%3E%3Cline x1='220' y1='370' x2='420' y2='250'/%3E%3Cline x1='260' y1='390' x2='460' y2='270'/%3E%3C/g%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='470' y1='250' x2='670' y2='390'/%3E%3Cline x1='510' y1='230' x2='710' y2='370'/%3E%3Cline x1='550' y1='210' x2='750' y2='350'/%3E%3Cline x1='490' y1='370' x2='690' y2='250'/%3E%3C/g%3E%3Ctext x='280' y='135' font-family='system-ui, sans-serif' font-weight='900' font-size='13' fill='%231e3a8a' opacity='0.75'%3EABU DHABI CITY%3C/text%3E%3Ctext x='250' y='310' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EKHALIFA CITY%3C/text%3E%3Ctext x='550' y='300' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EZAYED CITY%3C/text%3E%3Ctext x='580' y='175' font-family='system-ui, sans-serif' font-weight='900' font-size='12' fill='%23215A9E'%3EAL RAHA BEACH%3C/text%3E%3Ctext x='580' y='55' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3ESAADIYAT ISLAND%3C/text%3E%3Ctext x='450' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3EAL REEM ISLAND%3C/text%3E%3Ctext x='100' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='15' fill='%230284c7' opacity='0.8'%3EARABIAN GULF%3C/text%3E%3Ctext x='430' y='235' font-family='system-ui, sans-serif' font-weight='800' font-size='11' fill='%23b45309' transform='rotate(-12 430 235)'%3ESheikh Zayed Highway (E11)%3C/text%3E%3C/svg%3E`;
+
+      const pinCoords = [
+        { top: '48%', left: '28%', bg: '#1e3a8a', border: '#60a5fa' },
+        { top: '30%', left: '52%', bg: '#064e3b', border: '#34d399' },
+        { top: '62%', left: '65%', bg: '#581c87', border: '#c084fc' },
+      ];
+
+      const top3Features = filteredFeatures.slice(0, 3);
+      const pinsHtml = top3Features.map((f, idx) => {
+        const coord = pinCoords[idx % pinCoords.length];
+        return `
+          <div style="position: absolute; top: ${coord.top}; left: ${coord.left}; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
+            <div style="background: ${coord.bg}; color: white; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 2px solid ${coord.border};">
+              📍 ${f.nameEn}
+            </div>
+            <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid ${coord.border};"></div>
+          </div>
+        `;
+      }).join('');
+
       templateSpecificHtml = `
-        <div class="map-frame" style="background: #0f172a; color: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 2px solid #334155;">
-          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 900; margin-bottom: 15px;">
-            <span>📍 GIS Extent: Abu Dhabi Spatial Hub (Khalifa City / Zayed City)</span>
-            <span style="color: #60a5fa;">Bounding Box: [24.45°N, 54.37°E]</span>
+        <div class="map-frame" style="position: relative; overflow: hidden; border-radius: 14px; border: 2px solid #1e293b; background: #0f172a; padding: 0; margin-bottom: 20px;">
+          <!-- Map Top Header Bar -->
+          <div style="background: #0f172a; color: #ffffff; padding: 10px 16px; font-size: 11px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%;"></span>
+              <span>📍 Active Spatial Extent Canvas [Abu Dhabi SDI GIS Layer Map]</span>
+            </div>
+            <span style="font-family: monospace; color: #60a5fa;">Center: 24.4539° N, 54.3773° E</span>
           </div>
-          <div style="background: rgba(30, 41, 59, 0.8); border: 1px dashed #475569; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
-            <div style="font-size: 24px;">🗺️</div>
-            <div style="font-weight: 900; color: #93c5fd; margin-top: 6px;">SDI High-Resolution Canvas Map Extent</div>
-            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Multi-Sector Spatial Feature Layer Rendered at 1:25,000 Scale</div>
+
+          <!-- Real Basemap Imagery & Pins Canvas -->
+          <div style="position: relative; width: 100%; height: 340px; background-image: url('${mapSvgUri}'); background-size: cover; background-position: center; border-top: 1px solid #334155; border-bottom: 1px solid #334155;">
+
+            <!-- Compass Rose -->
+            <div style="position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: rgba(15, 23, 42, 0.9); border: 2px solid #60a5fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 11px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+              N ⬆
+            </div>
+
+            <!-- Scale Bar -->
+            <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid #475569; padding: 6px 12px; border-radius: 8px; color: #ffffff; font-size: 10px; font-weight: 900;">
+              <div style="border-bottom: 2px solid #60a5fa; margin-bottom: 2px; width: 60px; text-align: center; font-size: 9px;">2 km</div>
+              <span>Scale 1:25,000</span>
+            </div>
+
+            <!-- Map Pins -->
+            ${pinsHtml || `
+              <div style="position: absolute; top: 48%; left: 35%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
+                <div style="background: #1e3a8a; color: white; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 2px solid #60a5fa;">
+                  📍 Abu Dhabi Spatial Hub
+                </div>
+                <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #60a5fa;"></div>
+              </div>
+            `}
           </div>
-          <div style="display: flex; justify-content: space-between; font-size: 10px; color: #cbd5e1; font-weight: bold; background: rgba(15,23,42,0.9); padding: 8px 12px; border-radius: 6px;">
-            <span>Scale Ratio: 1:25,000</span>
-            <span>Projection: WGS 84 / UTM Zone 39N</span>
-            <span>Grid: 100m Spacing</span>
+
+          <!-- Bottom Coordinates Bar -->
+          <div style="background: #0f172a; color: #cbd5e1; font-size: 10px; font-weight: bold; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;">
+            <span>Grid Reference: UAE EPSG:32639</span>
+            <span>Cartographic Clearance: Grade A</span>
+            <span>Security: Unclassified Public Spatial Record</span>
           </div>
         </div>
 
@@ -493,9 +678,18 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
           {layerMenuOpen && (
             <div className="absolute top-full left-0 mt-1.5 w-48 p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl z-50 space-y-1 text-left rtl:text-right">
-              <div className="px-2 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider">
-                {language === 'ar' ? 'تصفية حسب الفئة' : 'Filter by Category'}
-              </div>
+              <button
+                type="button"
+                onClick={() => toggleCategory('ALL')}
+                className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-b border-slate-100 dark:border-slate-800 pb-2 mb-1 ${
+                  selectedCategories.length === ALL_LAYER_IDS.length
+                    ? 'bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 font-extrabold'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                }`}
+              >
+                <span>{language === 'ar' ? 'جميع الفئات' : 'All Categories'}</span>
+                {selectedCategories.length === ALL_LAYER_IDS.length && <Check className="w-3.5 h-3.5 text-geovision-blue shrink-0" />}
+              </button>
 
               {LAYER_OPTIONS.map((opt) => {
                 const isSelected = selectedCategories.includes(opt.id);
@@ -587,6 +781,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
             const isPriv = isFeaturePrivate(feat);
             const isFav = isFavorite(feat.nameEn);
             const dist = feat.distanceKm || 1.5;
+            const styleInfo = getCategoryIconAndStyle(feat.category, feat.subcategory);
 
             return (
               <div
@@ -594,56 +789,84 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                 onClick={() => {
                   setSelectedFeature(feat);
                   setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 16);
+                  if (currentView !== 'map') setCurrentView('map');
                 }}
-                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700/90 hover:border-geovision-blue dark:hover:border-geovision-blue cursor-pointer transition-all space-y-2.5 shadow-2xs hover:shadow-md group"
+                className="relative rounded-2xl bg-white/95 dark:bg-slate-900/90 backdrop-blur-md border border-slate-200/90 dark:border-slate-800 hover:border-geovision-blue dark:hover:border-blue-500 cursor-pointer transition-all duration-200 space-y-3 p-3.5 sm:p-4 shadow-xs hover:shadow-xl hover:shadow-blue-500/10 group overflow-hidden"
               >
-                {/* Header Row: Icon, Full Clear Title, Public/Private Badge */}
-                <div className="flex items-start justify-between gap-2.5">
-                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-geovision-blue flex items-center justify-center font-bold shrink-0 mt-0.5 group-hover:bg-geovision-blue group-hover:text-white transition-colors">
-                      <Building className="w-4.5 h-4.5" />
+                {/* Top Category Accent Line */}
+                <div className={`absolute top-0 left-0 right-0 h-1 bg-linear-to-r ${styleInfo.accentColor} opacity-80 group-hover:opacity-100 transition-opacity`} />
+
+                {/* Header Row: Category Icon, Title, Subcategory & Public/Private/Rating Badges */}
+                <div className="flex items-start justify-between gap-3 pt-1">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
+                    {/* Category Icon Avatar */}
+                    <div className={`w-10 h-10 rounded-2xl ${styleInfo.bgGradient} border flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200`}>
+                      {styleInfo.icon}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h5 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-snug break-words">
-                        {language === 'ar' ? feat.nameAr : feat.nameEn}
-                      </h5>
-                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
-                        {feat.subcategory} • {feat.addressEn || feat.addressAr}
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <h5 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 group-hover:text-geovision-blue dark:group-hover:text-blue-400 transition-colors leading-snug break-words">
+                          {language === 'ar' ? feat.nameAr : feat.nameEn}
+                        </h5>
+                        <span className={`px-2 py-0.5 rounded-md text-[9px] font-black tracking-wide border ${styleInfo.badgeBg} shrink-0`}>
+                          {feat.category}
+                        </span>
+                      </div>
+
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold flex items-center gap-1 truncate">
+                        <span>{feat.subcategory}</span>
+                        <span>•</span>
+                        <span className="truncate">{feat.addressEn || feat.addressAr}</span>
                       </p>
                     </div>
                   </div>
 
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0 mt-0.5 ${
-                      isPriv
-                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300'
-                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300'
-                    }`}
-                  >
-                    {isPriv ? 'Private' : 'Public'}
-                  </span>
+                  <div className="flex flex-col items-end gap-1 shrink-0">
+                    <span
+                      className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                        isPriv
+                          ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300 border border-purple-200 dark:border-purple-800'
+                          : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                      }`}
+                    >
+                      {isPriv ? 'Private' : 'Public'}
+                    </span>
+
+                    <span className="flex items-center gap-1 text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-50/80 dark:bg-amber-950/60 px-1.5 py-0.5 rounded-md border border-amber-200/80 dark:border-amber-800/80">
+                      <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                      <span>4.8</span>
+                    </span>
+                  </div>
                 </div>
 
-                {/* Info Row: Distance Badge & Open Status */}
-                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                {/* Info Bar: Distance Badge, Open Status & SDI Trust */}
+                <div className="flex flex-wrap items-center justify-between gap-2 py-1.5 px-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800">
                   <div className="flex items-center gap-2 flex-wrap">
-                    {/* Prominent Distance Label */}
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/70 text-geovision-blue dark:text-blue-300 font-extrabold text-[11px] border border-blue-200/80 dark:border-blue-800/80">
-                      <MapPin className="w-3 h-3 text-geovision-blue shrink-0" />
+                    {/* Distance Pill */}
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-950/80 text-geovision-blue dark:text-blue-300 font-black text-[11px] border border-blue-200 dark:border-blue-800 shadow-2xs">
+                      <MapPin className="w-3.5 h-3.5 text-geovision-blue dark:text-blue-400 shrink-0" />
                       <span>{dist} km {language === 'ar' ? 'من موقعك' : 'away'}</span>
                     </span>
 
                     {feat.openStatusEn && (
-                      <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
-                        • {language === 'ar' ? feat.openStatusAr || feat.openStatusEn : feat.openStatusEn}
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                        <Clock className="w-3 h-3 shrink-0 text-emerald-500" />
+                        <span>{language === 'ar' ? feat.openStatusAr || feat.openStatusEn : feat.openStatusEn}</span>
                       </span>
                     )}
                   </div>
 
-                  {/* Actions Bar: Google Maps Direct Link + 4 Interactive Tools */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    {/* Direct Google Maps Navigation Button */}
+                  <div className="flex items-center gap-1 text-[10px] font-extrabold text-blue-600 dark:text-blue-400">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-geovision-blue" />
+                    <span>{language === 'ar' ? 'موثوق SDI' : 'SDI Verified'}</span>
+                  </div>
+                </div>
+
+                {/* Actions Bar Footer */}
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    {/* Google Maps Direct Navigation Button */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -652,14 +875,16 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         window.open(gmapsUrl, '_blank');
                         showToast(language === 'ar' ? `فتح خرائط جوجل لـ ${feat.nameAr}` : `Opening Google Maps for ${feat.nameEn}`);
                       }}
-                      className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white transition-all cursor-pointer text-[10px] font-black shadow-2xs"
+                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-600 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:text-white border border-emerald-200 dark:border-emerald-800/80 transition-all cursor-pointer text-[10px] font-black shadow-2xs group/btn"
                       title={language === 'ar' ? 'التنقل عبر خرائط جوجل' : 'Navigate via Google Maps'}
                     >
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <ExternalLink className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 group-hover/btn:text-white transition-colors" />
                       <span>{language === 'ar' ? 'خرائط جوجل' : 'Google Maps'}</span>
                     </button>
+                  </div>
 
-                    {/* 1. SAVE TO FAVORITES OPTION */}
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {/* Save to Favorites */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -697,7 +922,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
                     </button>
 
-                    {/* 2. DIRECTION OPTION - INLINE IN CHAT */}
+                    {/* Inline Route Directions */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -706,9 +931,11 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 15);
                         if (expandedDirectionsId === feat.id) {
                           setExpandedDirectionsId(null);
+                          if (appState.setNavigationTarget) appState.setNavigationTarget(null);
                         } else {
                           setExpandedDirectionsId(feat.id);
                           setExpandedDetailsId(null);
+                          if (appState.setNavigationTarget) appState.setNavigationTarget(feat);
                         }
                         showToast(
                           language === 'ar'
@@ -718,7 +945,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       }}
                       className={`p-1.5 rounded-xl border transition-all cursor-pointer shadow-2xs ${
                         expandedDirectionsId === feat.id
-                          ? 'bg-geovision-blue text-white border-blue-600'
+                          ? 'bg-geovision-blue text-white border-blue-600 shadow-md shadow-blue-500/20'
                           : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white'
                       }`}
                       title={language === 'ar' ? 'عرض الاتجاهات في المحادثة' : 'View Directions in Chat'}
@@ -726,7 +953,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       <Navigation className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* 3. ZOOM OPTION */}
+                    {/* Quick Map Zoom */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -742,7 +969,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       <ZoomIn className="w-3.5 h-3.5" />
                     </button>
 
-                    {/* 4. FULL 4-TAB DETAILS OPTION - INLINE IN CHAT */}
+                    {/* Inline 4-Tab Spatial Analysis */}
                     <button
                       type="button"
                       onClick={(e) => {
@@ -756,9 +983,9 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                           setExpandedDirectionsId(null);
                         }
                       }}
-                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border transition-all cursor-pointer text-[10px] font-black shadow-2xs ${
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border transition-all cursor-pointer text-[10px] font-black shadow-2xs ${
                         expandedDetailsId === feat.id
-                          ? 'bg-geovision-blue text-white border-blue-600'
+                          ? 'bg-geovision-blue text-white border-blue-600 shadow-md shadow-blue-500/20'
                           : 'bg-blue-50 dark:bg-blue-950/80 border-blue-200 dark:border-blue-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white'
                       }`}
                       title={language === 'ar' ? 'عرض تفاصيل المعلم في المحادثة' : 'View 4-Tab Details in Chat'}
@@ -1632,36 +1859,46 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                 {printTemplate === 'map' && (
                   <div className="space-y-5 animate-in fade-in duration-200">
                     {/* Simulated High-Res Map Canvas Frame */}
-                    <div className="h-64 sm:h-72 rounded-2xl bg-slate-800 border-2 border-slate-300 dark:border-slate-700 relative overflow-hidden flex flex-col justify-between p-4 shadow-inner">
-                      {/* Map Canvas Background Grid Pattern */}
-                      <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none" />
+                    <div
+                      className="h-72 sm:h-84 rounded-2xl border-2 border-slate-300 dark:border-slate-700 relative overflow-hidden flex flex-col justify-between p-4 shadow-xl bg-cover bg-center"
+                      style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' width='100%25' height='100%25'%3E%3Crect width='800' height='500' fill='%23e0f2fe'/%3E%3Cpath d='M 0 60 Q 200 45 400 65 T 800 55 L 800 0 L 0 0 Z' fill='%23bae6fd' opacity='0.6'/%3E%3Cpath d='M 520 20 C 580 10 650 30 700 60 C 660 100 600 110 540 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 440 60 C 490 50 530 70 540 100 C 490 120 450 100 430 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 260 90 C 340 60 440 70 470 130 C 410 210 330 230 250 170 C 230 140 240 110 260 90 Z' fill='%23fef9c3' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 0 210 C 180 190 360 210 560 140 C 660 110 760 130 800 150 L 800 500 L 0 500 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 370 130 C 410 120 440 140 420 170 C 390 180 360 160 370 130 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 200 290 C 280 270 330 310 300 350 C 240 370 190 330 200 290 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 480 230 C 560 210 610 250 570 290 C 500 310 460 270 480 230 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23f59e0b' stroke-width='6' opacity='0.95'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-dasharray='10 6'/%3E%3Cpath d='M 290 170 C 410 180 540 200 800 230' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cpath d='M 270 340 C 390 360 540 390 750 440' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='160' y1='250' x2='360' y2='390'/%3E%3Cline x1='200' y1='230' x2='400' y2='370'/%3E%3Cline x1='240' y1='210' x2='440' y2='350'/%3E%3Cline x1='180' y1='350' x2='380' y2='230'/%3E%3Cline x1='220' y1='370' x2='420' y2='250'/%3E%3Cline x1='260' y1='390' x2='460' y2='270'/%3E%3C/g%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='470' y1='250' x2='670' y2='390'/%3E%3Cline x1='510' y1='230' x2='710' y2='370'/%3E%3Cline x1='550' y1='210' x2='750' y2='350'/%3E%3Cline x1='490' y1='370' x2='690' y2='250'/%3E%3C/g%3E%3Ctext x='280' y='135' font-family='system-ui, sans-serif' font-weight='900' font-size='13' fill='%231e3a8a' opacity='0.75'%3EABU DHABI CITY%3C/text%3E%3Ctext x='250' y='310' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EKHALIFA CITY%3C/text%3E%3Ctext x='550' y='300' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EZAYED CITY%3C/text%3E%3Ctext x='580' y='175' font-family='system-ui, sans-serif' font-weight='900' font-size='12' fill='%23215A9E'%3EAL RAHA BEACH%3C/text%3E%3Ctext x='580' y='55' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3ESAADIYAT ISLAND%3C/text%3E%3Ctext x='450' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3EAL REEM ISLAND%3C/text%3E%3Ctext x='100' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='15' fill='%230284c7' opacity='0.8'%3EARABIAN GULF%3C/text%3E%3Ctext x='430' y='235' font-family='system-ui, sans-serif' font-weight='800' font-size='11' fill='%23b45309' transform='rotate(-12 430 235)'%3ESheikh Zayed Highway (E11)%3C/text%3E%3C/svg%3E")` }}
+                    >
+                      {/* Overlay */}
+                      <div className="absolute inset-0 bg-slate-950/15 pointer-events-none" />
 
                       {/* Map Top Metadata Overlays */}
                       <div className="relative z-10 flex items-center justify-between text-white text-xs">
-                        <div className="px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-slate-700 font-bold flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                        <div className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700 font-bold flex items-center gap-2 shadow-md">
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                           <span>Extent: Abu Dhabi Spatial Hub (Khalifa City / Zayed City)</span>
                         </div>
-                        <div className="w-9 h-9 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-slate-700 flex items-center justify-center text-geovision-blue font-black shadow-md">
-                          <Compass className="w-5 h-5 text-blue-400" />
+                        <div className="w-9 h-9 rounded-full bg-slate-900/90 border-2 border-blue-400 flex items-center justify-center text-blue-400 font-black text-xs shadow-md">
+                          N ⬆
                         </div>
                       </div>
 
-                      {/* Map Pins Simulation */}
-                      <div className="relative z-10 grid grid-cols-3 gap-4 my-auto px-6">
-                        {filteredFeatures.slice(0, 3).map((f) => (
-                          <div key={f.id} className="p-2.5 rounded-xl bg-slate-900/95 border border-blue-500/40 text-white text-[10px] space-y-1 shadow-lg backdrop-blur-sm">
-                            <div className="flex items-center gap-1 font-black text-blue-300">
-                              <MapPin className="w-3 h-3 text-rose-400 shrink-0" />
-                              <span className="truncate">{f.nameEn}</span>
+                      {/* Absolute Positioned Map Pins Simulation */}
+                      <div className="absolute inset-0 z-10 pointer-events-none">
+                        {filteredFeatures.slice(0, 3).map((f, idx) => {
+                          const pos = [
+                            { top: '48%', left: '28%', border: 'border-blue-400', bg: 'bg-blue-950/90', text: 'text-blue-300' },
+                            { top: '30%', left: '52%', border: 'border-emerald-400', bg: 'bg-emerald-950/90', text: 'text-emerald-300' },
+                            { top: '62%', left: '65%', border: 'border-purple-400', bg: 'bg-purple-950/90', text: 'text-purple-300' },
+                          ][idx % 3];
+                          return (
+                            <div key={f.id} className="absolute transform -translate-x-1/2 -translate-y-full flex flex-col items-center" style={{ top: pos.top, left: pos.left }}>
+                              <div className={`${pos.bg} text-white px-3 py-1.5 rounded-xl border-2 ${pos.border} text-xs font-black shadow-2xl backdrop-blur-md flex items-center gap-1.5 whitespace-nowrap`}>
+                                <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
+                                <span className="truncate max-w-[160px]">{language === 'ar' ? f.nameAr : f.nameEn}</span>
+                              </div>
+                              <div className={`w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] ${pos.border.replace('border-', 'border-t-')}`}></div>
                             </div>
-                            <div className="text-slate-400 text-[9px] font-semibold">{f.subcategory} • {f.distanceKm || 1.5} km</div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
 
                       {/* Map Bottom Scale & Legend Overlay */}
-                      <div className="relative z-10 flex items-center justify-between text-[10px] text-white font-bold bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-slate-700">
+                      <div className="relative z-10 flex items-center justify-between text-[10px] text-white font-bold bg-slate-900/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-700 shadow-md">
                         <span>Scale Ratio: 1:25,000</span>
                         <span>Geographic Extent: Bounding Box [24.45N, 54.37E]</span>
                         <span>Layer: SDI Multi-Sector Facilities</span>

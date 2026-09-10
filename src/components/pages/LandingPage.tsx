@@ -2,27 +2,21 @@ import React from 'react';
 import { AISearchBar } from '../ai/AISearchBar';
 import { useAppState } from '../../context/AppStateContext';
 import { MapPin } from 'lucide-react';
-import homeVideo from '../../assets/homevideo.mp4';
 
 export const LandingPage: React.FC = () => {
-  const { language } = useAppState();
+  const { language, theme } = useAppState();
 
   return (
-    <div className="relative w-full min-h-screen pt-24 sm:pt-28 pb-10 px-4 sm:px-12 md:px-16 flex flex-col items-start justify-between bg-spatial-canvas overflow-hidden">
+    <div className="relative w-full min-h-screen pt-24 sm:pt-28 pb-10 px-4 sm:px-12 md:px-16 flex flex-col items-start justify-between bg-spatial-canvas dark:bg-[#041F3B] overflow-hidden">
       
-      {/* Background Video Layer — Full Homebackground.mp4 Animation */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className={`absolute inset-0 w-full h-full object-cover opacity-100 pointer-events-none z-0 transition-transform duration-500 ${
+      {/* Crisp Homepage Background Image Layer */}
+      <img
+        src={theme === 'dark' ? '/homepage bg dark.png' : '/homepage bg light.png'}
+        alt="GeoVision Abu Dhabi Spatial Canvas"
+        className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-500 pointer-events-none z-0 opacity-100 ${
           language === 'ar' ? '-scale-x-100' : ''
         }`}
-      >
-        <source src="/Homebackground.mp4" type="video/mp4" />
-        <source src={homeVideo} type="video/mp4" />
-      </video>
+      />
 
       {/* Hero & Search Launchpad */}
       <div className="relative z-10 w-full max-w-3xl text-left rtl:text-right space-y-4 my-auto flex flex-col items-start rtl:items-start">

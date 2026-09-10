@@ -42,6 +42,7 @@ export const MapWorkspace: React.FC = () => {
     removeFavorite,
     user,
     setGuestPromptOpen,
+    navigationTarget,
   } = useAppState();
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -195,6 +196,7 @@ export const MapWorkspace: React.FC = () => {
   };
 
   const isProgrammaticMoveRef = useRef(false);
+  const lastCenteredFeatureIdRef = useRef<string | null>(null);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -210,9 +212,32 @@ export const MapWorkspace: React.FC = () => {
         doubleClickZoom: true,
         touchZoom: true,
         dragging: true,
+        zoomSnap: 0.5,
+        zoomDelta: 0.5,
+        wheelDebounceTime: 40,
+        wheelPxPerZoomLevel: 60,
       });
 
-      map.on('moveend', () => {
+      // Forward mouse wheel scrolling over popup pane so zooming works even when mouse is over popup cards
+      const panes = map.getPanes();
+      if (panes.popupPane) {
+        panes.popupPane.addEventListener(
+          'wheel',
+          (e: WheelEvent) => {
+            if (mapInstanceRef.current) {
+              const delta = e.deltaY;
+              if (delta < 0) {
+                mapInstanceRef.current.zoomIn(0.5);
+              } else if (delta > 0) {
+                mapInstanceRef.current.zoomOut(0.5);
+              }
+            }
+          },
+          { passive: true }
+        );
+      }
+
+      map.on('moveend zoomend', () => {
         if (isProgrammaticMoveRef.current) {
           isProgrammaticMoveRef.current = false;
           return;
@@ -265,11 +290,21 @@ export const MapWorkspace: React.FC = () => {
     }
   }, [activeBasemap]);
 
-  // React to Zoom In, Zoom Out, Home, and Location updates
+  // React to Zoom In, Zoom Out, Home, and Location updates safely without interrupting mouse scroll
   useEffect(() => {
     if (mapInstanceRef.current) {
-      isProgrammaticMoveRef.current = true;
-      mapInstanceRef.current.setView(mapCenter, mapZoom, { animate: true });
+      const map = mapInstanceRef.current;
+      const currentCenter = map.getCenter();
+      const currentZoom = map.getZoom();
+
+      const latDiff = Math.abs(currentCenter.lat - mapCenter[0]);
+      const lngDiff = Math.abs(currentCenter.lng - mapCenter[1]);
+      const zoomDiff = Math.abs(currentZoom - mapZoom);
+
+      if (latDiff > 0.0001 || lngDiff > 0.0001 || zoomDiff > 0.05) {
+        isProgrammaticMoveRef.current = true;
+        map.setView(mapCenter, mapZoom, { animate: true });
+      }
     }
   }, [mapCenter, mapZoom]);
 
@@ -531,6 +566,7 @@ export const MapWorkspace: React.FC = () => {
 
     // 2. If no selected feature OR zero filtered features, close any popup and return
     if (!selectedFeature || filteredFeatures.length === 0) {
+      lastCenteredFeatureIdRef.current = null;
       map.closePopup();
       return;
     }
@@ -538,52 +574,61 @@ export const MapWorkspace: React.FC = () => {
     // Verify selected feature is present in active filtered results
     const isFeatureValid = filteredFeatures.some((f) => f.id === selectedFeature.id);
     if (!isFeatureValid) {
+      lastCenteredFeatureIdRef.current = null;
       map.closePopup();
       return;
     }
 
-    // 3. Draw dashed route line from origin to target feature
-    const origin: [number, number] = userLocation || [24.4539, 54.3773];
-    const destination: [number, number] = [selectedFeature.lat, selectedFeature.lng];
+    // 3. Draw dashed route line from origin to target feature ONLY IF navigation was explicitly requested
+    const isNavTargetActive = navigationTarget && navigationTarget.id === selectedFeature.id;
 
-    const polyline = L.polyline([origin, destination], {
-      color: '#2563eb',
-      weight: 5,
-      opacity: 0.9,
-      dashArray: '8, 8',
-    }).addTo(map);
+    if (isNavTargetActive) {
+      const origin: [number, number] = userLocation || [24.4539, 54.3773];
+      const destination: [number, number] = [selectedFeature.lat, selectedFeature.lng];
 
-    const distanceKm = selectedFeature.distanceKm || (
-      Math.hypot(selectedFeature.lat - origin[0], selectedFeature.lng - origin[1]) * 111
-    ).toFixed(1);
+      const polyline = L.polyline([origin, destination], {
+        color: '#2563eb',
+        weight: 5,
+        opacity: 0.9,
+        dashArray: '8, 8',
+        interactive: false,
+      }).addTo(map);
 
-    polyline.bindTooltip(
-      `<div style="font-family:sans-serif;font-weight:900;font-size:11px;color:#1e40af;padding:3px 8px;background:rgba(255,255,255,0.95);border-radius:8px;border:1.5px solid #2563eb;box-shadow:0 4px 12px rgba(37,99,235,0.25);">
-        📍 Route to ${language === 'ar' ? selectedFeature.nameAr : selectedFeature.nameEn}: <b>${distanceKm} km</b>
-      </div>`,
-      { permanent: true, direction: 'center' }
-    );
+      const distanceKm = selectedFeature.distanceKm || (
+        Math.hypot(selectedFeature.lat - origin[0], selectedFeature.lng - origin[1]) * 111
+      ).toFixed(1);
 
-    activeRouteLineRef.current = polyline;
+      polyline.bindTooltip(
+        `<div style="font-family:sans-serif;font-weight:900;font-size:11px;color:#1e40af;padding:3px 8px;background:rgba(255,255,255,0.95);border-radius:8px;border:1.5px solid #2563eb;box-shadow:0 4px 12px rgba(37,99,235,0.25);">
+          📍 Route to ${language === 'ar' ? selectedFeature.nameAr : selectedFeature.nameEn}: <b>${distanceKm} km</b>
+        </div>`,
+        { permanent: true, direction: 'center', interactive: false }
+      );
 
-    // Add origin pin marker
-    const startIcon = L.divIcon({
-      className: 'route-origin-marker',
-      html: `<div style="width:22px;height:22px;background:#2563eb;border:3.5px solid white;border-radius:50%;box-shadow:0 4px 14px rgba(37,99,235,0.6);"></div>`,
-      iconSize: [22, 22],
-      iconAnchor: [11, 11],
-    });
-    const startMarker = L.marker(origin, { icon: startIcon }).addTo(map);
-    startMarker.bindTooltip(
-      `<div style="font-family:sans-serif;font-weight:900;font-size:10.5px;color:#1e3a8a;padding:2px 6px;">📍 ${language === 'ar' ? 'موقعي الحالي' : 'Current Area Origin'}</div>`,
-      { permanent: false, direction: 'top' }
-    );
-    activeRouteStartMarkerRef.current = startMarker;
+      activeRouteLineRef.current = polyline;
 
-    // 4. Position Map View once centered on feature with latitude offset for top clearance
-    const targetZoom = Math.max(map.getZoom(), 14);
-    isProgrammaticMoveRef.current = true;
-    map.setView([selectedFeature.lat + 0.0035, selectedFeature.lng], targetZoom, { animate: true });
+      // Add origin pin marker
+      const startIcon = L.divIcon({
+        className: 'route-origin-marker',
+        html: `<div style="width:22px;height:22px;background:#2563eb;border:3.5px solid white;border-radius:50%;box-shadow:0 4px 14px rgba(37,99,235,0.6);"></div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11],
+      });
+      const startMarker = L.marker(origin, { icon: startIcon }).addTo(map);
+      startMarker.bindTooltip(
+        `<div style="font-family:sans-serif;font-weight:900;font-size:10.5px;color:#1e3a8a;padding:2px 6px;">📍 ${language === 'ar' ? 'موقعي الحالي' : 'Current Area Origin'}</div>`,
+        { permanent: false, direction: 'top', interactive: false }
+      );
+      activeRouteStartMarkerRef.current = startMarker;
+    }
+
+    // 4. Position Map View ONCE centered on feature when newly selected
+    if (selectedFeature.id !== lastCenteredFeatureIdRef.current) {
+      lastCenteredFeatureIdRef.current = selectedFeature.id;
+      const targetZoom = Math.max(map.getZoom(), 14);
+      isProgrammaticMoveRef.current = true;
+      map.setView([selectedFeature.lat + 0.0035, selectedFeature.lng], targetZoom, { animate: true });
+    }
 
     // 5. Open Popup on target marker or standalone popup
     const targetMarker = markersMapRef.current.get(selectedFeature.id);
@@ -609,7 +654,7 @@ export const MapWorkspace: React.FC = () => {
       popup.openOn(map);
       standalonePopupRef.current = popup;
     }
-  }, [selectedFeature, filteredFeatures, userLocation, language]);
+  }, [selectedFeature, filteredFeatures, userLocation, language, navigationTarget]);
 
   // Render Selected Focused Area Ring geometry for AI & Map Interactions
   useEffect(() => {

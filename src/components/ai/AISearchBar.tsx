@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import {
   Sparkles,
-  Mic,
   ArrowRight,
   Compass,
   X,
@@ -215,16 +214,6 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
               <X className="w-4 h-4" />
             </button>
           )}
-
-          {/* Microphone Voice Button */}
-          <button
-            type="button"
-            onClick={() => setVoiceOpen(true)}
-            className="p-2.5 text-[#545860] hover:text-[#215A9E] dark:hover:text-[#7DA1C4] rounded-2xl hover:bg-[#7DA1C4]/15 dark:hover:bg-slate-800 transition-all shrink-0 cursor-pointer"
-            title="Voice Search"
-          >
-            <Mic className="w-5 h-5 text-[#215A9E]" />
-          </button>
 
           {/* Submit Arrow Button */}
           <button

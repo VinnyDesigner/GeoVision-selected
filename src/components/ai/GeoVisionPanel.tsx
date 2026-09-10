@@ -9,9 +9,8 @@ import {
   X,
   ChevronRight,
   Plus,
-  Mic,
   BarChart2,
-  Activity,
+  Mic,
   GraduationCap,
   Building2,
   MapPin,
@@ -38,7 +37,7 @@ interface GeoVisionPanelProps {
 
 export const GEOAI_THEMES = [
   { id: 'education', labelEn: 'Education', labelAr: 'التعليم', icon: GraduationCap, count: 8 },
-  { id: 'healthcare', labelEn: 'Healthcare', labelAr: 'الرعاية الصحية', icon: Activity, count: 8 },
+  { id: 'healthcare', labelEn: 'Healthcare', labelAr: 'الرعاية الصحية', icon: Building2, count: 8 },
   { id: 'public_safety', labelEn: 'Public Safety', labelAr: 'الأمن والسلامة', icon: Shield, count: 8 },
   { id: 'transportation', labelEn: 'Transportation', labelAr: 'النقل والفيزياء', icon: MapPin, count: 8 },
   { id: 'tourism', labelEn: 'Tourism & Culture', labelAr: 'السياحة والثقافة', icon: Compass, count: 8 },
@@ -303,26 +302,35 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
   const recognitionRef = useRef<any>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const scrollToLatestMessage = () => {
-    if (!chatContainerRef.current) return;
-    const msgItems = chatContainerRef.current.querySelectorAll('.chat-message-item');
-    if (msgItems.length > 0) {
-      const lastMsg = msgItems[msgItems.length - 1];
-      lastMsg.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    } else {
+  const handleNewChat = () => {
+    startNewConversation();
+    setInputVal('');
+    setEditingMsgId(null);
+    setEditingText('');
+    if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = 0;
     }
   };
 
+  const scrollToLatestMessage = () => {
+    if (!chatContainerRef.current) return;
+    chatContainerRef.current.scrollTo({
+      top: chatContainerRef.current.scrollHeight,
+      behavior: 'smooth',
+    });
+  };
+
   useEffect(() => {
     scrollToLatestMessage();
-    const timer1 = setTimeout(scrollToLatestMessage, 80);
-    const timer2 = setTimeout(scrollToLatestMessage, 300);
+    const timer1 = setTimeout(scrollToLatestMessage, 60);
+    const timer2 = setTimeout(scrollToLatestMessage, 200);
+    const timer3 = setTimeout(scrollToLatestMessage, 500);
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
+      clearTimeout(timer3);
     };
-  }, [aiMessages.length, aiProcessing]);
+  }, [aiMessages.length, aiProcessing, aiMessages]);
 
   const handleVoiceInput = () => {
     const SpeechRecognition =
@@ -455,7 +463,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
 
         <div className="flex items-center gap-1.5 shrink-0">
           <button
-            onClick={startNewConversation}
+            onClick={handleNewChat}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#215A9E] text-white hover:bg-[#063360] font-extrabold text-xs shadow-md shadow-[#215A9E]/25 transition-all cursor-pointer whitespace-nowrap shrink-0"
             title={language === 'ar' ? 'محادثة جديدة' : 'New Chat'}
           >
@@ -641,14 +649,13 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
               onClick={handleVoiceInput}
               className={`p-2 rounded-xl transition-all cursor-pointer ${
                 isListening
-                  ? 'bg-rose-600 text-white animate-pulse shadow-md shadow-rose-500/40'
-                  : 'bg-slate-200/80 text-slate-700 dark:bg-slate-700 dark:text-slate-200 hover:bg-geovision-blue hover:text-white'
+                  ? 'bg-rose-500 text-white animate-pulse shadow-md shadow-rose-500/30'
+                  : 'text-slate-400 hover:text-geovision-blue dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
-              title={isListening ? 'Stop Listening' : 'Voice Query Input (Mic)'}
+              title={language === 'ar' ? 'البحث الصوتي' : 'Voice Search'}
             >
-              <Mic className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${isListening ? 'animate-bounce' : ''}`} />
+              <Mic className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
             </button>
-
             <button
               type="submit"
               disabled={!inputVal.trim() || aiProcessing}

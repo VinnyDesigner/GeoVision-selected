@@ -111,19 +111,23 @@ html {
 
 /* DGE Dark Mode (Reliable Blue Foundation) */
 .dark body,
-.dark {
+.dark,
+[data-theme="dark"] body,
+[data-theme="dark"] {
   background-color: #041F3B;
   color: #FFFFFF;
 }
 
-.dark .bg-spatial-canvas {
+.dark .bg-spatial-canvas,
+[data-theme="dark"] .bg-spatial-canvas {
   background:
     radial-gradient(circle at 20% 15%, rgba(33, 90, 158, 0.35), transparent 35%),
     radial-gradient(circle at 85% 40%, rgba(125, 161, 196, 0.20), transparent 32%),
     linear-gradient(135deg, #041F3B 0%, #063360 50%, #03162B 100%);
 }
 
-.dark .glass-level-1 {
+.dark .glass-level-1,
+[data-theme="dark"] .glass-level-1 {
   background: rgba(6, 51, 96, 0.65);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
@@ -132,7 +136,9 @@ html {
 }
 
 .dark .glass-level-2,
-.dark .glass-panel {
+.dark .glass-panel,
+[data-theme="dark"] .glass-level-2,
+[data-theme="dark"] .glass-panel {
   background: rgba(6, 51, 96, 0.76);
   backdrop-filter: blur(26px) saturate(150%);
   -webkit-backdrop-filter: blur(26px) saturate(150%);
@@ -140,7 +146,8 @@ html {
   box-shadow: 0 18px 45px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.dark .glass-level-3 {
+.dark .glass-level-3,
+[data-theme="dark"] .glass-level-3 {
   background: rgba(6, 51, 96, 0.85);
   backdrop-filter: blur(32px) saturate(160%);
   -webkit-backdrop-filter: blur(32px) saturate(160%);
@@ -148,21 +155,26 @@ html {
   box-shadow: 0 22px 56px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
-
 .dark input,
 .dark select,
-.dark textarea {
+.dark textarea,
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea {
   color-scheme: dark;
   color: #F8FAFC;
 }
 
 .dark input::placeholder,
-.dark textarea::placeholder {
+.dark textarea::placeholder,
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
   color: #94A3B8;
   opacity: 0.9;
 }
 
-.dark option {
+.dark option,
+[data-theme="dark"] option {
   background-color: #0F172A;
   color: #F8FAFC;
 }

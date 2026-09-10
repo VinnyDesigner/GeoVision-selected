@@ -8,9 +8,9 @@ export const AuthModal: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('ahmed.almansoori@dge.gov.ae');
+  const [password, setPassword] = useState('dge2026password');
+  const [username, setUsername] = useState('Ahmed Al Mansoori');
 
   if (!loginModalOpen) return null;
 
@@ -201,6 +201,8 @@ export const AuthModal: React.FC = () => {
         {/* Sign In Form */}
         {tab === 'signin' && (
           <form onSubmit={handleSignIn} className="space-y-4">
+
+
             <div className="space-y-1">
               <label className="text-xs font-bold text-[#063360] dark:text-slate-300">
                 {language === 'ar' ? 'البريد الإلكتروني' : 'Email Address'}

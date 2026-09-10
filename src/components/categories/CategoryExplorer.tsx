@@ -37,7 +37,7 @@ const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
   Wheat,
   Waves,
   Building,
-  healthcare: Activity,
+  healthcare: Building2,
   education: GraduationCap,
   transport: Bus,
   government: Building2,

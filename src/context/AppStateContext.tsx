@@ -106,6 +106,8 @@ interface AppStateContextType {
   filteredFeatures: GeoFeature[];
   pureMapMode: boolean;
   setPureMapMode: (pure: boolean) => void;
+  navigationTarget: GeoFeature | null;
+  setNavigationTarget: (feature: GeoFeature | null) => void;
 }
 
 const DEFAULT_FILTERS: SmartFilterState = {
@@ -128,8 +130,16 @@ const AppStateContext = createContext<AppStateContextType | undefined>(undefined
 
 export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [language, setLanguage] = useState<Language>('en');
-  const [theme, setTheme] = useState<Theme>('light');
-  const [currentView, setCurrentView] = useState<AppView>('map');
+  const [theme, setTheme] = useState<Theme>(() => {
+    try {
+      const saved = localStorage.getItem('geovision_theme');
+      if (saved === 'dark' || saved === 'light') return saved;
+    } catch (e) {
+      console.error(e);
+    }
+    return 'light';
+  });
+  const [currentView, setCurrentView] = useState<AppView>('home');
   const [user, setUser] = useState<User>(GUEST_USER);
 
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -171,6 +181,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const [aoiResult, setAoiResult] = useState<AOIResult | null>(null);
   const [bufferRadiusKm, setBufferRadiusKm] = useState<number>(0);
+  const [navigationTarget, setNavigationTarget] = useState<GeoFeature | null>(null);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -224,24 +235,6 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const [conversationContext, setConversationContext] = useState<ConversationContext>(DEFAULT_CONVERSATION_CONTEXT);
   const [userLocation, setUserLocation] = useState<[number, number] | null>([24.4539, 54.3773]);
-
-  // Geolocate user's location on mount and center map
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const userPos: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-          setUserLocation(userPos);
-          setMapCenter(userPos);
-          setMapZoom(14);
-        },
-        (err) => {
-          console.warn('Geolocation fallback to default Abu Dhabi user location', err);
-        },
-        { timeout: 5000 }
-      );
-    }
-  }, []);
 
   const INITIAL_WELCOME_MESSAGE: AIMessage = {
     id: 'msg-welcome',
@@ -385,20 +378,43 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSelectedSubcategoryIds([]);
     setSmartFilters(DEFAULT_FILTERS);
     setSelectedFeature(null);
+    setNavigationTarget(null);
     setBufferRadiusKm(0);
+    setUserDrawnShapes([]);
     showToast(language === 'ar' ? 'تمت إعادة تعيين محادثة البحث' : 'Conversation context reset');
   };
 
   const startNewConversation = () => {
     const newId = `sess-${Date.now()}`;
     setCurrentSessionId(newId);
-    setAiMessages([INITIAL_WELCOME_MESSAGE]);
+    setAiMessages([{
+      id: `msg-welcome-${Date.now()}`,
+      sender: 'ai',
+      textEn: 'Hello! I am GeoVision, your AI spatial assistant for Abu Dhabi. Ask me anything about location services, healthcare, schools, or spatial planning.',
+      textAr: 'مرحباً بك! أنا مساعد GeoVision الذكي للخرائط في أبوظبي. اسألني عن الخدمات والمستشفيات والمدارس والتحليل المكاني.',
+      timestamp: 'Just now',
+      recommendationsEn: [
+        'Show hospitals within 5 km of my location',
+        'Show schools within 2 km of bus stations in Khalifa City',
+        'Which area has the highest number of healthcare facilities?',
+        'Show hospitals in Khalifa City',
+      ],
+      recommendationsAr: [
+        'عرض المستشفيات على بعد 5 كم من موقعي',
+        'عرض المدارس على بعد 2 كم من محطات الحافلات في مدينة خليفة',
+        'ما هي المنطقة التي تضم أكبر عدد من المرافق الصحية؟',
+        'عرض المستشفيات في مدينة خليفة',
+      ],
+      trustLevel: 'authoritative',
+    }]);
     setConversationContext(DEFAULT_CONVERSATION_CONTEXT);
     setSelectedCategoryIds([]);
     setSelectedSubcategoryIds([]);
     setSmartFilters(DEFAULT_FILTERS);
     setSelectedFeature(null);
+    setNavigationTarget(null);
     setBufferRadiusKm(0);
+    setUserDrawnShapes([]);
     showToast(language === 'ar' ? 'بدأت محادثة جديدة' : 'Started new conversation');
   };
 
@@ -443,12 +459,27 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
     return TRANSLATIONS[language][key] || key;
   };
 
-  // Dark mode side effect
+  // Dark mode side effect with persistence and basemap synchronization
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.setAttribute('data-theme', 'dark');
+      document.body.classList.add('dark');
+      if (activeBasemap === 'dge' || activeBasemap === 'light') {
+        setActiveBasemap('dark');
+      }
     } else {
       document.documentElement.classList.remove('dark');
+      document.documentElement.setAttribute('data-theme', 'light');
+      document.body.classList.remove('dark');
+      if (activeBasemap === 'dark') {
+        setActiveBasemap('dge');
+      }
+    }
+    try {
+      localStorage.setItem('geovision_theme', theme);
+    } catch (e) {
+      console.error(e);
     }
   }, [theme]);
 
@@ -546,6 +577,11 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   // Filtered Features computation based on category selection, subcategory checklist & smart filters
   const filteredFeatures = GEO_FEATURES.filter(feat => {
+    // ALWAYS include selectedFeature so its location pin & popup are guaranteed to render on the map
+    if (selectedFeature && feat.id === selectedFeature.id) {
+      return true;
+    }
+
     // Active categories: either selectedCategoryIds or smartFilters.categories
     const activeCats = selectedCategoryIds.length > 0
       ? selectedCategoryIds
@@ -579,19 +615,20 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
     return true;
   });
 
-  // Auto-clear selected feature if zero features match or if selected feature is no longer in filteredFeatures
-  useEffect(() => {
-    if (selectedFeature) {
-      const isStillPresent = filteredFeatures.some(f => f.id === selectedFeature.id);
-      if (!isStillPresent) {
-        setSelectedFeature(null);
-      }
-    }
-  }, [filteredFeatures, selectedFeature]);
-
   // Natural Language AI Processing Simulation
   const sendAIMessage = (query: string) => {
     if (!query.trim()) return;
+
+    const lowerQ = query.toLowerCase();
+    const isNavRequest = lowerQ.includes('direction') || lowerQ.includes('navigate') || lowerQ.includes('route to') || lowerQ.includes('كيف أصل') || lowerQ.includes('الاتجاهات') || lowerQ.includes('مسار');
+    if (!isNavRequest) {
+      setNavigationTarget(null);
+    }
+
+    const isBufferRequest = lowerQ.includes('buffer') || lowerQ.includes('radius') || lowerQ.includes('within') || lowerQ.includes('نطاق') || lowerQ.includes('نصف قطر') || lowerQ.includes('على بعد') || lowerQ.includes('نصف القطر');
+    if (!isBufferRequest) {
+      setBufferRadiusKm(0);
+    }
 
     // Add user message immediately
     const isArabicQuery = /[\u0600-\u06FF]/.test(query);
@@ -745,6 +782,70 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             lower.includes('gis legend') ||
             query.includes('مفتاح الخريطة') ||
             query.includes('دليل الطبقات');
+
+          // Intelligent NLU UI Theme Mode Intent Detection (Dark / Light)
+          const isThemeDarkRequest =
+            lower.includes('dark mode') ||
+            lower.includes('mode to dark') ||
+            lower.includes('mode to dar') ||
+            lower.includes('change mode to dark') ||
+            lower.includes('change mode to dar') ||
+            lower.includes('switch to dark') ||
+            lower.includes('dark theme') ||
+            lower.includes('night mode') ||
+            lower === 'dark mode' ||
+            lower === 'dark' ||
+            lower === 'dar' ||
+            query.includes('المظلم') ||
+            query.includes('الداكن') ||
+            query.includes('الوضع الداكن') ||
+            query.includes('الوضع المظلم') ||
+            query.includes('وضع الليل') ||
+            query.includes('الوضع الليلي');
+
+          const isThemeLightRequest =
+            lower.includes('light mode') ||
+            lower.includes('mode to light') ||
+            lower.includes('change mode to light') ||
+            lower.includes('switch to light') ||
+            lower.includes('light theme') ||
+            lower.includes('day mode') ||
+            lower === 'light mode' ||
+            lower === 'light' ||
+            query.includes('الفاتح') ||
+            query.includes('الوضع الفاتح') ||
+            query.includes('الوضع النهاري');
+
+          // Intelligent NLU Language Intent Detection (English / Arabic)
+          const isLanguageEnglishRequest =
+            lower.includes('english language') ||
+            lower.includes('language to english') ||
+            lower.includes('switch to english') ||
+            lower.includes('change to english') ||
+            lower.includes('change language english') ||
+            lower.includes('in english') ||
+            lower === 'english' ||
+            lower === 'en' ||
+            query.includes('الإنجليزية') ||
+            query.includes('الإنكليزية') ||
+            query.includes('إلى الإنجليزية') ||
+            query.includes('للإنكليزية') ||
+            query.includes('انجليزي') ||
+            query.includes('انكليزي');
+
+          const isLanguageArabicRequest =
+            lower.includes('arabic language') ||
+            lower.includes('language to arabic') ||
+            lower.includes('switch to arabic') ||
+            lower.includes('change to arabic') ||
+            lower.includes('change language arabic') ||
+            lower.includes('in arabic') ||
+            lower === 'arabic' ||
+            lower === 'ar' ||
+            query.includes('العربية') ||
+            query.includes('إلى العربية') ||
+            query.includes('للغة العربية') ||
+            query.includes('عربي');
 
           // Intelligent NLU Matching Engine for 20 Conversational GIS Features
           let responseEn = '';
@@ -1001,6 +1102,42 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             recsEn = ['Open Basemap Gallery', 'Print / Export Map', 'Draw AOI boundary'];
             recsAr = ['معرض الخرائط الأساسية', 'طباعة وتصدير الخريطة', 'رسم منطقة اهتمام'];
             showToast(language === 'ar' ? 'تم فتح مفتاح الخريطة' : 'Map Legend opened');
+          }
+          else if (isThemeDarkRequest && !lower.includes('hospital') && !lower.includes('school') && !lower.includes('park') && !lower.includes('center') && !lower.includes('rehab')) {
+            setTheme('dark');
+            responseEn = 'UI Theme updated: Switched to Dark Mode.';
+            responseAr = 'تم تحديث مظهر الواجهة: تفعيل الوضع الداكن.';
+            matchedFeats = [];
+            recsEn = ['Switch to Light Mode', 'Switch to Arabic', 'Show hospitals in Abu Dhabi'];
+            recsAr = ['التبديل إلى الوضع الفاتح', 'التحويل للغة العربية', 'عرض المستشفيات في أبوظبي'];
+            showToast(language === 'ar' ? 'تم تفعيل الوضع الداكن' : 'Switched to Dark Mode');
+          }
+          else if (isThemeLightRequest && !lower.includes('hospital') && !lower.includes('school') && !lower.includes('park') && !lower.includes('center') && !lower.includes('rehab')) {
+            setTheme('light');
+            responseEn = 'UI Theme updated: Switched to Light Mode.';
+            responseAr = 'تم تحديث مظهر الواجهة: تفعيل الوضع الفاتح.';
+            matchedFeats = [];
+            recsEn = ['Switch to Dark Mode', 'Switch to Arabic', 'Show hospitals in Abu Dhabi'];
+            recsAr = ['التبديل إلى الوضع الداكن', 'التحويل للغة العربية', 'عرض المستشفيات في أبوظبي'];
+            showToast(language === 'ar' ? 'تم تفعيل الوضع الفاتح' : 'Switched to Light Mode');
+          }
+          else if (isLanguageEnglishRequest && !lower.includes('hospital') && !lower.includes('school') && !lower.includes('park') && !lower.includes('center') && !lower.includes('rehab')) {
+            setLanguage('en');
+            responseEn = 'System Language updated: Switched to English.';
+            responseAr = 'تم تغيير لغة النظام إلى اللغة الإنجليزية.';
+            matchedFeats = [];
+            recsEn = ['Switch to Dark Mode', 'Switch to Arabic', 'Show hospitals in Abu Dhabi'];
+            recsAr = ['التبديل إلى الوضع الداكن', 'التحويل للغة العربية', 'عرض المستشفيات في أبوظبي'];
+            showToast('Switched language to English');
+          }
+          else if (isLanguageArabicRequest && !lower.includes('hospital') && !lower.includes('school') && !lower.includes('park') && !lower.includes('center') && !lower.includes('rehab')) {
+            setLanguage('ar');
+            responseEn = 'System Language updated: Switched to Arabic.';
+            responseAr = 'تم تغيير لغة النظام إلى اللغة العربية.';
+            matchedFeats = [];
+            recsEn = ['Switch to Light Mode', 'Switch to English', 'Show hospitals in Abu Dhabi'];
+            recsAr = ['التبديل إلى الوضع الفاتح', 'التحويل للغة الإنجليزية', 'عرض المستشفيات في أبوظبي'];
+            showToast('تم تغيير اللغة إلى العربية');
           }
           else if (isSatelliteRequest && !lower.includes('hospital') && !lower.includes('school') && !lower.includes('park') && !lower.includes('center') && !lower.includes('rehab')) {
             setActiveBasemap('satellite');
@@ -3940,6 +4077,10 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
           if (matchedFeats.length > 0) {
             setSelectedFeature(matchedFeats[0]);
+            const autoCats = Array.from(new Set(matchedFeats.map(f => f.category).filter(Boolean)));
+            if (autoCats.length > 0) {
+              setSelectedCategoryIds(autoCats);
+            }
           } else {
             setSelectedFeature(null);
           }
@@ -4031,6 +4172,8 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
         GEO_FEATURES,
         pureMapMode,
         setPureMapMode,
+        navigationTarget,
+        setNavigationTarget,
       }}
     >
       {children}
