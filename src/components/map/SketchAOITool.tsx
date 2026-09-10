@@ -22,6 +22,7 @@ export const SketchAOITool: React.FC = () => {
     setActiveTool,
     drawTool,
     setDrawTool,
+    setUserDrawnShapes,
     clearUserDrawnShapes,
     userDrawnShapes,
     aoiResult,
@@ -56,7 +57,47 @@ export const SketchAOITool: React.FC = () => {
 
   const handleSimulateShapeDraw = () => {
     setSketchState('drawn');
-    showToast(`${drawTool.toUpperCase()} spatial drawing created`);
+
+    const shapeId = `shape-${Date.now()}`;
+    const centerLat = 24.4539;
+    const centerLng = 54.3773;
+
+    let newShape: any;
+    if (drawTool === 'point') {
+      newShape = { id: shapeId, type: 'point', lat: centerLat, lng: centerLng, radius: 1000 };
+    } else if (drawTool === 'circle') {
+      newShape = { id: shapeId, type: 'circle', lat: centerLat, lng: centerLng, radius: 2500 };
+    } else if (drawTool === 'polygon') {
+      newShape = {
+        id: shapeId,
+        type: 'polygon',
+        lat: centerLat,
+        lng: centerLng,
+        radius: 2000,
+        points: [
+          [24.465, 54.377],
+          [24.455, 54.395],
+          [24.442, 54.385],
+          [24.445, 54.365],
+          [24.460, 54.362],
+        ],
+      };
+    } else {
+      newShape = {
+        id: shapeId,
+        type: 'rect',
+        lat: centerLat,
+        lng: centerLng,
+        radius: 2000,
+        bounds: [
+          [24.440, 54.360],
+          [24.468, 54.395],
+        ],
+      };
+    }
+
+    setUserDrawnShapes((prev) => [...prev, newShape]);
+    showToast(`${drawTool.toUpperCase()} spatial drawing created on map`);
 
     const labelName =
       drawTool === 'point'
@@ -124,10 +165,10 @@ export const SketchAOITool: React.FC = () => {
   };
 
   return (
-    <div className="absolute top-20 left-18 sm:left-20 rtl:left-auto rtl:right-18 sm:rtl:right-20 z-[600] w-80 sm:w-[360px] glass-level-3 rounded-3xl p-5 shadow-2xl border border-white/80 dark:border-slate-800 animate-fade-in space-y-4 glow-blue">
+    <div className="absolute top-4 sm:top-6 left-16 sm:left-20 rtl:left-auto rtl:right-16 sm:rtl:right-20 z-[600] w-80 sm:w-[370px] max-h-[calc(100vh-140px)] glass-level-3 rounded-3xl p-4 sm:p-5 shadow-2xl border border-white/80 dark:border-slate-800 animate-fade-in flex flex-col overflow-hidden glow-blue pointer-events-auto">
       
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+      {/* Header (Fixed) */}
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-3 shrink-0">
         <h3 className="text-base font-black text-slate-900 dark:text-white">
           Draw
         </h3>
@@ -138,6 +179,9 @@ export const SketchAOITool: React.FC = () => {
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Scrollable Body Content */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-1.5 space-y-4">
 
       {/* DRAWING TOOL Section */}
       <div className="space-y-3">
@@ -286,7 +330,6 @@ export const SketchAOITool: React.FC = () => {
         </div>
       )}
 
-      {/* Clear drawings Button */}
       <button
         onClick={handleClearDrawings}
         className="w-full py-3 rounded-2xl glass-level-1 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 font-bold hover:bg-red-50 hover:text-red-600 transition-colors flex items-center justify-center gap-2 cursor-pointer"
@@ -295,6 +338,7 @@ export const SketchAOITool: React.FC = () => {
         <span>Clear drawings{userDrawnShapes.length > 0 ? ` (${userDrawnShapes.length})` : ''}</span>
       </button>
 
+      </div>
     </div>
   );
 };

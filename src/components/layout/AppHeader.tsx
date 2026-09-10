@@ -78,13 +78,13 @@ export const AppHeader: React.FC = () => {
   };
 
   return (
-    <div className="fixed top-2 sm:top-3 left-1/2 -translate-x-1/2 z-[500] w-[calc(100%-1rem)] sm:w-[calc(100%-2rem)] max-w-7xl">
-      <header className="relative w-full h-[56px] sm:h-[62px] glass-level-2 rounded-2xl px-2.5 sm:px-5 flex items-center justify-between shadow-xl border border-white/80 dark:border-white/10">
+    <div className="fixed top-2 sm:top-3 left-3 sm:left-4 right-3 sm:right-4 z-[500]">
+      <header className="relative w-full h-[56px] sm:h-[62px] glass-level-2 rounded-2xl px-3 sm:px-6 flex items-center justify-between shadow-xl border border-white/80 dark:border-white/10">
         
         {/* Left: First Logo — Department of Government Enablement Brandmark */}
         <div className="flex items-center cursor-pointer shrink-0" onClick={() => handleNavClick('home')}>
           <img
-            src="/assets/logos/dge-logo.png"
+            src="./assets/logos/dge-logo.png"
             alt="Department of Government Enablement"
             className="h-7 sm:h-9 md:h-10 max-w-[130px] sm:max-w-none object-contain dark:bg-white/90 dark:px-2 dark:py-1 dark:rounded-lg shrink-0 transition-transform hover:scale-105"
           />
@@ -127,18 +127,6 @@ export const AppHeader: React.FC = () => {
             <Info className="w-3.5 h-3.5" />
             {t('nav.about')}
           </button>
-
-          <button
-            onClick={() => handleNavClick('help')}
-            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-              currentView === 'help'
-                ? 'bg-[#215A9E]/10 text-[#215A9E] dark:text-[#7DA1C4] font-extrabold shadow-2xs'
-                : 'text-slate-600 hover:text-[#063360] dark:text-slate-300 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
-            }`}
-          >
-            <HelpCircle className="w-3.5 h-3.5" />
-            {t('nav.help')}
-          </button>
         </nav>
 
         {/* Right: Controls & Last Logo — Abu Dhabi Spatial Data */}
@@ -169,10 +157,23 @@ export const AppHeader: React.FC = () => {
           {/* Theme Switcher */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer"
             title="Toggle Light/Dark Theme"
           >
             {theme === 'light' ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />}
+          </button>
+
+          {/* Help Icon Button */}
+          <button
+            onClick={() => handleNavClick('help')}
+            className={`p-1.5 sm:p-2 rounded-xl transition-colors glass-level-1 cursor-pointer ${
+              currentView === 'help'
+                ? 'bg-[#215A9E]/15 text-geovision-blue dark:text-blue-300 font-extrabold ring-1 ring-geovision-blue/30'
+                : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue'
+            }`}
+            title={t('nav.help')}
+          >
+            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-geovision-blue" />
           </button>
 
           {/* Feedback Button (Desktop & Tablet) */}
@@ -290,7 +291,7 @@ export const AppHeader: React.FC = () => {
           {/* Rightmost: Second Logo — Abu Dhabi Spatial Data */}
           <div className="hidden md:flex items-center cursor-pointer shrink-0" onClick={() => handleNavClick('home')}>
             <img
-              src="/assets/logos/spatial-data-logo.png"
+              src="./assets/logos/spatial-data-logo.png"
               alt="Abu Dhabi Spatial Data"
               className="h-6 sm:h-7 md:h-8 max-w-[85px] sm:max-w-[110px] object-contain dark:bg-white/90 dark:px-2 dark:py-0.5 dark:rounded-lg shrink-0 transition-transform hover:scale-105"
             />

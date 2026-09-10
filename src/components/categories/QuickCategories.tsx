@@ -1,7 +1,20 @@
 import React from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import { CATEGORIES } from '../../data/mockAbuDhabiData';
-import { Activity, GraduationCap, Bus, Building2, Trees, Zap } from 'lucide-react';
+import {
+  Activity,
+  GraduationCap,
+  Bus,
+  Building2,
+  Trees,
+  Zap,
+  Shield,
+  Compass,
+  Leaf,
+  Wheat,
+  Waves,
+  Building,
+} from 'lucide-react';
 
 const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
   Activity,
@@ -10,6 +23,24 @@ const ICON_MAP: Record<string, React.FC<{ className?: string }>> = {
   Building2,
   Trees,
   Zap,
+  Shield,
+  Compass,
+  Leaf,
+  Wheat,
+  Waves,
+  Building,
+  healthcare: Activity,
+  education: GraduationCap,
+  transport: Bus,
+  government: Building2,
+  parks: Trees,
+  utilities: Zap,
+  public_safety: Shield,
+  tourism: Compass,
+  environment: Leaf,
+  agriculture: Wheat,
+  hydrography: Waves,
+  urban: Building,
 };
 
 export const QuickCategories: React.FC = () => {

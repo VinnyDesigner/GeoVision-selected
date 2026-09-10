@@ -10,18 +10,22 @@ export const LandingPage: React.FC = () => {
   return (
     <div className="relative w-full min-h-screen pt-24 sm:pt-28 pb-10 px-4 sm:px-12 md:px-16 flex flex-col items-start justify-between bg-spatial-canvas overflow-hidden">
       
-      {/* Background Video Layer — Full Original Video */}
+      {/* Background Video Layer — Full Homebackground.mp4 Animation */}
       <video
-        src={homeVideo}
         autoPlay
         loop
         muted
         playsInline
-        className="absolute inset-0 w-full h-full object-cover opacity-100 pointer-events-none z-0"
-      />
+        className={`absolute inset-0 w-full h-full object-cover opacity-100 pointer-events-none z-0 transition-transform duration-500 ${
+          language === 'ar' ? '-scale-x-100' : ''
+        }`}
+      >
+        <source src="/Homebackground.mp4" type="video/mp4" />
+        <source src={homeVideo} type="video/mp4" />
+      </video>
 
-      {/* Left-Aligned Hero & Search Launchpad */}
-      <div className="relative z-10 w-full max-w-3xl text-left rtl:text-right space-y-4 my-auto flex flex-col items-start">
+      {/* Hero & Search Launchpad */}
+      <div className="relative z-10 w-full max-w-3xl text-left rtl:text-right space-y-4 my-auto flex flex-col items-start rtl:items-start">
         
         {/* BIG GeoVision Hero Brand Title */}
         <div className="flex items-center gap-3">

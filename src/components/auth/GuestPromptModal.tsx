@@ -22,28 +22,34 @@ export const GuestPromptModal: React.FC = () => {
         {/* Modal Top Header Row featuring both official logos */}
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8 rtl:pl-8 rtl:pr-0">
           <img
-            src="/assets/logos/dge-logo.png"
+            src="./assets/logos/dge-logo.png"
             alt="Department of Government Enablement"
             className="h-8 sm:h-9 object-contain dark:bg-white/90 dark:px-2 dark:py-0.5 dark:rounded-lg shrink-0"
           />
           <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 shrink-0" />
           <img
-            src="/assets/logos/spatial-data-logo.png"
+            src="./assets/logos/spatial-data-logo.png"
             alt="Abu Dhabi Spatial Data"
             className="h-7 sm:h-8 object-contain dark:bg-white/90 dark:px-2 dark:py-0.5 dark:rounded-lg shrink-0"
           />
         </div>
 
         {/* Title & Subtitle */}
-        <div className="space-y-2">
+        <div className="space-y-3 text-center">
           <h2 className="text-xl font-black text-slate-900 dark:text-white">
-            {language === 'ar' ? 'حفظ اكتشافاتك في GeoVision' : 'Save Your GeoVision Discoveries'}
+            {language === 'ar' ? 'قم بإنشاء حساب للحفظ' : 'Create an Account to Save'}
           </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed font-semibold">
-            {language === 'ar'
-              ? 'قم بتسجيل الدخول لحفظ المواقع المكانية وطبقات الخريطة والمحادثات عبر أجهزتك'
-              : 'Sign in to save your spatial locations, dataset layer states, and conversation history across devices.'}
-          </p>
+
+          <div className="p-3 rounded-2xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700 text-left rtl:text-right space-y-1.5 text-xs font-bold text-slate-700 dark:text-slate-200">
+            <p className="text-[11px] font-black text-geovision-blue dark:text-blue-300">
+              {language === 'ar' ? 'عند تسجيل الدخول يمكنك حفظ:' : 'Create an account to save:'}
+            </p>
+            <div className="space-y-1 text-slate-800 dark:text-slate-100 font-extrabold">
+              <p>✓ {language === 'ar' ? 'المواقع المفضلة' : 'Favourite locations'}</p>
+              <p>✓ {language === 'ar' ? 'سجل البحث' : 'Search history'}</p>
+              <p>✓ {language === 'ar' ? 'محادثات الذكاء الاصطناعي المكانية' : 'Saved AI conversations'}</p>
+            </div>
+          </div>
         </div>
 
         <div className="flex flex-col gap-2.5 pt-2">

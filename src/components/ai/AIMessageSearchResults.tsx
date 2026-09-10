@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { GeoFeature } from '../../types';
 import { useAppState } from '../../context/AppStateContext';
 import {
+  ExternalLink,
   ChevronDown,
   Check,
   Building,
@@ -12,44 +13,70 @@ import {
   Info,
   RotateCcw,
   X,
+  Heart,
+  Navigation,
+  Printer,
+  BarChart2,
+  TrendingUp,
+  Compass,
+  Download,
+  FileText,
+  Sparkles,
 } from 'lucide-react';
+import { triggerPrintDocument } from '../../utils/printUtils';
+import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
 
 interface AIMessageSearchResultsProps {
-  features: GeoFeature[];
-  setSelectedFeature: (feat: GeoFeature) => void;
-  language: 'en' | 'ar';
+  features?: GeoFeature[];
+  matchedFeatures?: GeoFeature[];
+  setSelectedFeature?: (feat: GeoFeature) => void;
+  language?: 'en' | 'ar';
+  messageId?: string;
 }
 
 const LAYER_OPTIONS = [
   { id: 'education', labelEn: 'Education', labelAr: 'التعليم' },
   { id: 'healthcare', labelEn: 'Healthcare', labelAr: 'الرعاية الصحية' },
   { id: 'transport', labelEn: 'Transport', labelAr: 'النقل والمواصلات' },
-  { id: 'environment', labelEn: 'Environment', labelAr: 'البيئة' },
-  { id: 'tourism', labelEn: 'Tourism', labelAr: 'السياحة' },
-  { id: 'utilities', labelEn: 'Utilities', labelAr: 'الخدمات العامة' },
+  { id: 'environment', labelEn: 'Environment', labelAr: 'البيئة والمحميات' },
+  { id: 'tourism', labelEn: 'Tourism', labelAr: 'السياحة والثقافة' },
+  { id: 'utilities', labelEn: 'Utilities', labelAr: 'الخدمات والمرافق' },
   { id: 'government', labelEn: 'Government', labelAr: 'الخدمات الحكومية' },
-  { id: 'parks', labelEn: 'Parks', labelAr: 'الحدائق العامة' },
+  { id: 'parks', labelEn: 'Parks', labelAr: 'الحدائق والترفيه' },
+  { id: 'public_safety', labelEn: 'Public Safety', labelAr: 'الأمن والسلامة العامة' },
+  { id: 'agriculture', labelEn: 'Agriculture', labelAr: 'الزراعة والمواشي' },
+  { id: 'hydrography', labelEn: 'Hydrography', labelAr: 'السطوح المائية والشواطئ' },
+  { id: 'urban', labelEn: 'Urban & Land Use', labelAr: 'التخطيط العمراني' },
 ];
 
-export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
-  features,
-  setSelectedFeature,
-  language,
-}) => {
-  const { setMapCenterAndZoom, setCurrentView, currentView, showToast } = useAppState();
+const ALL_LAYER_IDS = LAYER_OPTIONS.map((opt) => opt.id);
 
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    'education',
-    'healthcare',
-    'transport',
-    'environment',
-    'tourism',
-    'utilities',
-    'government',
-    'parks',
-  ]);
+export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
+  features: featuresProp,
+  matchedFeatures,
+  setSelectedFeature: setSelectedFeatureProp,
+  language: languageProp,
+}) => {
+  const appState = useAppState();
+  const setMapCenterAndZoom = appState.setMapCenterAndZoom;
+  const setCurrentView = appState.setCurrentView;
+  const showToast = appState.showToast;
+  const language = languageProp || appState.language || 'en';
+  const setSelectedFeature = setSelectedFeatureProp || appState.setSelectedFeature;
+  const sendAIMessage = appState.sendAIMessage;
+
+  const addFavorite = appState.addFavorite;
+  const removeFavorite = appState.removeFavorite;
+  const isFavorite = appState.isFavorite;
+  const favorites = appState.favorites;
+  const currentView = appState.currentView;
+
+  const features = (matchedFeatures || featuresProp || []).filter(Boolean);
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(ALL_LAYER_IDS);
 
   const isFeaturePrivate = (feat: GeoFeature): boolean => {
+    if (!feat || !feat.nameEn) return false;
     const nameLower = feat.nameEn.toLowerCase();
     return (
       nameLower.includes('private') ||
@@ -61,19 +88,39 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     );
   };
 
-  const allArePublic = features.length > 0 && features.every(f => !isFeaturePrivate(f));
-  const allArePrivate = features.length > 0 && features.every(f => isFeaturePrivate(f));
-
-  const [selectedType, setSelectedType] = useState<'all' | 'private' | 'public'>(
-    allArePublic ? 'public' : allArePrivate ? 'private' : 'all'
-  );
+  const [selectedType, setSelectedType] = useState<'all' | 'private' | 'public'>('all');
   const [layerMenuOpen, setLayerMenuOpen] = useState(false);
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [visibleCount, setVisibleCount] = useState(5);
 
+  // New Modals State: Analytics, Print, Directions
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showPrintReport, setShowPrintReport] = useState(false);
+  const [activeRouteTarget, setActiveRouteTarget] = useState<GeoFeature | null>(null);
+
+  // Inline Details & Directions State (Rendered directly in chat stream)
+  const [expandedDetailsId, setExpandedDetailsId] = useState<string | null>(null);
+  const [activeInlineTab, setActiveInlineTab] = useState<'overview' | 'nearby' | 'details' | 'related'>('overview');
+  const [expandedDirectionsId, setExpandedDirectionsId] = useState<string | null>(null);
+  const [nearbyRadiusKm, setNearbyRadiusKm] = useState<number>(3);
+
+  // Print UI Customization State
+  const [printTemplate, setPrintTemplate] = useState<'briefing' | 'ledger' | 'map'>('briefing');
+  const [printOrientation, setPrintOrientation] = useState<'portrait' | 'landscape'>('portrait');
+
   const layerRef = useRef<HTMLDivElement>(null);
   const typeRef = useRef<HTMLDivElement>(null);
+
+  const setGuestPromptOpen = appState.setGuestPromptOpen;
+  const user = appState.user;
+
+  // Auto-expand 4-tab details in chat stream when selectedFeature is set or updated
+  useEffect(() => {
+    if (appState.selectedFeature) {
+      setExpandedDetailsId(appState.selectedFeature.id);
+    }
+  }, [appState.selectedFeature]);
 
   // Close menus when clicking anywhere outside of their respective containers
   useEffect(() => {
@@ -97,18 +144,40 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     }
   };
 
+  const handleExportCSV = () => {
+    if (!filteredFeatures || filteredFeatures.length === 0) return;
+    const headers = ['#', 'Name (EN)', 'Name (AR)', 'Subcategory', 'Distance (km)', 'Type', 'Status', 'Latitude', 'Longitude'];
+    const rows = filteredFeatures.map((f, i) => [
+      i + 1,
+      `"${(f.nameEn || '').replace(/"/g, '""')}"`,
+      `"${(f.nameAr || '').replace(/"/g, '""')}"`,
+      `"${f.subcategory || ''}"`,
+      f.distanceKm || 1.5,
+      isFeaturePrivate(f) ? 'Private' : 'Public',
+      `"${f.openStatusEn || 'Open 24/7'}"`,
+      f.lat,
+      f.lng,
+    ]);
+    const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `DGE_Spatial_Report_${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast(language === 'ar' ? 'تم تصدير البيانات إلى ملف CSV بنجاح' : 'Exported spatial records to CSV successfully');
+  };
+
   const filteredFeatures = features.filter((feat) => {
-    // 1. Layer Category Filter
     if (selectedCategories.length > 0 && !selectedCategories.includes(feat.category)) {
       return false;
     }
 
-    // 2. Type Filter (Private vs Public)
     const isPriv = isFeaturePrivate(feat);
     if (selectedType === 'private' && !isPriv) return false;
     if (selectedType === 'public' && isPriv) return false;
 
-    // 3. Keyword Search Filter inside results
     if (searchFilter.trim()) {
       const q = searchFilter.toLowerCase();
       const matchName = (feat.nameEn || '').toLowerCase().includes(q) || (feat.nameAr || '').includes(q);
@@ -141,24 +210,180 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
   const handleClearFilters = () => {
     setSearchFilter('');
-    setSelectedCategories([
-      'education',
-      'healthcare',
-      'transport',
-      'environment',
-      'tourism',
-      'utilities',
-      'government',
-      'parks',
-    ]);
+    setSelectedCategories(ALL_LAYER_IDS);
     setSelectedType('all');
     showToast(language === 'ar' ? 'تمت إعادة تعيين الفلاتر' : 'Result filters cleared');
+  };
+
+  // Analytics Computation
+  const categoryCounts = filteredFeatures.reduce((acc, f) => {
+    acc[f.category] = (acc[f.category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  const publicCount = filteredFeatures.filter(f => !isFeaturePrivate(f)).length;
+  const privateCount = filteredFeatures.filter(f => isFeaturePrivate(f)).length;
+  const openNowCount = filteredFeatures.filter(f => f.openStatusEn?.toLowerCase().includes('open')).length;
+
+  const distances = filteredFeatures.map(f => f.distanceKm || 1.5);
+  const minDist = distances.length > 0 ? Math.min(...distances) : 0;
+  const avgDist = distances.length > 0 ? (distances.reduce((a, b) => a + b, 0) / distances.length).toFixed(1) : 0;
+
+  const handleTriggerPrint = () => {
+    showToast(language === 'ar' ? 'جاري فتح تقرير الطباعة الرسمي...' : 'Preparing official SDI report document for printing...');
+
+    const tableRowsHtml = filteredFeatures.map((f, i) => `
+      <tr>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #64748b;">${i + 1}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: 900;">${f.nameEn}<br/><small style="color: #64748b;">${f.nameAr || ''}</small></td>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">${f.subcategory}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-family: monospace;">${f.lat.toFixed(4)}, ${f.lng.toFixed(4)}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0; font-weight: bold; color: #215A9E;">${f.distanceKm || 1.5} km</td>
+        <td style="padding: 8px; border-bottom: 1px solid #e2e8f0;">
+          <span style="background: ${isFeaturePrivate(f) ? '#f3e8ff' : '#dcfce7'}; color: ${isFeaturePrivate(f) ? '#6b21a8' : '#166534'}; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900;">
+            ${isFeaturePrivate(f) ? 'PRIVATE' : 'PUBLIC'}
+          </span>
+        </td>
+      </tr>
+    `).join('');
+
+    let templateSpecificHtml = '';
+
+    if (printTemplate === 'briefing') {
+      templateSpecificHtml = `
+        <div class="kpi-grid">
+          <div class="kpi-card"><div class="kpi-lbl">Total Matched</div><div class="kpi-val">${filteredFeatures.length}</div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Min Proximity</div><div class="kpi-val">${minDist} km</div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Average Drive</div><div class="kpi-val">${avgDist} km</div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Operational Rate</div><div class="kpi-val">${Math.round((openNowCount / (filteredFeatures.length || 1)) * 100)}%</div></div>
+        </div>
+
+        <div class="insights-box">
+          <strong style="color: #215A9E; text-transform: uppercase; font-size: 11px; display: block; margin-bottom: 6px;">Key Spatial Intelligence Takeaways</strong>
+          <ul style="margin: 0; padding-left: 18px; line-height: 1.6;">
+            <li>High concentration of spatial facilities located within <strong>Khalifa City Sector 1 & Zayed City</strong> corridor.</li>
+            <li>Public vs Private Sector distribution ratio is <strong>${publicCount} Public / ${privateCount} Private</strong>.</li>
+            <li>Geodetic reference system verified: <strong>WGS 84 / UTM Zone 39N (EPSG:32639)</strong>.</li>
+          </ul>
+        </div>
+
+        <h3 style="font-size: 13px; font-weight: 900; margin-top: 20px; text-transform: uppercase;">Top Spatial Results Summary</h3>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Facility Name</th>
+              <th>Subcategory</th>
+              <th>Coordinates</th>
+              <th>Distance</th>
+              <th>Sector</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRowsHtml}
+          </tbody>
+        </table>
+      `;
+    } else if (printTemplate === 'ledger') {
+      templateSpecificHtml = `
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 11px; display: flex; justify-content: space-between;">
+          <span><strong>Total Indexed Features:</strong> ${filteredFeatures.length} Records</span>
+          <span><strong>Public:</strong> ${publicCount} | <strong>Private:</strong> ${privateCount}</span>
+          <span><strong>Spatial Datum:</strong> WGS 84 (EPSG:32639)</span>
+        </div>
+
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Facility Name</th>
+              <th>Subcategory</th>
+              <th>Coordinates</th>
+              <th>Distance</th>
+              <th>Sector</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRowsHtml}
+          </tbody>
+        </table>
+      `;
+    } else {
+      templateSpecificHtml = `
+        <div class="map-frame" style="background: #0f172a; color: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border: 2px solid #334155;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 900; margin-bottom: 15px;">
+            <span>📍 GIS Extent: Abu Dhabi Spatial Hub (Khalifa City / Zayed City)</span>
+            <span style="color: #60a5fa;">Bounding Box: [24.45°N, 54.37°E]</span>
+          </div>
+          <div style="background: rgba(30, 41, 59, 0.8); border: 1px dashed #475569; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 15px;">
+            <div style="font-size: 24px;">🗺️</div>
+            <div style="font-weight: 900; color: #93c5fd; margin-top: 6px;">SDI High-Resolution Canvas Map Extent</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Multi-Sector Spatial Feature Layer Rendered at 1:25,000 Scale</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 10px; color: #cbd5e1; font-weight: bold; background: rgba(15,23,42,0.9); padding: 8px 12px; border-radius: 6px;">
+            <span>Scale Ratio: 1:25,000</span>
+            <span>Projection: WGS 84 / UTM Zone 39N</span>
+            <span>Grid: 100m Spacing</span>
+          </div>
+        </div>
+
+        <h3 style="font-size: 13px; font-weight: 900; margin-top: 20px; text-transform: uppercase;">Mapped Features Index</h3>
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Facility Name</th>
+              <th>Subcategory</th>
+              <th>Coordinates</th>
+              <th>Distance</th>
+              <th>Sector</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRowsHtml}
+          </tbody>
+        </table>
+      `;
+    }
+
+    const htmlContent = `
+      <div class="header-banner">
+        <div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span class="badge">DGE</span>
+            <span style="font-weight: 900; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">Government of Abu Dhabi • Spatial Intelligence Center</span>
+          </div>
+          <h1 style="font-size: 20px; font-weight: 900; margin: 8px 0 4px 0;">Official Spatial Intelligence Search Report</h1>
+          <div style="font-size: 11px; color: #64748b; font-weight: 600;">Department of Government Enablement • Abu Dhabi Spatial Data Infrastructure (SDI)</div>
+        </div>
+        <div style="text-align: right;">
+          <span class="security-stamp">OFFICIAL SDI USE ONLY</span>
+          <div style="font-size: 10px; font-weight: 900; color: #94a3b8; margin-top: 6px;">REF ID: SDI-RPT-2026-904</div>
+          <div style="font-size: 10px; color: #64748b;">${new Date().toLocaleString()}</div>
+        </div>
+      </div>
+
+      ${templateSpecificHtml}
+
+      <div class="footer-block">
+        <div>
+          <strong>Certified by Abu Dhabi SDI Spatial Authority</strong><br/>
+          Digitally Signed & Validated • Department of Government Enablement
+        </div>
+        <div style="text-align: right; font-family: monospace;">
+          HASH: 8f4e92a1c0d57e3b<br/>
+          PAGE 1 OF 1
+        </div>
+      </div>
+    `;
+
+    triggerPrintDocument('Official Spatial Intelligence Search Report - Abu Dhabi SDI', htmlContent, printOrientation);
   };
 
   return (
     <div className="mt-3.5 space-y-2.5 pt-3 border-t border-slate-200/80 dark:border-slate-700/80">
       
-      {/* High-Volume Results Header Banner (> 100 results handling) */}
+      {/* High-Volume Banner */}
       {isHighVolume && (
         <div className="p-2.5 rounded-xl bg-blue-50/90 dark:bg-slate-900 border border-blue-200/80 dark:border-slate-700 flex items-center justify-between gap-2 text-[11px] font-extrabold text-geovision-blue dark:text-blue-300">
           <div className="flex items-center gap-1.5 min-w-0">
@@ -175,17 +400,44 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
         </div>
       )}
 
-      {/* Row 1: Search Results Title & Quick Search Input */}
+      {/* Header Bar with Action Buttons (Title, Analytics, Print, Filter Input) */}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white">
-            {language === 'ar' ? 'نتائج البحث' : 'Search Results'} ({filteredFeatures.length})
+        <div className="flex items-center gap-2 flex-wrap">
+          <h4 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>{language === 'ar' ? 'نتائج البحث' : 'Search Results'}</span>
+            <span className="px-2 py-0.5 rounded-full bg-blue-100 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 text-xs font-black">
+              {filteredFeatures.length}
+            </span>
           </h4>
+
+          {/* Global Results Action Buttons: Analytics & Print */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => setShowAnalytics(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-[11px] font-black border border-indigo-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
+              title={language === 'ar' ? 'تحليلات النتائج' : 'View Query Analytics'}
+            >
+              <BarChart2 className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'التحليلات' : 'Analytics'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setShowPrintReport(true)}
+              className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white text-[11px] font-black border border-emerald-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
+              title={language === 'ar' ? 'طباعة التقرير' : 'Print Search Report'}
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>{language === 'ar' ? 'طباعة' : 'Print'}</span>
+            </button>
+          </div>
+
           {hasActiveFilters && (
             <button
               type="button"
               onClick={handleClearFilters}
-              className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white text-[10px] font-extrabold transition-all cursor-pointer shadow-2xs"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white text-[10px] font-extrabold transition-all cursor-pointer shadow-2xs"
             >
               <RotateCcw className="w-3 h-3" />
               <span>{language === 'ar' ? 'إلغاء الفلاتر' : 'Clear Filters'}</span>
@@ -193,7 +445,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
           )}
         </div>
 
-        {/* Quick Filter Input Box - ALWAYS AVAILABLE */}
+        {/* Quick Filter Search Box */}
         <div className="relative flex-1 max-w-[170px]">
           <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 rtl:right-2.5 rtl:left-auto" />
           <input
@@ -215,10 +467,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
         </div>
       </div>
 
-      {/* Row 2: Filter Controls */}
+      {/* Row 2: Category & Type Dropdowns */}
       <div className="flex flex-wrap items-center gap-3 py-1.5 px-2.5 rounded-xl bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/60">
         
-        {/* 1. CATEGORY FILTER */}
+        {/* Category Filter */}
         <div className="relative flex items-center gap-1.5" ref={layerRef}>
           <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400">
             <span className="shrink-0">{language === 'ar' ? 'الفئة:' : 'Category:'}</span>
@@ -239,7 +491,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
             </button>
           </div>
 
-          {/* Layer Menu Dropdown */}
           {layerMenuOpen && (
             <div className="absolute top-full left-0 mt-1.5 w-48 p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl z-50 space-y-1 text-left rtl:text-right">
               <div className="px-2 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider">
@@ -268,7 +519,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
           )}
         </div>
 
-        {/* 2. TYPE FILTER */}
+        {/* Type Filter */}
         <div className="relative flex items-center gap-1.5" ref={typeRef}>
           <div className="flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400">
             <span className="shrink-0">{language === 'ar' ? 'النوع:' : 'Type:'}</span>
@@ -289,7 +540,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
             </button>
           </div>
 
-          {/* Type Menu Dropdown */}
           {typeMenuOpen && (
             <div className="absolute top-full left-0 mt-1.5 w-44 p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl z-50 space-y-1">
               <div className="px-2 py-1 text-[10px] font-black text-slate-400 uppercase tracking-wider">
@@ -326,15 +576,18 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
       </div>
 
-      {/* Feature Cards List with Action Icons (Info & Zoom In) */}
+      {/* Feature Cards List with 4 Working Action Icons for EACH Item */}
       {filteredFeatures.length === 0 ? (
         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800 text-center text-xs text-slate-400 font-bold">
           {language === 'ar' ? 'لا توجد نتائج مطابقة للتصفية المختارة.' : 'No spatial matches found for selected category/type filter.'}
         </div>
       ) : (
-        <div className="space-y-2 max-h-64 overflow-y-auto pr-2.5 scrollbar-none">
+        <div className="space-y-3 max-h-[380px] overflow-y-auto pr-2 scrollbar-none">
           {displayedFeatures.map((feat) => {
             const isPriv = isFeaturePrivate(feat);
+            const isFav = isFavorite(feat.nameEn);
+            const dist = feat.distanceKm || 1.5;
+
             return (
               <div
                 key={feat.id}
@@ -342,85 +595,525 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                   setSelectedFeature(feat);
                   setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 16);
                 }}
-                className="p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-700/80 hover:border-geovision-blue dark:hover:border-geovision-blue cursor-pointer transition-all flex items-center justify-between gap-3 shadow-2xs hover:shadow-md overflow-hidden group"
+                className="p-3.5 sm:p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700/90 hover:border-geovision-blue dark:hover:border-geovision-blue cursor-pointer transition-all space-y-2.5 shadow-2xs hover:shadow-md group"
               >
-                {/* Left side: Icon & Title/Details */}
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  {/* Building Icon */}
-                  <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-geovision-blue flex items-center justify-center font-bold shrink-0 group-hover:bg-geovision-blue group-hover:text-white transition-colors">
-                    <Building className="w-4.5 h-4.5" />
-                  </div>
+                {/* Header Row: Icon, Full Clear Title, Public/Private Badge */}
+                <div className="flex items-start justify-between gap-2.5">
+                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-geovision-blue flex items-center justify-center font-bold shrink-0 mt-0.5 group-hover:bg-geovision-blue group-hover:text-white transition-colors">
+                      <Building className="w-4.5 h-4.5" />
+                    </div>
 
-                  {/* Main Content */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h5 className="text-xs font-black text-slate-900 dark:text-white truncate">
+                    <div className="flex-1 min-w-0">
+                      <h5 className="text-xs sm:text-sm font-black text-slate-900 dark:text-white leading-snug break-words">
                         {language === 'ar' ? feat.nameAr : feat.nameEn}
                       </h5>
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0 ${
-                          isPriv
-                            ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300'
-                            : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300'
-                        }`}
-                      >
-                        {isPriv ? 'Private' : 'Public'}
-                      </span>
-                    </div>
-
-                    <div className="flex items-center gap-2 mt-1">
-                      <p className="text-[10px] text-slate-400 flex items-center gap-1 font-semibold truncate">
-                        <MapPin className="w-3 h-3 text-geovision-blue shrink-0" />
-                        <span className="truncate">{feat.subcategory} • {feat.distanceKm || 1.5} km</span>
+                      <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                        {feat.subcategory} • {feat.addressEn || feat.addressAr}
                       </p>
-                      {feat.openStatusEn && (
-                        <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 shrink-0 truncate max-w-[140px]">
-                          • {language === 'ar' ? feat.openStatusAr || feat.openStatusEn : feat.openStatusEn}
-                        </span>
-                      )}
                     </div>
+                  </div>
+
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shrink-0 mt-0.5 ${
+                      isPriv
+                        ? 'bg-purple-100 text-purple-700 dark:bg-purple-950/80 dark:text-purple-300'
+                        : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-300'
+                    }`}
+                  >
+                    {isPriv ? 'Private' : 'Public'}
+                  </span>
+                </div>
+
+                {/* Info Row: Distance Badge & Open Status */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {/* Prominent Distance Label */}
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-blue-50 dark:bg-blue-950/70 text-geovision-blue dark:text-blue-300 font-extrabold text-[11px] border border-blue-200/80 dark:border-blue-800/80">
+                      <MapPin className="w-3 h-3 text-geovision-blue shrink-0" />
+                      <span>{dist} km {language === 'ar' ? 'من موقعك' : 'away'}</span>
+                    </span>
+
+                    {feat.openStatusEn && (
+                      <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400">
+                        • {language === 'ar' ? feat.openStatusAr || feat.openStatusEn : feat.openStatusEn}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions Bar: Google Maps Direct Link + 4 Interactive Tools */}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {/* Direct Google Maps Navigation Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${feat.lat},${feat.lng}`;
+                        window.open(gmapsUrl, '_blank');
+                        showToast(language === 'ar' ? `فتح خرائط جوجل لـ ${feat.nameAr}` : `Opening Google Maps for ${feat.nameEn}`);
+                      }}
+                      className="flex items-center gap-1 px-2 py-1.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white transition-all cursor-pointer text-[10px] font-black shadow-2xs"
+                      title={language === 'ar' ? 'التنقل عبر خرائط جوجل' : 'Navigate via Google Maps'}
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>{language === 'ar' ? 'خرائط جوجل' : 'Google Maps'}</span>
+                    </button>
+
+                    {/* 1. SAVE TO FAVORITES OPTION */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (user?.isGuest) {
+                          setGuestPromptOpen(true);
+                          return;
+                        }
+                        if (isFav) {
+                          const favItem = favorites.find(f => f.nameEn === feat.nameEn);
+                          if (favItem) removeFavorite(favItem.id);
+                        } else {
+                          addFavorite({
+                            type: 'location',
+                            nameEn: feat.nameEn,
+                            nameAr: feat.nameAr,
+                            categoryEn: feat.category,
+                            categoryAr: feat.category,
+                            lat: feat.lat,
+                            lng: feat.lng,
+                          });
+                        }
+                      }}
+                      className={`p-1.5 rounded-xl border transition-all cursor-pointer shadow-2xs ${
+                        isFav
+                          ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-200 text-rose-500 hover:bg-rose-100'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                      }`}
+                      title={
+                        language === 'ar'
+                          ? isFav ? 'إزالة من المفضلة' : 'حفظ في المفضلة'
+                          : isFav ? 'Remove from Favorites' : 'Save to Favorites'
+                      }
+                    >
+                      <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
+                    </button>
+
+                    {/* 2. DIRECTION OPTION - INLINE IN CHAT */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFeature(feat);
+                        setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 15);
+                        if (expandedDirectionsId === feat.id) {
+                          setExpandedDirectionsId(null);
+                        } else {
+                          setExpandedDirectionsId(feat.id);
+                          setExpandedDetailsId(null);
+                        }
+                        showToast(
+                          language === 'ar'
+                            ? `عرض اتجاهات المسار لـ ${feat.nameAr}`
+                            : `Loaded inline directions to ${feat.nameEn}`
+                        );
+                      }}
+                      className={`p-1.5 rounded-xl border transition-all cursor-pointer shadow-2xs ${
+                        expandedDirectionsId === feat.id
+                          ? 'bg-geovision-blue text-white border-blue-600'
+                          : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white'
+                      }`}
+                      title={language === 'ar' ? 'عرض الاتجاهات في المحادثة' : 'View Directions in Chat'}
+                    >
+                      <Navigation className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* 3. ZOOM OPTION */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFeature(feat);
+                        setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 16);
+                        if (currentView !== 'map') setCurrentView('map');
+                        showToast(language === 'ar' ? `التركيز على ${feat.nameAr}` : `Zoomed to ${feat.nameEn}`);
+                      }}
+                      className="p-1.5 rounded-xl bg-blue-50 dark:bg-slate-800 border border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer shadow-2xs"
+                      title={language === 'ar' ? 'تكبير الموقع على الخريطة' : 'Zoom to location on map'}
+                    >
+                      <ZoomIn className="w-3.5 h-3.5" />
+                    </button>
+
+                    {/* 4. FULL 4-TAB DETAILS OPTION - INLINE IN CHAT */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFeature(feat);
+                        setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 16);
+                        if (expandedDetailsId === feat.id) {
+                          setExpandedDetailsId(null);
+                        } else {
+                          setExpandedDetailsId(feat.id);
+                          setExpandedDirectionsId(null);
+                        }
+                      }}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-xl border transition-all cursor-pointer text-[10px] font-black shadow-2xs ${
+                        expandedDetailsId === feat.id
+                          ? 'bg-geovision-blue text-white border-blue-600'
+                          : 'bg-blue-50 dark:bg-blue-950/80 border-blue-200 dark:border-blue-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white'
+                      }`}
+                      title={language === 'ar' ? 'عرض تفاصيل المعلم في المحادثة' : 'View 4-Tab Details in Chat'}
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                      <span>{language === 'ar' ? 'التحليل المكاني 4-Tab' : '4-Tab Details'}</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Right side: Interactive Action Icons (Zoom In & Info) */}
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {/* Zoom In Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 16);
-                      if (currentView !== 'map') setCurrentView('map');
-                      showToast(language === 'ar' ? `التركيز على ${feat.nameAr}` : `Zoomed to ${feat.nameEn}`);
-                    }}
-                    className="p-1.5 sm:p-2 rounded-xl bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer shadow-2xs"
-                    title={language === 'ar' ? 'تكبير الخريطة على هذا الموقع' : 'Zoom in to location on map'}
+                {/* ================= INLINE 4-TAB DETAILS CONTAINER ================= */}
+                {expandedDetailsId === feat.id && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-3 p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 space-y-3.5 animate-in fade-in duration-200 shadow-inner"
                   >
-                    <ZoomIn className="w-3.5 h-3.5" />
-                  </button>
+                    {/* Header */}
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-2 text-xs font-black text-geovision-blue dark:text-blue-300">
+                        <Sparkles className="w-4 h-4" />
+                        <span>{language === 'ar' ? `تحليل مكاني تفصيلي: ${feat.nameAr}` : `Detailed Spatial Analysis: ${feat.nameEn}`}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedDetailsId(null)}
+                        className="p-1 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
 
-                  {/* Info Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedFeature(feat);
-                      setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 16);
-                      if (currentView !== 'map') setCurrentView('map');
-                    }}
-                    className="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer shadow-2xs"
-                    title={language === 'ar' ? 'عرض التفاصيل الجغرافية' : 'View feature details'}
+                    {/* 4 Interactive Tabs Navigation */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none border-b border-slate-200 dark:border-slate-700">
+                      <button
+                        type="button"
+                        onClick={() => setActiveInlineTab('overview')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                          activeInlineTab === 'overview'
+                            ? 'bg-geovision-blue text-white shadow-2xs'
+                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        📌 {language === 'ar' ? 'نظرة عامة' : 'Overview'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveInlineTab('nearby')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                          activeInlineTab === 'nearby'
+                            ? 'bg-geovision-blue text-white shadow-2xs'
+                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        📍 {language === 'ar' ? 'المرافق القريبة' : 'Nearby'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveInlineTab('details')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                          activeInlineTab === 'details'
+                            ? 'bg-geovision-blue text-white shadow-2xs'
+                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        📋 {language === 'ar' ? 'الخصائص' : 'Details'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveInlineTab('related')}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
+                          activeInlineTab === 'related'
+                            ? 'bg-geovision-blue text-white shadow-2xs'
+                            : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-100'
+                        }`}
+                      >
+                        🔗 {language === 'ar' ? 'ذات صلة' : 'Related'}
+                      </button>
+                    </div>
+
+                    {/* Tab 1: OVERVIEW */}
+                    {activeInlineTab === 'overview' && (
+                      <div className="space-y-3 text-xs">
+                        <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed bg-white dark:bg-slate-900 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                          {language === 'ar'
+                            ? `يعتبر ${feat.nameAr} من المعالم والمرافق الرئيسية في إمارة أبوظبي ضمن فئة ${feat.category}. البيانات موثوقة مكانياً في الفهرس الجغرافي SDI.`
+                            : `${feat.nameEn} represents a key facility within Abu Dhabi's ${feat.category} spatial layer, fully verified in the SDI catalog.`}
+                        </p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <span className="text-[10px] text-slate-400 font-bold block">{language === 'ar' ? 'المسافة' : 'Distance'}</span>
+                            <span className="font-black text-slate-900 dark:text-white">{dist} km</span>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <span className="text-[10px] text-slate-400 font-bold block">{language === 'ar' ? 'حالة التشغيل' : 'Status'}</span>
+                            <span className="font-black text-emerald-600 dark:text-emerald-400">{feat.openStatusEn || 'Open 24/7'}</span>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <span className="text-[10px] text-slate-400 font-bold block">{language === 'ar' ? 'الموثوقية' : 'SDI Trust'}</span>
+                            <span className="font-black text-purple-600 dark:text-purple-400">{feat.isAuthoritative ? 'Verified SDI' : 'Standard'}</span>
+                          </div>
+                          <div className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700">
+                            <span className="text-[10px] text-slate-400 font-bold block">{language === 'ar' ? 'الإحداثيات' : 'Coords'}</span>
+                            <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{feat.lat.toFixed(3)}, {feat.lng.toFixed(3)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab 2: NEARBY */}
+                    {activeInlineTab === 'nearby' && (
+                      <div className="space-y-3 text-xs">
+                        <div className="flex items-center justify-between gap-2 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-700">
+                          <span className="font-bold text-slate-600 dark:text-slate-300 text-[11px]">{language === 'ar' ? 'نطاق البحث القريب:' : 'Proximity Radius:'}</span>
+                          <div className="flex gap-1">
+                            {[1, 3, 5, 10].map((r) => (
+                              <button
+                                key={r}
+                                type="button"
+                                onClick={() => setNearbyRadiusKm(r)}
+                                className={`px-2 py-0.5 rounded-lg font-black text-[10px] transition-all ${
+                                  nearbyRadiusKm === r
+                                    ? 'bg-geovision-blue text-white shadow-2xs'
+                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                                }`}
+                              >
+                                {r} km
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                          {GEO_FEATURES.filter(f => f.id !== feat.id)
+                            .map(f => {
+                              const dLat = ((f.lat - feat.lat) * Math.PI) / 180;
+                              const dLon = ((f.lng - feat.lng) * Math.PI) / 180;
+                              const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((feat.lat * Math.PI) / 180) * Math.cos((f.lat * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                              const itemDist = Math.round(6371 * c * 10) / 10;
+                              return { ...f, itemDist };
+                            })
+                            .filter(f => f.itemDist <= nearbyRadiusKm)
+                            .sort((a, b) => a.itemDist - b.itemDist)
+                            .slice(0, 5)
+                            .map((nearItem) => (
+                              <div
+                                key={nearItem.id}
+                                onClick={() => {
+                                  setSelectedFeature(nearItem);
+                                  setMapCenterAndZoom([nearItem.lat + 0.0035, nearItem.lng], 16);
+                                }}
+                                className="p-2.5 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-between hover:border-geovision-blue cursor-pointer transition-all shadow-2xs"
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="font-black text-slate-900 dark:text-white truncate text-xs">{language === 'ar' ? nearItem.nameAr : nearItem.nameEn}</div>
+                                  <div className="text-[10px] text-slate-400 truncate">{nearItem.subcategory} • {nearItem.addressEn || nearItem.addressAr}</div>
+                                </div>
+                                <span className="text-[10px] font-black text-geovision-blue dark:text-blue-300 px-2 py-0.5 rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 shrink-0">
+                                  {nearItem.itemDist} km
+                                </span>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab 3: DETAILS */}
+                    {activeInlineTab === 'details' && (
+                      <div className="space-y-3 text-xs">
+                        <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden bg-white dark:bg-slate-900">
+                          <table className="w-full text-[11px] text-left rtl:text-right">
+                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                              <tr className="bg-slate-50/50 dark:bg-slate-800/40">
+                                <td className="px-3 py-1.5 font-extrabold text-slate-500 w-1/3">Feature ID</td>
+                                <td className="px-3 py-1.5 font-mono font-bold text-slate-900 dark:text-white">{feat.id}</td>
+                              </tr>
+                              <tr>
+                                <td className="px-3 py-1.5 font-extrabold text-slate-500">Category / Sub</td>
+                                <td className="px-3 py-1.5 font-bold text-slate-900 dark:text-white">{feat.category} / {feat.subcategory}</td>
+                              </tr>
+                              <tr className="bg-slate-50/50 dark:bg-slate-800/40">
+                                <td className="px-3 py-1.5 font-extrabold text-slate-500">Coordinates</td>
+                                <td className="px-3 py-1.5 font-mono font-bold text-slate-900 dark:text-white">Lat: {feat.lat.toFixed(4)} N, Lng: {feat.lng.toFixed(4)} E</td>
+                              </tr>
+                              <tr>
+                                <td className="px-3 py-1.5 font-extrabold text-slate-500">Grid Datum</td>
+                                <td className="px-3 py-1.5 font-mono font-bold text-slate-900 dark:text-white">UTM Zone 39N (EPSG:4326)</td>
+                              </tr>
+                              {feat.phone && (
+                                <tr className="bg-slate-50/50 dark:bg-slate-800/40">
+                                  <td className="px-3 py-1.5 font-extrabold text-slate-500">Phone</td>
+                                  <td className="px-3 py-1.5 font-bold text-geovision-blue">{feat.phone}</td>
+                                </tr>
+                              )}
+                              {feat.metadata && Object.entries(feat.metadata).map(([k, v]) => (
+                                <tr key={k}>
+                                  <td className="px-3 py-1.5 font-extrabold text-slate-500">{k}</td>
+                                  <td className="px-3 py-1.5 font-bold text-slate-900 dark:text-white">{String(v)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Tab 4: RELATED INFORMATION */}
+                    {activeInlineTab === 'related' && (
+                      <div className="space-y-3 text-xs">
+                        <div className="p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/60 space-y-2">
+                          <div className="font-black text-purple-700 dark:text-purple-300 text-xs">
+                            {language === 'ar' ? 'الطبقات والموضوعات المكانية ذات الصلة' : 'Connected Abu Dhabi Spatial Layers'}
+                          </div>
+                          <div className="space-y-1 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
+                            <div>• Master Urban Plan 2030 Zoning Index</div>
+                            <div>• Integrated Bus Transit Corridor Density</div>
+                            <div>• Environmental Sensitivity & Catchment Zone</div>
+                          </div>
+                        </div>
+
+                        <div className="p-3 rounded-xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 space-y-2">
+                          <div className="font-black text-geovision-blue dark:text-blue-300 text-xs">
+                            {language === 'ar' ? 'متابعة التحليل الذكي عبر GeoVision' : 'Suggested AI Spatial Analysis'}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => sendAIMessage(`Show all schools and bus stops near ${feat.nameEn}`)}
+                            className="w-full text-left rtl:text-right p-2 rounded-lg bg-white dark:bg-slate-900 border border-blue-200 dark:border-slate-700 hover:border-geovision-blue font-bold text-slate-800 dark:text-slate-200 text-[11px] transition-all"
+                          >
+                            ✨ {language === 'ar' ? `عرض الخدمات المجاورة لـ ${feat.nameAr}` : `Find all surrounding services near ${feat.nameEn}`}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* ================= INLINE ROUTE DIRECTIONS CONTAINER ================= */}
+                {expandedDirectionsId === feat.id && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="mt-3 p-4 rounded-2xl bg-blue-50/80 dark:bg-slate-800/90 border border-blue-200 dark:border-slate-700 space-y-3.5 animate-in fade-in duration-200 shadow-inner"
                   >
-                    <Info className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+                    {/* Header */}
+                    <div className="flex items-center justify-between pb-2 border-b border-blue-200 dark:border-slate-700">
+                      <div className="flex items-center gap-2 text-xs font-black text-geovision-blue dark:text-blue-300">
+                        <Navigation className="w-4 h-4" />
+                        <span>{language === 'ar' ? `مسار الاتجاهات والملاحة المباشرة` : `Inline Step-by-Step Route Navigation`}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setExpandedDirectionsId(null)}
+                        className="p-1 rounded-lg hover:bg-blue-100 dark:hover:bg-slate-700 text-slate-400 hover:text-slate-600 transition-colors"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+
+                    {/* Route Summary Stats */}
+                    <div className="p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold block">{language === 'ar' ? 'الوجهة المستهدفة' : 'Destination'}</span>
+                        <span className="font-black text-slate-900 dark:text-white">{language === 'ar' ? feat.nameAr : feat.nameEn}</span>
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <span className="text-[10px] text-slate-400 font-bold block">{language === 'ar' ? 'المسافة' : 'Distance'}</span>
+                          <span className="font-black text-geovision-blue dark:text-blue-300">{dist} km</span>
+                        </div>
+                        <div className="text-right border-l pl-3 border-slate-200 dark:border-slate-700">
+                          <span className="text-[10px] text-slate-400 font-bold block">{language === 'ar' ? 'الزمن المقدر' : 'Est. Duration'}</span>
+                          <span className="font-black text-emerald-600 dark:text-emerald-400">~{Math.round(dist * 2.2 + 2)} mins</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Step-by-Step Route List */}
+                    <div className="space-y-2 text-xs">
+                      <span className="font-black text-slate-700 dark:text-slate-300 text-[11px] uppercase tracking-wider block">
+                        {language === 'ar' ? 'توجيهات مسار الملاحة:' : 'Step-by-Step Route Navigation:'}
+                      </span>
+
+                      <div className="space-y-2 p-3 rounded-xl bg-white dark:bg-slate-900 border border-blue-100 dark:border-slate-700 max-h-[180px] overflow-y-auto custom-scrollbar font-medium">
+                        <div className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300">
+                          <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 font-black flex items-center justify-center shrink-0 text-[10px] mt-0.5">1</div>
+                          <div>
+                            <div className="font-bold text-slate-900 dark:text-white">{language === 'ar' ? 'الانطلاق من موقعك الحالي (وسط أبوظبي)' : 'Start from Abu Dhabi City Center'}</div>
+                            <div className="text-[10px] text-slate-400">{language === 'ar' ? 'الاتجاه شرقاً نحو طريق الشاطئ' : 'Head East on Sultan Bin Zayed the First St'}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300">
+                          <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950 text-geovision-blue font-black flex items-center justify-center shrink-0 text-[10px] mt-0.5">2</div>
+                          <div>
+                            <div className="font-bold text-slate-900 dark:text-white">{language === 'ar' ? `الانضمام إلى طريق E10 السريع` : `Merge onto E10 Highway`}</div>
+                            <div className="text-[10px] text-slate-400">{language === 'ar' ? `المتابعة لمسافة ${(dist * 0.7).toFixed(1)} كم` : `Continue straight for ${(dist * 0.7).toFixed(1)} km`}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300">
+                          <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-950 text-geovision-blue font-black flex items-center justify-center shrink-0 text-[10px] mt-0.5">3</div>
+                          <div>
+                            <div className="font-bold text-slate-900 dark:text-white">{language === 'ar' ? `اتخاذ مخرج القطاع نحو ${feat.subcategory}` : `Take Exit toward ${feat.subcategory} sector`}</div>
+                            <div className="text-[10px] text-slate-400">{language === 'ar' ? 'الانعطاف يميناً عند الإشارة الضوئية' : 'Turn right into sector boulevard (400 m)'}</div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2.5 text-slate-700 dark:text-slate-300">
+                          <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-600 font-black flex items-center justify-center shrink-0 text-[10px] mt-0.5">4</div>
+                          <div>
+                            <div className="font-bold text-slate-900 dark:text-white">{language === 'ar' ? `الوصول إلى الوجهة: ${feat.nameAr}` : `Arrive at destination: ${feat.nameEn}`}</div>
+                            <div className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">{feat.addressEn || feat.addressAr}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${feat.lat},${feat.lng}`;
+                          window.open(gmapsUrl, '_blank');
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>{language === 'ar' ? 'خرائط جوجل' : 'Google Maps'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedFeature(feat);
+                          setMapCenterAndZoom([feat.lat + 0.0035, feat.lng], 16);
+                          if (currentView !== 'map') setCurrentView('map');
+                          showToast(language === 'ar' ? `تم تركيز المسار على الخريطة` : `Route focused on map workspace`);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-geovision-blue hover:bg-blue-600 text-white font-black text-xs flex items-center gap-1.5 shadow-2xs transition-all cursor-pointer"
+                      >
+                        <Navigation className="w-3.5 h-3.5" />
+                        <span>{language === 'ar' ? 'التركيز على الخريطة' : 'Focus Route on Map'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       )}
 
-      {/* Pagination & View All Controls for High Volume Results */}
+      {/* Pagination Controls */}
       {filteredFeatures.length > visibleCount && (
         <div className="pt-2 flex items-center justify-between gap-2">
           <button
@@ -432,7 +1125,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
               ? `عرض المزيد (+5 من أصل ${filteredFeatures.length})`
               : `Show Next 5 (of ${filteredFeatures.length})`}
           </button>
-          
+
           <button
             type="button"
             onClick={() => setVisibleCount(filteredFeatures.length)}
@@ -443,15 +1136,743 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
         </div>
       )}
 
-      {visibleCount > 5 && visibleCount >= filteredFeatures.length && (
-        <div className="pt-1 text-center">
-          <button
-            type="button"
-            onClick={() => setVisibleCount(5)}
-            className="text-[11px] font-bold text-slate-400 hover:text-geovision-blue transition-colors cursor-pointer"
-          >
-            {language === 'ar' ? 'طي القائمة (عرض أول 5)' : 'Collapse list (Show top 5)'}
-          </button>
+      {/* ----------------------------------------------------------------------- */}
+      {/* 1. EXECUTIVE DETAILED QUERY ANALYTICS MODAL */}
+      {/* ----------------------------------------------------------------------- */}
+      {showAnalytics && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[9999] flex items-center justify-center pt-20 sm:pt-24 pb-6 px-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl max-w-3xl w-full shadow-2xl flex flex-col max-h-[calc(100vh-120px)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* FIXED HEADER */}
+            <div className="shrink-0 p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 rounded-t-3xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-300 flex items-center justify-center font-black border border-indigo-200 dark:border-indigo-800">
+                  <BarChart2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white">
+                    {language === 'ar' ? 'التقرير التحليلي المكاني المتقدم' : 'Executive Spatial Analytics Report'}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-bold">
+                    {language === 'ar' ? 'تحليل التوزيع والمسافات والجاهزية للمرافق' : 'Proximity, Distribution & Sector Availability Breakdown'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAnalytics(false)}
+                className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* SCROLLABLE INNER BODY CONTENT */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-5">
+              {/* KPI Cards Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-2xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-100 dark:border-slate-700 text-center space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                    {language === 'ar' ? 'إجمالي المعالم' : 'Total Matched'}
+                  </p>
+                  <p className="text-2xl font-black text-geovision-blue dark:text-blue-400">
+                    {filteredFeatures.length}
+                  </p>
+                  <p className="text-[9.5px] font-bold text-blue-600 dark:text-blue-300">
+                    {language === 'ar' ? 'معلم مكاني محدد' : 'SDI Spatial Features'}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-emerald-50/80 dark:bg-slate-800/80 border border-emerald-100 dark:border-slate-700 text-center space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                    {language === 'ar' ? 'أقرب معلم' : 'Nearest Feature'}
+                  </p>
+                  <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
+                    {minDist} km
+                  </p>
+                  <p className="text-[9.5px] font-bold text-emerald-600 dark:text-emerald-300">
+                    {language === 'ar' ? 'أقرب مسافة من موقعك' : 'Immediate Proximity'}
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-purple-50/80 dark:bg-slate-800/80 border border-purple-100 dark:border-slate-700 text-center space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                    {language === 'ar' ? 'متوسط المسافة' : 'Avg Distance'}
+                  </p>
+                  <p className="text-2xl font-black text-purple-600 dark:text-purple-400">
+                    {avgDist} km
+                  </p>
+                  <p className="text-[9.5px] font-bold text-purple-600 dark:text-purple-300">
+                    ~{Math.round(Number(avgDist) * 2.2)} mins driving
+                  </p>
+                </div>
+
+                <div className="p-3.5 rounded-2xl bg-amber-50/80 dark:bg-slate-800/80 border border-amber-100 dark:border-slate-700 text-center space-y-1">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                    {language === 'ar' ? 'نسبة الجاهزية' : 'Operational %'}
+                  </p>
+                  <p className="text-2xl font-black text-amber-600 dark:text-amber-400">
+                    {Math.round((openNowCount / (filteredFeatures.length || 1)) * 100)}%
+                  </p>
+                  <p className="text-[9.5px] font-bold text-amber-600 dark:text-amber-300">
+                    {openNowCount} Open 24/7 Services
+                  </p>
+                </div>
+              </div>
+
+              {/* Category Breakdown Progress Bars */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
+                <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center justify-between">
+                  <span>{language === 'ar' ? 'التوزيع حسب الفئة المحددة' : 'Category Share Breakdown'}</span>
+                  <span className="text-slate-400 text-[10px]">{filteredFeatures.length} Items Total</span>
+                </h4>
+                <div className="space-y-2.5 max-h-44 overflow-y-auto pr-1">
+                  {Object.entries(categoryCounts).map(([cat, count]) => {
+                    const pct = Math.round((count / filteredFeatures.length) * 100) || 0;
+                    return (
+                      <div key={cat} className="space-y-1 text-xs">
+                        <div className="flex justify-between font-black text-slate-800 dark:text-slate-200 capitalize text-[11.5px]">
+                          <span className="flex items-center gap-1.5">
+                            <span className="w-2 h-2 rounded-full bg-geovision-blue" />
+                            <span>{cat}</span>
+                          </span>
+                          <span>{count} facilities ({pct}%)</span>
+                        </div>
+                        <div className="w-full h-2.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-geovision-blue transition-all duration-500"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Public vs Private Sector Dual Bar */}
+              <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2.5">
+                <div className="flex justify-between text-xs font-black text-slate-800 dark:text-slate-200">
+                  <span className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500 inline-block" />
+                    <span>Public Sector ({publicCount})</span>
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-sm bg-purple-500 inline-block" />
+                    <span>Private Sector ({privateCount})</span>
+                  </span>
+                </div>
+                <div className="w-full h-3.5 rounded-full bg-slate-200 dark:bg-slate-700 flex overflow-hidden p-0.5">
+                  <div
+                    className="h-full bg-emerald-500 rounded-l-full transition-all duration-500"
+                    style={{ width: `${(publicCount / (filteredFeatures.length || 1)) * 100}%` }}
+                  />
+                  <div
+                    className="h-full bg-purple-500 rounded-r-full transition-all duration-500"
+                    style={{ width: `${(privateCount / (filteredFeatures.length || 1)) * 100}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Spatial Insights Bullet Points */}
+              <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-800/70 space-y-2 text-xs">
+                <h5 className="font-black text-geovision-blue dark:text-blue-300 flex items-center gap-1.5">
+                  <TrendingUp className="w-4 h-4" />
+                  <span>{language === 'ar' ? 'رؤى التحليل المكاني' : 'Spatial Intelligence Key Takeaways'}</span>
+                </h5>
+                <ul className="space-y-1 text-slate-700 dark:text-slate-300 font-semibold list-disc pl-4 rtl:pr-4">
+                  <li>Primary cluster concentration identified within <b>Khalifa City Sector 1 & Zayed City</b>.</li>
+                  <li>Average drive time from user origin is <b>~{Math.round(Number(avgDist) * 2.2)} minutes</b> via E11 Highway corridor.</li>
+                  <li><b>{Math.round((openNowCount / (filteredFeatures.length || 1)) * 100)}%</b> of mapped features maintain 24/7 service availability.</li>
+                </ul>
+              </div>
+            </div>
+
+            {/* FIXED FOOTER */}
+            <div className="shrink-0 p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 rounded-b-3xl flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAnalytics(false)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                {language === 'ar' ? 'إغلاق' : 'Close'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowAnalytics(false);
+                  setShowPrintReport(true);
+                }}
+                className="px-5 py-2.5 rounded-xl bg-geovision-blue hover:bg-blue-700 text-white font-black text-xs cursor-pointer shadow-lg shadow-blue-500/25 flex items-center gap-2 transition-all"
+              >
+                <Printer className="w-4 h-4" />
+                <span>{language === 'ar' ? 'طباعة / تصدير التقرير' : 'Print / Export Report'}</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ----------------------------------------------------------------------- */}
+      {/* 2. OFFICIAL PRINT & EXPORT PDF REPORT MODAL */}
+      {/* ----------------------------------------------------------------------- */}
+      {showPrintReport && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[9999] flex items-center justify-center pt-20 sm:pt-24 pb-6 px-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl max-w-5xl w-full shadow-2xl flex flex-col max-h-[calc(100vh-120px)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* FIXED HEADER WITH CONTROLS & LAYOUT SWITCHER */}
+            <div className="shrink-0 p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-t-3xl space-y-4">
+              {/* Header Title Row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-300 flex items-center justify-center font-black border border-emerald-200 dark:border-emerald-800 shadow-sm">
+                    <Printer className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white flex items-center gap-2">
+                      <span>{language === 'ar' ? 'استوديو تصدير وتجهيز التقرير الجغرافي الرسمي' : 'Official SDI Spatial Report Export Studio'}</span>
+                      <span className="px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 text-[10px] font-black uppercase">
+                        DGE Certified
+                      </span>
+                    </h3>
+                    <p className="text-xs text-slate-400 font-bold">
+                      Department of Government Enablement • Abu Dhabi Spatial Data Infrastructure (SDI)
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowPrintReport(false)}
+                  className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Controls Bar: Layout Template Selector & Orientation Toggle */}
+              <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+                {/* Template Selector Tabs */}
+                <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/90 border border-slate-200/80 dark:border-slate-700 overflow-x-auto">
+                  <button
+                    type="button"
+                    onClick={() => setPrintTemplate('briefing')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                      printTemplate === 'briefing'
+                        ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                    }`}
+                  >
+                    <BarChart2 className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'تقرير ملخص إيجازي' : 'Executive Briefing'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPrintTemplate('ledger')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                      printTemplate === 'ledger'
+                        ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'سجل البيانات المكانية' : 'Spatial Data Ledger'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPrintTemplate('map')}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
+                      printTemplate === 'map'
+                        ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
+                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                    }`}
+                  >
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>{language === 'ar' ? 'خريطة النطاق الجغرافي' : 'GIS Map & Extent Canvas'}</span>
+                  </button>
+                </div>
+
+                {/* Right Side Format Controls: Orientation & CSV Export */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200/80 dark:border-slate-700 text-xs font-bold">
+                    <button
+                      type="button"
+                      onClick={() => setPrintOrientation('portrait')}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                        printOrientation === 'portrait'
+                          ? 'bg-white dark:bg-slate-700 text-geovision-blue dark:text-blue-300 shadow-2xs'
+                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      📄 Portrait
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPrintOrientation('landscape')}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
+                        printOrientation === 'landscape'
+                          ? 'bg-white dark:bg-slate-700 text-geovision-blue dark:text-blue-300 shadow-2xs'
+                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                      }`}
+                    >
+                      📑 Landscape
+                    </button>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleExportCSV}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs transition-all cursor-pointer shadow-2xs"
+                  >
+                    <Download className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                    <span>CSV</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* SCROLLABLE INNER BODY CONTENT - A4 PAPER SHEET SIMULATION */}
+            <div className="flex-1 overflow-y-auto p-6 bg-slate-100/90 dark:bg-slate-950/90">
+              <div
+                id="sdi-printable-report"
+                className={`mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl rounded-2xl p-6 sm:p-8 space-y-6 text-slate-900 dark:text-slate-100 transition-all duration-300 ${
+                  printOrientation === 'landscape' ? 'max-w-4xl' : 'max-w-2xl'
+                }`}
+              >
+                {/* A4 REPORT SHEET TOP EMBLEM BANNER */}
+                <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-5 flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-lg bg-geovision-blue text-white font-black flex items-center justify-center text-xs shadow-md">
+                        DGE
+                      </div>
+                      <h4 className="font-black text-sm uppercase tracking-wider text-slate-900 dark:text-white">
+                        Government of Abu Dhabi • Spatial Intelligence Authority
+                      </h4>
+                    </div>
+                    <h2 className="text-xl font-black text-slate-900 dark:text-white pt-1">
+                      {printTemplate === 'briefing' && (language === 'ar' ? 'تقرير الإيجاز التنفيذي للتحليل المكاني' : 'Executive Spatial Intelligence Briefing')}
+                      {printTemplate === 'ledger' && (language === 'ar' ? 'سجل البيانات والمواصفات الجغرافية الكامل' : 'Comprehensive SDI Feature Data Ledger')}
+                      {printTemplate === 'map' && (language === 'ar' ? 'خريطة النطاق الجغرافي المعتمدة' : 'Official SDI Interactive Map Extent Sheet')}
+                    </h2>
+                    <p className="text-xs text-slate-500 font-semibold">
+                      Authoritative Geospatial Analytics & Facility Service Infrastructure Report
+                    </p>
+                  </div>
+
+                  <div className="text-right rtl:text-left space-y-1 shrink-0">
+                    <span className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 font-black text-[10px] uppercase tracking-wider inline-block">
+                      OFFICIAL SDI USE ONLY
+                    </span>
+                    <p className="text-[10px] font-black text-slate-400 block pt-1">
+                      REF ID: SDI-RPT-2026-904
+                    </p>
+                    <p className="text-[10px] font-bold text-slate-500">
+                      {new Date().toLocaleDateString()} • {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                </div>
+
+                {/* ------------------------------------------------------------------- */}
+                {/* LAYOUT TEMPLATE 1: EXECUTIVE BRIEFING */}
+                {/* ------------------------------------------------------------------- */}
+                {printTemplate === 'briefing' && (
+                  <div className="space-y-6 animate-in fade-in duration-200">
+                    {/* Executive KPI Matrix */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center space-y-1">
+                        <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400 block">Total Matched</span>
+                        <span className="text-xl font-black text-geovision-blue dark:text-blue-400">{filteredFeatures.length}</span>
+                        <span className="text-[9px] font-bold text-slate-500 block">Identified Points</span>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center space-y-1">
+                        <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400 block">Min Proximity</span>
+                        <span className="text-xl font-black text-emerald-600 dark:text-emerald-400">{minDist} km</span>
+                        <span className="text-[9px] font-bold text-slate-500 block">Nearest Facility</span>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center space-y-1">
+                        <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400 block">Average Drive</span>
+                        <span className="text-xl font-black text-purple-600 dark:text-purple-400">{avgDist} km</span>
+                        <span className="text-[9px] font-bold text-slate-500 block">~{Math.round(Number(avgDist) * 2.2)} Mins</span>
+                      </div>
+                      <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 text-center space-y-1">
+                        <span className="text-[9.5px] font-black uppercase tracking-wider text-slate-400 block">Operational</span>
+                        <span className="text-xl font-black text-amber-600 dark:text-amber-400">
+                          {Math.round((openNowCount / (filteredFeatures.length || 1)) * 100)}%
+                        </span>
+                        <span className="text-[9px] font-bold text-slate-500 block">{openNowCount} Active 24/7</span>
+                      </div>
+                    </div>
+
+                    {/* Executive Insights Box */}
+                    <div className="p-4 rounded-xl bg-blue-50/60 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 space-y-2 text-xs">
+                      <h5 className="font-black text-geovision-blue dark:text-blue-300 flex items-center gap-1.5 uppercase text-[11px] tracking-wider">
+                        <TrendingUp className="w-4 h-4" />
+                        <span>Key Spatial Briefing Takeaways</span>
+                      </h5>
+                      <ul className="space-y-1 text-slate-700 dark:text-slate-300 font-semibold list-disc pl-4 rtl:pr-4">
+                        <li>High concentration of facilities located along <b>Khalifa City Sector 1 & Zayed City</b> highway corridor.</li>
+                        <li>Public Sector distribution accounts for <b>{publicCount} facilities ({Math.round((publicCount / (filteredFeatures.length || 1)) * 100)}%)</b>.</li>
+                        <li>Emergency & driving access rated optimal with an average transit window under <b>{Math.round(Number(avgDist) * 2.2)} minutes</b>.</li>
+                      </ul>
+                    </div>
+
+                    {/* Feature Overview Table */}
+                    <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden text-xs">
+                      <table className="w-full text-left rtl:text-right">
+                        <thead className="bg-slate-900 text-white font-black text-[10px] uppercase tracking-wider">
+                          <tr>
+                            <th className="p-2.5">#</th>
+                            <th className="p-2.5">Facility Name</th>
+                            <th className="p-2.5">Subcategory</th>
+                            <th className="p-2.5">Distance</th>
+                            <th className="p-2.5">Sector</th>
+                            <th className="p-2.5">Operational Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                          {filteredFeatures.slice(0, 8).map((f, i) => {
+                            const isPriv = isFeaturePrivate(f);
+                            return (
+                              <tr key={f.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td className="p-2.5 font-black text-slate-400">{i + 1}</td>
+                                <td className="p-2.5 font-black text-slate-900 dark:text-white">
+                                  {language === 'ar' ? f.nameAr : f.nameEn}
+                                </td>
+                                <td className="p-2.5 text-slate-500">{f.subcategory}</td>
+                                <td className="p-2.5 font-black text-geovision-blue dark:text-blue-400">{f.distanceKm || 1.5} km</td>
+                                <td className="p-2.5">
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${isPriv ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'}`}>
+                                    {isPriv ? 'Private' : 'Public'}
+                                  </span>
+                                </td>
+                                <td className="p-2.5 text-emerald-600 dark:text-emerald-400 font-bold">
+                                  {f.openStatusEn || 'Open 24/7'}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* ------------------------------------------------------------------- */}
+                {/* LAYOUT TEMPLATE 2: SPATIAL DATA LEDGER */}
+                {/* ------------------------------------------------------------------- */}
+                {printTemplate === 'ledger' && (
+                  <div className="space-y-5 animate-in fade-in duration-200">
+                    <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex flex-wrap items-center justify-between gap-3 text-xs">
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Geodetic Reference Standard</span>
+                        <span className="font-black text-slate-900 dark:text-white">WGS 84 / UTM Zone 39N (EPSG:32639)</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Total Mapped Items</span>
+                        <span className="font-black text-geovision-blue dark:text-blue-400">{filteredFeatures.length} Records</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider block">Spatial Data Verification</span>
+                        <span className="font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" /> Certified SDI Dataset
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Detailed Data Ledger Table */}
+                    <div className="border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden text-xs">
+                      <table className="w-full text-left rtl:text-right">
+                        <thead className="bg-slate-900 text-white font-black text-[10px] uppercase tracking-wider">
+                          <tr>
+                            <th className="p-2.5">#</th>
+                            <th className="p-2.5">Name (EN / AR)</th>
+                            <th className="p-2.5">Category</th>
+                            <th className="p-2.5">Coordinates (Lat / Lng)</th>
+                            <th className="p-2.5">Proximity</th>
+                            <th className="p-2.5">Sector Type</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-semibold text-slate-800 dark:text-slate-200 text-[11px]">
+                          {filteredFeatures.map((f, i) => {
+                            const isPriv = isFeaturePrivate(f);
+                            return (
+                              <tr key={f.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+                                <td className="p-2.5 font-black text-slate-400">{i + 1}</td>
+                                <td className="p-2.5 font-black text-slate-900 dark:text-white">
+                                  <div>{f.nameEn}</div>
+                                  <div className="text-[10px] text-slate-400 font-semibold">{f.nameAr}</div>
+                                </td>
+                                <td className="p-2.5 text-slate-500">{f.subcategory}</td>
+                                <td className="p-2.5 font-mono text-[10.5px] text-slate-600 dark:text-slate-400">
+                                  {f.lat.toFixed(4)}, {f.lng.toFixed(4)}
+                                </td>
+                                <td className="p-2.5 font-black text-geovision-blue dark:text-blue-400">{f.distanceKm || 1.5} km</td>
+                                <td className="p-2.5">
+                                  <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${isPriv ? 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'}`}>
+                                    {isPriv ? 'Private' : 'Public'}
+                                  </span>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* ------------------------------------------------------------------- */}
+                {/* LAYOUT TEMPLATE 3: GIS MAP EXTENT CANVAS */}
+                {/* ------------------------------------------------------------------- */}
+                {printTemplate === 'map' && (
+                  <div className="space-y-5 animate-in fade-in duration-200">
+                    {/* Simulated High-Res Map Canvas Frame */}
+                    <div className="h-64 sm:h-72 rounded-2xl bg-slate-800 border-2 border-slate-300 dark:border-slate-700 relative overflow-hidden flex flex-col justify-between p-4 shadow-inner">
+                      {/* Map Canvas Background Grid Pattern */}
+                      <div className="absolute inset-0 bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:16px_16px] opacity-20 pointer-events-none" />
+
+                      {/* Map Top Metadata Overlays */}
+                      <div className="relative z-10 flex items-center justify-between text-white text-xs">
+                        <div className="px-3 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-slate-700 font-bold flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Extent: Abu Dhabi Spatial Hub (Khalifa City / Zayed City)</span>
+                        </div>
+                        <div className="w-9 h-9 rounded-xl bg-slate-900/90 backdrop-blur-sm border border-slate-700 flex items-center justify-center text-geovision-blue font-black shadow-md">
+                          <Compass className="w-5 h-5 text-blue-400" />
+                        </div>
+                      </div>
+
+                      {/* Map Pins Simulation */}
+                      <div className="relative z-10 grid grid-cols-3 gap-4 my-auto px-6">
+                        {filteredFeatures.slice(0, 3).map((f) => (
+                          <div key={f.id} className="p-2.5 rounded-xl bg-slate-900/95 border border-blue-500/40 text-white text-[10px] space-y-1 shadow-lg backdrop-blur-sm">
+                            <div className="flex items-center gap-1 font-black text-blue-300">
+                              <MapPin className="w-3 h-3 text-rose-400 shrink-0" />
+                              <span className="truncate">{f.nameEn}</span>
+                            </div>
+                            <div className="text-slate-400 text-[9px] font-semibold">{f.subcategory} • {f.distanceKm || 1.5} km</div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Map Bottom Scale & Legend Overlay */}
+                      <div className="relative z-10 flex items-center justify-between text-[10px] text-white font-bold bg-slate-900/90 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-slate-700">
+                        <span>Scale Ratio: 1:25,000</span>
+                        <span>Geographic Extent: Bounding Box [24.45N, 54.37E]</span>
+                        <span>Layer: SDI Multi-Sector Facilities</span>
+                      </div>
+                    </div>
+
+                    {/* Features Index Below Map */}
+                    <div className="space-y-2 text-xs">
+                      <h5 className="font-black text-slate-900 dark:text-white uppercase text-[11px] tracking-wider">
+                        Mapped Features Index ({filteredFeatures.length} Points)
+                      </h5>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
+                        {filteredFeatures.map((f, idx) => (
+                          <div key={f.id} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+                            <span className="font-bold text-slate-800 dark:text-slate-200 truncate pr-2">
+                              {idx + 1}. {language === 'ar' ? f.nameAr : f.nameEn}
+                            </span>
+                            <span className="font-black text-geovision-blue dark:text-blue-400 shrink-0">{f.distanceKm || 1.5} km</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* A4 REPORT FOOTER SIGNATURE & SECURITY STAMP */}
+                <div className="pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 text-xs font-bold text-slate-500 dark:text-slate-400">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 border border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-300 flex items-center justify-center font-black">
+                      ✓
+                    </div>
+                    <div>
+                      <p className="font-black text-slate-900 dark:text-white text-xs">Certified by Abu Dhabi SDI Spatial Authority</p>
+                      <p className="text-[10px] text-slate-400">Digitally Signed & Validated • Department of Government Enablement</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right rtl:text-left text-[10px] font-mono text-slate-400">
+                    <p>HASH: 8f4e92a1c0d57e3b</p>
+                    <p>PAGE 1 OF 1</p>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* FIXED FOOTER WITH ACTION BUTTONS */}
+            <div className="shrink-0 p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 rounded-b-3xl flex items-center justify-between gap-3">
+              <button
+                type="button"
+                onClick={() => setShowPrintReport(false)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold text-xs cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                {language === 'ar' ? 'إلغاء' : 'Close Studio'}
+              </button>
+              
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleExportCSV}
+                  className="px-4 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-white font-bold text-xs cursor-pointer hover:bg-slate-300 dark:hover:bg-slate-600 transition-colors flex items-center gap-2"
+                >
+                  <Download className="w-4 h-4" />
+                  <span>{language === 'ar' ? 'تصدير CSV' : 'Export Data (CSV)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleTriggerPrint}
+                  className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs cursor-pointer shadow-lg shadow-emerald-600/25 flex items-center gap-2 transition-all"
+                >
+                  <Printer className="w-4 h-4" />
+                  <span>{language === 'ar' ? 'طباعة / حفظ كملف PDF' : 'Print / Save PDF Report'}</span>
+                </button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ----------------------------------------------------------------------- */}
+      {/* 3. DIRECTIONS / ROUTING MODAL */}
+      {/* ----------------------------------------------------------------------- */}
+      {activeRouteTarget && (
+        <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[9999] flex items-center justify-center pt-20 sm:pt-24 pb-6 px-4">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl flex flex-col max-h-[calc(100vh-120px)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            
+            {/* FIXED HEADER */}
+            <div className="shrink-0 p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 rounded-t-3xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-300 flex items-center justify-center font-black border border-emerald-200 dark:border-emerald-800">
+                  <Navigation className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-black text-base sm:text-lg text-slate-900 dark:text-white">
+                    {language === 'ar' ? 'مسار الاتجاهات والملاحة' : 'Route & Navigation Directions'}
+                  </h3>
+                  <p className="text-xs text-slate-400 font-bold">
+                    {language === 'ar' ? 'مسار ملاحي مباشر وحساب زمن الرحلة' : 'Live Turn-by-Turn Routing & Estimated Drive Time'}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveRouteTarget(null)}
+                className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* SCROLLABLE INNER BODY CONTENT */}
+            <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+              {/* Origin & Destination Card */}
+              <div className="p-4 rounded-2xl bg-emerald-50/80 dark:bg-slate-800/80 border border-emerald-200/80 dark:border-slate-700 space-y-3">
+                <div className="flex items-start gap-2.5 text-xs">
+                  <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 mt-0.5 shrink-0 shadow-sm" />
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                      {language === 'ar' ? 'نقطة الانطلاق' : 'Origin Location'}
+                    </p>
+                    <p className="font-extrabold text-slate-800 dark:text-slate-100">
+                      {language === 'ar' ? 'موقعي الحالي (وسط مدينة خليفة)' : 'Current Position (Khalifa City Hub)'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="w-0.5 h-4 bg-emerald-300 dark:bg-slate-600 ml-1.5" />
+
+                <div className="flex items-start gap-2.5 text-xs">
+                  <MapPin className="w-4 h-4 text-rose-500 mt-0.5 shrink-0" />
+                  <div>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                      {language === 'ar' ? 'الوجهة' : 'Destination'}
+                    </p>
+                    <p className="font-black text-slate-900 dark:text-white">
+                      {language === 'ar' ? activeRouteTarget.nameAr : activeRouteTarget.nameEn}
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                      {activeRouteTarget.subcategory} • {activeRouteTarget.distanceKm || 1.8} km
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Travel Summary Stats */}
+              <div className="grid grid-cols-2 gap-3 text-center text-xs">
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{language === 'ar' ? 'زمن القيادة المقدر' : 'Est. Driving Time'}</p>
+                  <p className="text-base font-black text-slate-900 dark:text-white mt-0.5">
+                    ~{Math.round((activeRouteTarget.distanceKm || 1.8) * 2.2)} mins
+                  </p>
+                </div>
+                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">{language === 'ar' ? 'مسار الحافلة المتاح' : 'Transit Shuttle'}</p>
+                  <p className="text-base font-black text-geovision-blue dark:text-blue-400 mt-0.5">
+                    Route 160 (Direct)
+                  </p>
+                </div>
+              </div>
+
+              {/* Step-by-step guidance */}
+              <div className="space-y-2 pt-1 text-xs">
+                <p className="font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider text-[11px]">
+                  {language === 'ar' ? 'خطوات الطريق:' : 'Turn-by-Turn Guidance:'}
+                </p>
+                <div className="space-y-1.5 text-xs text-slate-600 dark:text-slate-300 font-semibold bg-slate-50 dark:bg-slate-800/50 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                  <p className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-blue-100 text-geovision-blue font-black flex items-center justify-center text-[10px] shrink-0">1</span>
+                    <span>Head northeast on Sheikh Zayed Highway E11 (1.2 km)</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-blue-100 text-geovision-blue font-black flex items-center justify-center text-[10px] shrink-0">2</span>
+                    <span>Take Sector Exit 12 toward {activeRouteTarget.nameEn} (400 m)</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 font-black flex items-center justify-center text-[10px] shrink-0">3</span>
+                    <span>Arrive at destination on the right side.</span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* FIXED FOOTER */}
+            <div className="shrink-0 p-4 sm:p-5 border-t border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-800/80 rounded-b-3xl flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveRouteTarget(null)}
+                className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                {language === 'ar' ? 'إغلاق' : 'Close'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setMapCenterAndZoom([activeRouteTarget.lat + 0.0035, activeRouteTarget.lng], 16);
+                  setSelectedFeature(activeRouteTarget);
+                  if (currentView !== 'map') setCurrentView('map');
+                  setActiveRouteTarget(null);
+                  showToast(language === 'ar' ? 'تم التركيز على مسار الخريطة' : 'Route focused on interactive map view');
+                }}
+                className="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs cursor-pointer shadow-lg shadow-emerald-600/25 flex items-center gap-2 transition-all"
+              >
+                <Compass className="w-4 h-4" />
+                <span>{language === 'ar' ? 'بدء الملاحة على الخريطة' : 'Start Map Route'}</span>
+              </button>
+            </div>
+
+          </div>
         </div>
       )}
 

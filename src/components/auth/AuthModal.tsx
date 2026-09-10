@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
-import { X, Eye, EyeOff, Lock, Mail, User, ArrowRight } from 'lucide-react';
+import { X, Eye, EyeOff, Lock, Mail, User, ArrowRight, AlertCircle } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
   const { loginModalOpen, setLoginModalOpen, setUser, showToast, language } = useAppState();
   const [tab, setTab] = useState<'signin' | 'signup' | 'forgot'>('signin');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,34 +14,111 @@ export const AuthModal: React.FC = () => {
 
   if (!loginModalOpen) return null;
 
+  const isValidEmail = (emailStr: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr.trim());
+  };
+
+  const handleTabChange = (newTab: 'signin' | 'signup' | 'forgot') => {
+    setTab(newTab);
+    setError(null);
+  };
+
   const handleSignIn = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!email.trim() || !isValidEmail(email)) {
+      setError(
+        language === 'ar'
+          ? 'يرجى إدخال عنوان بريد إلكتروني صحيح.'
+          : 'Please enter a valid email address.'
+      );
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setError(
+        language === 'ar'
+          ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة. يرجى التحقق وإعادة المحاولة.'
+          : 'Invalid email address or password. Please check your credentials and try again.'
+      );
+      return;
+    }
+
     setUser({
       id: 'user-registered-1',
-      username: username || 'ahmed_almansoori',
-      email: email || 'ahmed.almansoori@dge.gov.ae',
+      username: username || email.split('@')[0],
+      email: email,
       name: username || 'Ahmed Al Mansoori',
       isGuest: false,
     });
     setLoginModalOpen(false);
-    showToast(language === 'ar' ? 'تم تسجيل الدخول بنجاح' : 'Signed in successfully as Ahmed Al Mansoori');
+    showToast(
+      language === 'ar'
+        ? 'تم تسجيل الدخول بنجاح! تم استعادة محادثتك سابقة.'
+        : 'Signed in successfully! Your previous conversation has been restored.'
+    );
   };
 
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!username.trim() || username.trim().length < 3) {
+      setError(
+        language === 'ar'
+          ? 'يرجى إدخال الاسم الكامل (3 أحرف على الأقل).'
+          : 'Please enter your full name (minimum 3 characters).'
+      );
+      return;
+    }
+
+    if (!email.trim() || !isValidEmail(email)) {
+      setError(
+        language === 'ar'
+          ? 'يرجى إدخال عنوان بريد إلكتروني صحيح.'
+          : 'Please enter a valid email address.'
+      );
+      return;
+    }
+
+    if (!password || password.length < 6) {
+      setError(
+        language === 'ar'
+          ? 'يجب أن تتكون كلمة المرور من 6 أحرف على الأقل.'
+          : 'Password must be at least 6 characters long.'
+      );
+      return;
+    }
+
     setUser({
       id: `user-${Date.now()}`,
-      username: username || 'new_citizen',
-      email: email || 'citizen@dge.gov.ae',
-      name: username || 'Registered Citizen',
+      username: username.trim(),
+      email: email.trim(),
+      name: username.trim(),
       isGuest: false,
     });
     setLoginModalOpen(false);
-    showToast(language === 'ar' ? 'تم إنشاء الحساب بنجاح! مرحباً بك في GeoVision' : 'Account created! Welcome to GeoVision');
+    showToast(
+      language === 'ar'
+        ? 'تم إنشاء الحساب بنجاح! تم حفظ جلسة البحث الخاصة بك.'
+        : 'Account created! Your search session has been restored & saved to your account.'
+    );
   };
 
   const handleForgot = (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+
+    if (!email.trim() || !isValidEmail(email)) {
+      setError(
+        language === 'ar'
+          ? 'يرجى إدخال عنوان بريد إلكتروني صحيح.'
+          : 'Please enter a valid email address.'
+      );
+      return;
+    }
+
     showToast(language === 'ar' ? 'تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني' : 'Password reset link sent to your email');
     setTab('signin');
   };
@@ -60,13 +138,13 @@ export const AuthModal: React.FC = () => {
         {/* Modal Top Header Row featuring both official logos */}
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8 rtl:pl-8 rtl:pr-0">
           <img
-            src="/assets/logos/dge-logo.png"
+            src="./assets/logos/dge-logo.png"
             alt="Department of Government Enablement"
             className="h-8 sm:h-9 object-contain dark:bg-white/90 dark:px-2 dark:py-0.5 dark:rounded-lg shrink-0"
           />
           <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 shrink-0" />
           <img
-            src="/assets/logos/spatial-data-logo.png"
+            src="./assets/logos/spatial-data-logo.png"
             alt="Abu Dhabi Spatial Data"
             className="h-7 sm:h-8 object-contain dark:bg-white/90 dark:px-2 dark:py-0.5 dark:rounded-lg shrink-0"
           />
@@ -90,7 +168,7 @@ export const AuthModal: React.FC = () => {
         {tab !== 'forgot' && (
           <div className="grid grid-cols-2 gap-1 p-1 rounded-2xl glass-level-1 text-xs font-extrabold">
             <button
-              onClick={() => setTab('signin')}
+              onClick={() => handleTabChange('signin')}
               className={`py-2 rounded-xl transition-all cursor-pointer ${
                 tab === 'signin'
                   ? 'bg-[#215A9E] text-white shadow-md shadow-[#215A9E]/25 font-black'
@@ -100,7 +178,7 @@ export const AuthModal: React.FC = () => {
               {language === 'ar' ? 'تسجيل الدخول' : 'Sign In'}
             </button>
             <button
-              onClick={() => setTab('signup')}
+              onClick={() => handleTabChange('signup')}
               className={`py-2 rounded-xl transition-all cursor-pointer ${
                 tab === 'signup'
                   ? 'bg-[#215A9E] text-white shadow-md shadow-[#215A9E]/25 font-black'
@@ -109,6 +187,14 @@ export const AuthModal: React.FC = () => {
             >
               {language === 'ar' ? 'إنشاء حساب' : 'Register'}
             </button>
+          </div>
+        )}
+
+        {/* Error Alert Banner */}
+        {error && (
+          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-extrabold flex items-center gap-2.5 animate-fade-in shadow-xs">
+            <AlertCircle className="w-4 h-4 shrink-0 text-rose-500" />
+            <span className="leading-snug">{error}</span>
           </div>
         )}
 

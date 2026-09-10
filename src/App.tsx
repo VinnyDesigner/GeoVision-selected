@@ -14,36 +14,39 @@ import { GuestPromptModal } from './components/auth/GuestPromptModal';
 import { FeedbackModal } from './components/common/FeedbackModal';
 import { Toast } from './components/common/Toast';
 import { LocationPermissionPopup } from './components/common/LocationPermissionPopup';
+import { SearchResultDetailsModal } from './components/common/SearchResultDetailsModal';
 
-const MainContent: React.FC = () => {
-  const { currentView } = useAppState();
+const MainAppShell: React.FC = () => {
+  const { currentView, pureMapMode } = useAppState();
+  const isPureMap = currentView === 'map' && pureMapMode;
 
   return (
-    <main className="w-full min-h-[calc(100vh-4rem)]">
-      {currentView === 'home' && <LandingPage />}
-      {currentView === 'map' && <MapWorkspace />}
-      {currentView === 'categories' && <CategoryExplorer />}
-      {currentView === 'about' && <AboutUsPage />}
-      {currentView === 'help' && <HelpPage />}
-      {currentView === 'favorites' && <FavoritesPage />}
-      {currentView === 'history' && <HistoryPage />}
-      {currentView === 'profile' && <ProfilePage />}
-    </main>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
+      {!isPureMap && <AppHeader />}
+      <main className={isPureMap ? 'w-full h-screen overflow-hidden' : 'w-full min-h-[calc(100vh-4rem)]'}>
+        {currentView === 'home' && <LandingPage />}
+        {currentView === 'map' && <MapWorkspace />}
+        {currentView === 'categories' && <CategoryExplorer />}
+        {currentView === 'about' && <AboutUsPage />}
+        {currentView === 'help' && <HelpPage />}
+        {currentView === 'favorites' && <FavoritesPage />}
+        {currentView === 'history' && <HistoryPage />}
+        {currentView === 'profile' && <ProfilePage />}
+      </main>
+      <AuthModal />
+      <GuestPromptModal />
+      <FeedbackModal />
+      <Toast />
+      <LocationPermissionPopup />
+      <SearchResultDetailsModal />
+    </div>
   );
 };
 
 export function App() {
   return (
     <AppStateProvider>
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
-        <AppHeader />
-        <MainContent />
-        <AuthModal />
-        <GuestPromptModal />
-        <FeedbackModal />
-        <Toast />
-        <LocationPermissionPopup />
-      </div>
+      <MainAppShell />
     </AppStateProvider>
   );
 }

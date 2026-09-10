@@ -40,9 +40,9 @@ export const BufferTool: React.FC = () => {
   };
 
   return (
-    <div className="absolute top-20 left-18 sm:left-20 rtl:left-auto rtl:right-18 sm:rtl:right-20 z-[600] w-80 sm:w-96 glass-level-3 rounded-3xl p-5 shadow-2xl border border-white/80 dark:border-slate-800 animate-fade-in space-y-4 glow-blue">
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5">
+    <div className="absolute top-4 sm:top-6 left-16 sm:left-20 rtl:left-auto rtl:right-16 sm:rtl:right-20 z-[600] w-80 sm:w-96 max-h-[calc(100vh-140px)] glass-level-3 rounded-3xl p-4 sm:p-5 shadow-2xl border border-white/80 dark:border-slate-800 animate-fade-in flex flex-col overflow-hidden glow-blue pointer-events-auto">
+      {/* Header (Fixed) */}
+      <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2.5 mb-3 shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-xl bg-geovision-blue text-white flex items-center justify-center font-bold">
             <Circle className="w-4 h-4" />
@@ -53,11 +53,14 @@ export const BufferTool: React.FC = () => {
         </div>
         <button
           onClick={() => setActiveTool('none')}
-          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg"
+          className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-lg cursor-pointer"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
+
+      {/* Scrollable Body Content */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar pr-1.5 space-y-4">
 
       {/* Step 1: Select Target */}
       <div className="space-y-1.5">
@@ -153,7 +156,7 @@ export const BufferTool: React.FC = () => {
           </div>
         </div>
       )}
-
+      </div>
     </div>
   );
 };

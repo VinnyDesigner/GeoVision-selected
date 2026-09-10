@@ -73,13 +73,13 @@ export const FavoritesPage: React.FC = () => {
             <div>
               <h1 className="text-2xl sm:text-4xl font-black tracking-tight">{t('fav.title')}</h1>
               <p className="text-xs sm:text-sm font-bold text-amber-100 mt-1">
-                Saved spatial locations, GIS layers, and search bookmarks for {user.name}
+                Favorite spatial locations, GIS layers, and search bookmarks for {user.name}
               </p>
             </div>
           </div>
 
           <div className="px-5 py-2.5 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 text-xs font-black shrink-0">
-            {favorites.length} Saved Bookmarks
+            {favorites.length} Favorites
           </div>
         </div>
       </div>
@@ -143,7 +143,7 @@ export const FavoritesPage: React.FC = () => {
                   </h3>
                   <p className="text-[11px] text-slate-400 font-semibold mt-1 flex items-center gap-1.5">
                     <MapPin className="w-3 h-3 text-geovision-blue shrink-0" />
-                    <span>Saved {fav.savedAt}</span>
+                    <span>Added {fav.savedAt}</span>
                   </p>
                 </div>
               </div>

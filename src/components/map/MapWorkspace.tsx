@@ -23,6 +23,7 @@ export const MapWorkspace: React.FC = () => {
     setSelectedFeature,
     mapCenter,
     mapZoom,
+    setMapCenterAndZoom,
     filteredFeatures,
     bufferRadiusKm,
     aoiResult,
@@ -35,19 +36,65 @@ export const MapWorkspace: React.FC = () => {
     sendAIMessage,
     addFavorite,
     isFavorite,
+    pureMapMode,
+    userLocation,
+    favorites,
+    removeFavorite,
+    user,
+    setGuestPromptOpen,
   } = useAppState();
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const tileLayerRef = useRef<L.Layer | null>(null);
   const markersGroupRef = useRef<L.LayerGroup | null>(null);
   const markersMapRef = useRef<Map<string, L.Marker>>(new Map());
   const standalonePopupRef = useRef<L.Popup | null>(null);
   const drawnLayersGroupRef = useRef<L.LayerGroup | null>(null);
   const bufferCircleRef = useRef<L.Circle | null>(null);
   const aoiPolygonRef = useRef<L.Polygon | null>(null);
+  const activeRouteLineRef = useRef<L.Polyline | null>(null);
+  const activeRouteStartMarkerRef = useRef<L.Marker | null>(null);
 
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
+  const [panelWidth, setPanelWidth] = useState<number>(480);
+  const [isResizing, setIsResizing] = useState<boolean>(false);
+
+  const handleStartResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsResizing(true);
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isResizing) return;
+      const isRtl = document.documentElement.getAttribute('dir') === 'rtl';
+      let newWidth = isRtl ? e.clientX : window.innerWidth - e.clientX;
+      newWidth = Math.max(340, Math.min(850, newWidth));
+      setPanelWidth(newWidth);
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize({ animate: false });
+      }
+    };
+
+    const handleMouseUp = () => {
+      if (isResizing) {
+        setIsResizing(false);
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }
+    };
+
+    if (isResizing) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    }
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isResizing]);
 
   // Coordinate Format Dropdown State & Ref
   const [coordFormat, setCoordFormat] = useState<'DD' | 'DDM' | 'DMS' | 'UTM'>('DD');
@@ -101,12 +148,53 @@ export const MapWorkspace: React.FC = () => {
     return `${lat.toFixed(4)}° ${latDir}, ${lng.toFixed(4)}° ${lngDir}`;
   };
 
-  // 100% English Basemap Tile URLs
+  // Abu Dhabi DGE & ArcGIS Basemap Tile URLs
   const basemapUrls: Record<string, string> = {
-    light: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
-    streets: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    dge: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+    dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   };
+
+  const createBasemapLayer = (map: L.Map, type: string): L.Layer => {
+    if (type === 'dge') {
+      const primaryUrl = 'https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer/tile/{z}/{y}/{x}';
+      const fallbackUrl = basemapUrls['dge'];
+
+      const layer = L.tileLayer(primaryUrl, {
+        maxZoom: 19,
+        attribution: '&copy; DGE Abu Dhabi Spatial Infrastructure (SDI)',
+      });
+
+      let fallbackDone = false;
+      layer.on('tileerror', () => {
+        if (!fallbackDone) {
+          fallbackDone = true;
+          try {
+            map.removeLayer(layer);
+            const fallback = L.tileLayer(fallbackUrl, {
+              maxZoom: 19,
+              attribution: '&copy; DGE Abu Dhabi Spatial Infrastructure (SDI)',
+            });
+            fallback.addTo(map);
+            tileLayerRef.current = fallback;
+          } catch {
+            // ignore
+          }
+        }
+      });
+
+      return layer.addTo(map);
+    }
+
+    const tileUrl = basemapUrls[type] || basemapUrls['dge'];
+    return L.tileLayer(tileUrl, {
+      maxZoom: 19,
+      attribution: '&copy; ArcGIS / DGE Abu Dhabi Spatial Infrastructure (SDI)',
+    }).addTo(map);
+  };
+
+  const isProgrammaticMoveRef = useRef(false);
 
   // Initialize Leaflet Map
   useEffect(() => {
@@ -117,15 +205,28 @@ export const MapWorkspace: React.FC = () => {
         center: mapCenter,
         zoom: mapZoom,
         zoomControl: false,
+        attributionControl: false,
+        scrollWheelZoom: true,
+        doubleClickZoom: true,
+        touchZoom: true,
+        dragging: true,
       });
 
-      const tileUrl = basemapUrls[activeBasemap] || basemapUrls['streets'];
-      const tileLayer = L.tileLayer(tileUrl, {
-        maxZoom: 19,
-        attribution: '&copy; DGE Abu Dhabi Spatial Infrastructure',
-      }).addTo(map);
+      map.on('moveend', () => {
+        if (isProgrammaticMoveRef.current) {
+          isProgrammaticMoveRef.current = false;
+          return;
+        }
+        const center = map.getCenter();
+        const zoom = map.getZoom();
+        if (center && zoom) {
+          setMapCenterAndZoom([center.lat, center.lng], zoom);
+        }
+      });
 
-      tileLayerRef.current = tileLayer;
+      const layer = createBasemapLayer(map, activeBasemap);
+      tileLayerRef.current = layer as any;
+
       markersGroupRef.current = L.layerGroup().addTo(map);
       drawnLayersGroupRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
@@ -147,16 +248,28 @@ export const MapWorkspace: React.FC = () => {
 
   // Update Basemap Tiles
   useEffect(() => {
-    if (mapInstanceRef.current && tileLayerRef.current) {
-      const tileUrl = basemapUrls[activeBasemap] || basemapUrls['streets'];
-      tileLayerRef.current.setUrl(tileUrl);
+    if (mapInstanceRef.current) {
+      if (tileLayerRef.current) {
+        tileLayerRef.current.remove();
+        tileLayerRef.current = null;
+      }
+
+      const layer = createBasemapLayer(mapInstanceRef.current, activeBasemap);
+      tileLayerRef.current = layer as any;
+
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+        }
+      }, 50);
     }
   }, [activeBasemap]);
 
-  // Update Map Center and Zoom
+  // React to Zoom In, Zoom Out, Home, and Location updates
   useEffect(() => {
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo(mapCenter, mapZoom, { duration: 1.2 });
+      isProgrammaticMoveRef.current = true;
+      mapInstanceRef.current.setView(mapCenter, mapZoom, { animate: true });
     }
   }, [mapCenter, mapZoom]);
 
@@ -167,7 +280,6 @@ export const MapWorkspace: React.FC = () => {
     const categoryLabel = `${feat.category.toUpperCase()} • ${feat.subcategory.toUpperCase()}`;
     const isFav = isFavorite(feat.nameEn);
 
-    // Contact info (phone & website)
     let contactHtml = '';
     if (feat.phone || feat.website) {
       contactHtml = `
@@ -178,7 +290,6 @@ export const MapWorkspace: React.FC = () => {
       `;
     }
 
-    // Dynamic Metadata Attributes with Glassmorphism container
     let metadataHtml = '';
     if (feat.metadata && Object.keys(feat.metadata).length > 0) {
       const rows = Object.entries(feat.metadata)
@@ -220,17 +331,16 @@ export const MapWorkspace: React.FC = () => {
 
         <div style="border-top: 1px solid rgba(125, 161, 196, 0.2); margin-top: 8px; padding-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px;">
           <button
-            id="pop-ask-ai-${feat.id}"
-            class="popup-ask-ai-btn"
-            style="flex: 1; padding: 6px 10px; font-size: 11px;"
+            id="pop-details-${feat.id}"
+            style="flex: 1; padding: 7px 12px; font-size: 11.5px; font-weight: 900; background: #215A9E; color: white; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 5px;"
           >
-            ✨ ${language === 'ar' ? 'اسأل GeoVision' : 'Ask GeoVision'}
+            📋 ${language === 'ar' ? 'عرض التفاصيل (4 تبويبات)' : 'View Details (4-Tab Analysis)'}
           </button>
           <button
             id="pop-fav-${feat.id}"
             class="popup-fav-btn"
-            style="padding: 5px 9px; border: 1px solid ${isFav ? '#F59E0B' : 'rgba(125, 161, 196, 0.3)'}; background: ${isFav ? '#FEF3C7' : 'rgba(255,255,255,0.6)'}; color: ${isFav ? '#D97706' : '#545860'}; font-size: 13px;"
-            title="${language === 'ar' ? 'إضافة إلى المفضلة' : 'Save to Favorites'}"
+            style="padding: 6px 11px; border: 1px solid ${isFav ? '#F59E0B' : 'rgba(125, 161, 196, 0.3)'}; background: ${isFav ? '#FEF3C7' : 'rgba(255,255,255,0.8)'}; color: ${isFav ? '#D97706' : '#545860'}; font-size: 14px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;"
+            title="${language === 'ar' ? (isFav ? 'إزالة من المفضلة' : 'حفظ في المفضلة') : (isFav ? 'Remove from Favorites' : 'Save to Favorites')}"
           >
             ${isFav ? '★' : '☆'}
           </button>
@@ -240,17 +350,13 @@ export const MapWorkspace: React.FC = () => {
   };
 
   const attachPopupEvents = (feat: GeoFeature) => {
-    const askAiBtn = document.getElementById(`pop-ask-ai-${feat.id}`);
-    if (askAiBtn) {
-      askAiBtn.onclick = (e) => {
+    const detailsBtn = document.getElementById(`pop-details-${feat.id}`);
+    if (detailsBtn) {
+      detailsBtn.onclick = (e) => {
         e.stopPropagation();
         setAiPanelOpen(true);
-        const featName = language === 'ar' ? feat.nameAr : feat.nameEn;
-        sendAIMessage(
-          language === 'ar'
-            ? `أخبرني بالمزيد عن ${featName} والخدمات المكانية المحيطة به.`
-            : `Tell me more about ${featName} and its surrounding spatial services.`
-        );
+        setSelectedFeature(feat);
+        sendAIMessage(language === 'ar' ? `عرض تفاصيل ${feat.nameAr}` : `View details for ${feat.nameEn}`);
       };
     }
 
@@ -258,23 +364,108 @@ export const MapWorkspace: React.FC = () => {
     if (favBtn) {
       favBtn.onclick = (e) => {
         e.stopPropagation();
-        addFavorite({
-          type: 'location',
-          nameEn: feat.nameEn,
-          nameAr: feat.nameAr,
-          categoryEn: feat.category,
-          categoryAr: feat.category,
-          lat: feat.lat,
-          lng: feat.lng,
-        });
-        favBtn.innerHTML = '★';
-        favBtn.style.background = '#FEF3C7';
-        favBtn.style.color = '#D97706';
-        favBtn.style.borderColor = '#F59E0B';
-        showToast(language === 'ar' ? 'تمت الإضافة إلى المفضلة' : 'Saved to Favorites');
+        if (user.isGuest) {
+          setGuestPromptOpen(true);
+          return;
+        }
+        const currentlyFav = isFavorite(feat.nameEn);
+        if (currentlyFav) {
+          const item = favorites.find((f) => f.nameEn === feat.nameEn);
+          if (item) removeFavorite(item.id);
+          favBtn.innerHTML = '☆';
+          favBtn.style.background = 'rgba(255,255,255,0.8)';
+          favBtn.style.color = '#545860';
+          favBtn.style.borderColor = 'rgba(125, 161, 196, 0.3)';
+          showToast(language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from Favorites');
+        } else {
+          addFavorite({
+            type: 'location',
+            nameEn: feat.nameEn,
+            nameAr: feat.nameAr,
+            categoryEn: feat.category,
+            categoryAr: feat.category,
+            lat: feat.lat,
+            lng: feat.lng,
+          });
+          favBtn.innerHTML = '★';
+          favBtn.style.background = '#FEF3C7';
+          favBtn.style.color = '#D97706';
+          favBtn.style.borderColor = '#F59E0B';
+          showToast(language === 'ar' ? 'تمت الإضافة إلى المفضلة' : 'Added to Favorites');
+        }
       };
     }
   };
+
+  // Global Event Delegation for Leaflet Map Popup Action Buttons
+  useEffect(() => {
+    const handleGlobalPopupClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      // 1. Handle "View Details (4-Tab Analysis)" popup button click
+      const detailsBtn = target.closest<HTMLButtonElement>('[id^="pop-details-"]');
+      if (detailsBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        const featId = detailsBtn.id.replace('pop-details-', '');
+        const feat = GEO_FEATURES.find((f) => f.id === featId) || filteredFeatures.find((f) => f.id === featId);
+        if (feat) {
+          setAiPanelOpen(true);
+          setSelectedFeature(feat);
+          sendAIMessage(language === 'ar' ? `عرض تفاصيل ${feat.nameAr}` : `View details for ${feat.nameEn}`);
+          showToast(language === 'ar' ? `جاري فتح تفاصيل ${feat.nameAr} في المحادثة` : `Opening details for ${feat.nameEn} in AI Chat`);
+        }
+        return;
+      }
+
+      // 2. Handle "Star / Favorite" popup button click
+      const favBtn = target.closest<HTMLButtonElement>('[id^="pop-fav-"]');
+      if (favBtn) {
+        e.stopPropagation();
+        e.preventDefault();
+        if (user.isGuest) {
+          setGuestPromptOpen(true);
+          return;
+        }
+        const featId = favBtn.id.replace('pop-fav-', '');
+        const feat = GEO_FEATURES.find((f) => f.id === featId) || filteredFeatures.find((f) => f.id === featId);
+        if (feat) {
+          const currentlyFav = isFavorite(feat.nameEn);
+          if (currentlyFav) {
+            const item = favorites.find((f) => f.nameEn === feat.nameEn);
+            if (item) removeFavorite(item.id);
+            favBtn.innerHTML = '☆';
+            favBtn.style.background = 'rgba(255,255,255,0.8)';
+            favBtn.style.color = '#545860';
+            favBtn.style.borderColor = 'rgba(125, 161, 196, 0.3)';
+            showToast(language === 'ar' ? 'تمت الإزالة من المفضلة' : 'Removed from Favorites');
+          } else {
+            addFavorite({
+              type: 'location',
+              nameEn: feat.nameEn,
+              nameAr: feat.nameAr,
+              categoryEn: feat.category,
+              categoryAr: feat.category,
+              lat: feat.lat,
+              lng: feat.lng,
+            });
+            favBtn.innerHTML = '★';
+            favBtn.style.background = '#FEF3C7';
+            favBtn.style.color = '#D97706';
+            favBtn.style.borderColor = '#F59E0B';
+            showToast(language === 'ar' ? 'تمت الإضافة إلى المفضلة' : 'Added to Favorites');
+          }
+        }
+        return;
+      }
+    };
+
+    document.addEventListener('click', handleGlobalPopupClick, true);
+    return () => {
+      document.removeEventListener('click', handleGlobalPopupClick, true);
+    };
+  }, [language, isFavorite, favorites, removeFavorite, addFavorite, showToast, setAiPanelOpen, setSelectedFeature, sendAIMessage, filteredFeatures, user, setGuestPromptOpen]);
 
   // Update Feature Markers & Layer Clusters
   useEffect(() => {
@@ -291,18 +482,14 @@ export const MapWorkspace: React.FC = () => {
       marker.bindPopup(popupHtml, {
         maxWidth: 320,
         className: 'geovision-map-popup',
-        autoPan: true,
-        autoPanPadding: [40, 120],
-        autoPanPaddingTopLeft: L.point(40, 120),
-        autoPanPaddingBottomRight: L.point(40, 70),
+        autoPan: false,
+        autoClose: false,
+        closeOnClick: false,
       });
 
-      marker.on('click', () => {
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
         setSelectedFeature(feat);
-        if (mapInstanceRef.current) {
-          const targetLat = feat.lat + 0.0035;
-          mapInstanceRef.current.flyTo([targetLat, feat.lng], 16, { duration: 0.8 });
-        }
       });
 
       marker.on('popupopen', () => {
@@ -314,35 +501,103 @@ export const MapWorkspace: React.FC = () => {
     });
 
     markersMapRef.current = newMarkersMap;
-  }, [filteredFeatures, language, setSelectedFeature, isFavorite, addFavorite, sendAIMessage, showToast]);
 
-  // Open map popup directly on the selected location whenever a feature is selected
+    if (!selectedFeature || filteredFeatures.length === 0 || !newMarkersMap.has(selectedFeature.id)) {
+      mapInstanceRef.current?.closePopup();
+    } else if (selectedFeature && newMarkersMap.has(selectedFeature.id)) {
+      const openMarker = newMarkersMap.get(selectedFeature.id);
+      openMarker?.openPopup();
+    }
+  }, [filteredFeatures, language, selectedFeature]);
+
+  // Open map popup directly on selected feature & draw route polyline
   useEffect(() => {
-    if (!mapInstanceRef.current || !selectedFeature) return;
-
+    if (!mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
-    const targetMarker = markersMapRef.current.get(selectedFeature.id);
-    const targetLat = selectedFeature.lat + 0.0035;
 
-    map.flyTo([targetLat, selectedFeature.lng], 16, { duration: 0.8 });
+    // 1. Remove existing route polyline, origin marker & standalone popup
+    if (activeRouteLineRef.current) {
+      activeRouteLineRef.current.remove();
+      activeRouteLineRef.current = null;
+    }
+    if (activeRouteStartMarkerRef.current) {
+      activeRouteStartMarkerRef.current.remove();
+      activeRouteStartMarkerRef.current = null;
+    }
+    if (standalonePopupRef.current) {
+      standalonePopupRef.current.remove();
+      standalonePopupRef.current = null;
+    }
+
+    // 2. If no selected feature OR zero filtered features, close any popup and return
+    if (!selectedFeature || filteredFeatures.length === 0) {
+      map.closePopup();
+      return;
+    }
+
+    // Verify selected feature is present in active filtered results
+    const isFeatureValid = filteredFeatures.some((f) => f.id === selectedFeature.id);
+    if (!isFeatureValid) {
+      map.closePopup();
+      return;
+    }
+
+    // 3. Draw dashed route line from origin to target feature
+    const origin: [number, number] = userLocation || [24.4539, 54.3773];
+    const destination: [number, number] = [selectedFeature.lat, selectedFeature.lng];
+
+    const polyline = L.polyline([origin, destination], {
+      color: '#2563eb',
+      weight: 5,
+      opacity: 0.9,
+      dashArray: '8, 8',
+    }).addTo(map);
+
+    const distanceKm = selectedFeature.distanceKm || (
+      Math.hypot(selectedFeature.lat - origin[0], selectedFeature.lng - origin[1]) * 111
+    ).toFixed(1);
+
+    polyline.bindTooltip(
+      `<div style="font-family:sans-serif;font-weight:900;font-size:11px;color:#1e40af;padding:3px 8px;background:rgba(255,255,255,0.95);border-radius:8px;border:1.5px solid #2563eb;box-shadow:0 4px 12px rgba(37,99,235,0.25);">
+        📍 Route to ${language === 'ar' ? selectedFeature.nameAr : selectedFeature.nameEn}: <b>${distanceKm} km</b>
+      </div>`,
+      { permanent: true, direction: 'center' }
+    );
+
+    activeRouteLineRef.current = polyline;
+
+    // Add origin pin marker
+    const startIcon = L.divIcon({
+      className: 'route-origin-marker',
+      html: `<div style="width:22px;height:22px;background:#2563eb;border:3.5px solid white;border-radius:50%;box-shadow:0 4px 14px rgba(37,99,235,0.6);"></div>`,
+      iconSize: [22, 22],
+      iconAnchor: [11, 11],
+    });
+    const startMarker = L.marker(origin, { icon: startIcon }).addTo(map);
+    startMarker.bindTooltip(
+      `<div style="font-family:sans-serif;font-weight:900;font-size:10.5px;color:#1e3a8a;padding:2px 6px;">📍 ${language === 'ar' ? 'موقعي الحالي' : 'Current Area Origin'}</div>`,
+      { permanent: false, direction: 'top' }
+    );
+    activeRouteStartMarkerRef.current = startMarker;
+
+    // 4. Position Map View once centered on feature with latitude offset for top clearance
+    const targetZoom = Math.max(map.getZoom(), 14);
+    isProgrammaticMoveRef.current = true;
+    map.setView([selectedFeature.lat + 0.0035, selectedFeature.lng], targetZoom, { animate: true });
+
+    // 5. Open Popup on target marker or standalone popup
+    const targetMarker = markersMapRef.current.get(selectedFeature.id);
 
     if (targetMarker) {
-      setTimeout(() => {
-        targetMarker.openPopup();
-      }, 350);
+      targetMarker.openPopup();
+      attachPopupEvents(selectedFeature);
     } else {
-      // If marker is not in filtered list, open a standalone popup at the exact coordinates
-      if (standalonePopupRef.current) {
-        standalonePopupRef.current.remove();
-        standalonePopupRef.current = null;
-      }
       const popup = L.popup({
         maxWidth: 320,
         className: 'geovision-map-popup',
-        autoPan: true,
-        autoPanPadding: [40, 120],
-        autoPanPaddingTopLeft: L.point(40, 120),
-        autoPanPaddingBottomRight: L.point(40, 70),
+        autoPan: false,
+        autoClose: false,
+        closeOnClick: false,
       })
         .setLatLng([selectedFeature.lat, selectedFeature.lng])
         .setContent(buildFeaturePopupHtml(selectedFeature));
@@ -351,12 +606,10 @@ export const MapWorkspace: React.FC = () => {
         attachPopupEvents(selectedFeature);
       });
 
-      setTimeout(() => {
-        popup.openOn(map);
-        standalonePopupRef.current = popup;
-      }, 350);
+      popup.openOn(map);
+      standalonePopupRef.current = popup;
     }
-  }, [selectedFeature, language]);
+  }, [selectedFeature, filteredFeatures, userLocation, language]);
 
   // Render Selected Focused Area Ring geometry for AI & Map Interactions
   useEffect(() => {
@@ -727,24 +980,22 @@ export const MapWorkspace: React.FC = () => {
   }, [activeTool, drawTool, setUserDrawnShapes, sendAIMessage, showToast]);
 
 
-  // Invalidate Leaflet Map Size on AI Panel toggle and window resize
-
-  // Invalidate Leaflet Map Size on AI Panel toggle and window resize
+  // Invalidate Leaflet Map Size on AI Panel toggle, panel width change, and window resize
   useEffect(() => {
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.invalidateSize();
+      mapInstanceRef.current.invalidateSize({ animate: false });
       const timer1 = setTimeout(() => {
-        mapInstanceRef.current?.invalidateSize();
+        mapInstanceRef.current?.invalidateSize({ animate: false });
       }, 100);
       const timer2 = setTimeout(() => {
-        mapInstanceRef.current?.invalidateSize();
+        mapInstanceRef.current?.invalidateSize({ animate: false });
       }, 350);
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
       };
     }
-  }, [aiPanelOpen]);
+  }, [aiPanelOpen, panelWidth]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -755,19 +1006,24 @@ export const MapWorkspace: React.FC = () => {
   }, []);
 
   return (
-    <div className="relative w-full h-screen pt-[84px] sm:pt-[88px] overflow-hidden flex flex-col md:flex-row bg-spatial-canvas">
+    <div className={`relative w-full overflow-hidden flex flex-col md:flex-row bg-spatial-canvas ${pureMapMode ? 'h-screen pt-0' : 'h-screen pt-[84px] sm:pt-[88px]'}`}>
 
-      {/* Main 90% Visual Canvas Map */}
-      <div className="relative flex-1 h-full w-full overflow-hidden">
+      {/* Main Visual Canvas Map */}
+      <div className="relative flex-1 min-w-0 h-full w-full overflow-hidden">
 
-        {/* Leaflet Map Canvas */}
-        <div ref={mapContainerRef} className="w-full h-full z-0" />
+        {/* Primary Interactive Map Canvas for All Basemaps (DGE, Streets, Light, Satellite) */}
+        <div
+          ref={mapContainerRef}
+          className="absolute inset-0 w-full h-full z-10 pointer-events-auto bg-[#F4F3F0] dark:bg-slate-900"
+        />
+
+
 
         {/* Floating Tool Dock */}
-        <MapToolbar />
+        {!pureMapMode && <MapToolbar />}
 
         {/* Floating Data & Filter Drawer */}
-        {filterDrawerOpen && (
+        {!pureMapMode && filterDrawerOpen && (
           <div className="absolute top-4 sm:top-6 left-[72px] sm:left-[80px] z-[600] w-64 sm:w-72 h-[408px] max-h-[calc(100vh-160px)] glass-level-3 rounded-3xl p-3 sm:p-3.5 shadow-2xl border border-white/80 dark:border-slate-800 animate-slide-in flex flex-col overflow-hidden pointer-events-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2 shrink-0">
               <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
@@ -787,95 +1043,98 @@ export const MapWorkspace: React.FC = () => {
         )}
 
         {/* Active Floating Tool Panels */}
-        {activeTool === 'basemap' && <BasemapGallery />}
-        {activeTool === 'legend' && <MapLegend />}
-        {activeTool === 'buffer' && <BufferTool />}
-        {activeTool === 'sketch' && <SketchAOITool />}
+        {!pureMapMode && activeTool === 'basemap' && <BasemapGallery />}
+        {!pureMapMode && activeTool === 'legend' && <MapLegend />}
+        {!pureMapMode && activeTool === 'buffer' && <BufferTool />}
+        {!pureMapMode && activeTool === 'sketch' && <SketchAOITool />}
 
         {/* Print Modal */}
-        <PrintMapModal />
+        {!pureMapMode && <PrintMapModal />}
 
-        {/* Bottom Coordinates & Scale Capsule Status Bar with Format Radio Selector */}
-        <div className="hidden sm:block absolute bottom-3 left-16 sm:left-20 rtl:left-auto rtl:right-16 sm:rtl:right-20 z-[600]" ref={coordRef}>
-
-          {/* Radio Button Popover Dropdown (Matches Reference Image) */}
-          {coordMenuOpen && (
-            <div className="absolute bottom-full left-0 mb-2.5 z-[9999] w-44 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700/90 shadow-2xl shadow-slate-950/20 space-y-1.5 animate-in fade-in zoom-in-95 duration-150">
-              <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider px-1 pb-1 border-b border-slate-100 dark:border-slate-800">
-                Coordinate Format
-              </div>
-              {[
-                { id: 'DD', label: 'DD (Decimal Deg)' },
-                { id: 'DDM', label: 'DDM (Deg Dec Min)' },
-                { id: 'DMS', label: 'DMS (Deg Min Sec)' },
-                { id: 'UTM', label: 'UTM (Grid Proj)' },
-              ].map((opt) => {
-                const isSelected = coordFormat === opt.id;
-                return (
-                  <div
-                    key={opt.id}
-                    onClick={() => {
-                      setCoordFormat(opt.id as any);
-                      setCoordMenuOpen(false);
-                    }}
-                    className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
-                  >
+        {/* Bottom Coordinates & Scale Capsule Status Bar */}
+        {!pureMapMode && (
+          <div className="hidden sm:block absolute bottom-3 left-16 sm:left-20 rtl:left-auto rtl:right-16 sm:rtl:right-20 z-[600]" ref={coordRef}>
+            {coordMenuOpen && (
+              <div className="absolute bottom-full left-0 mb-2.5 z-[9999] w-44 p-3 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-700/90 shadow-2xl shadow-slate-950/20 space-y-1.5 animate-in fade-in zoom-in-95 duration-150">
+                <div className="text-[10px] font-black text-slate-400 uppercase tracking-wider px-1 pb-1 border-b border-slate-100 dark:border-slate-800">
+                  Coordinate Format
+                </div>
+                {[
+                  { id: 'DD', label: 'DD (Decimal Deg)' },
+                  { id: 'DDM', label: 'DDM (Deg Dec Min)' },
+                  { id: 'DMS', label: 'DMS (Deg Min Sec)' },
+                  { id: 'UTM', label: 'UTM (Grid Proj)' },
+                ].map((opt) => {
+                  const isSelected = coordFormat === opt.id;
+                  return (
                     <div
-                      className={`w-4 h-4 rounded-full flex items-center justify-center transition-all shrink-0 ${isSelected
-                        ? 'border-2 border-geovision-blue'
-                        : 'border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
-                        }`}
+                      key={opt.id}
+                      onClick={() => {
+                        setCoordFormat(opt.id as any);
+                        setCoordMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2.5 px-2 py-1.5 rounded-xl cursor-pointer hover:bg-blue-50 dark:hover:bg-slate-800 transition-colors"
                     >
-                      {isSelected && <div className="w-2 h-2 rounded-full bg-geovision-blue" />}
+                      <div
+                        className={`w-4 h-4 rounded-full flex items-center justify-center transition-all shrink-0 ${isSelected
+                          ? 'border-2 border-geovision-blue'
+                          : 'border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800'
+                          }`}
+                      >
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-geovision-blue" />}
+                      </div>
+                      <span className={`text-xs ${isSelected ? 'font-black text-geovision-blue dark:text-blue-300' : 'font-extrabold text-slate-700 dark:text-slate-300'}`}>
+                        {opt.label}
+                      </span>
                     </div>
-                    <span className={`text-xs ${isSelected ? 'font-black text-geovision-blue dark:text-blue-300' : 'font-extrabold text-slate-700 dark:text-slate-300'}`}>
-                      {opt.label}
-                    </span>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex items-center gap-3 glass-level-1 px-4 py-2 rounded-2xl border border-white/70 dark:border-slate-800 text-[11px] font-black text-slate-800 dark:text-slate-200 shadow-lg">
+              <button
+                type="button"
+                onClick={() => setCoordMenuOpen(!coordMenuOpen)}
+                className="flex items-center gap-1 font-black text-slate-900 dark:text-white hover:text-geovision-blue dark:hover:text-geovision-blue cursor-pointer"
+              >
+                <span>{coordFormat}</span>
+                <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${coordMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+              <span className="font-extrabold">{formatCoordinates(mapCenter[0], mapCenter[1], coordFormat)}</span>
+              <span className="h-3 w-px bg-slate-300 dark:bg-slate-700" />
+              <span>Scale: 1:{Math.round(250000 / mapZoom)}</span>
             </div>
-          )}
-
-          {/* Status Bar Capsule */}
-          <div className="flex items-center gap-3 glass-level-1 px-4 py-2 rounded-2xl border border-white/70 dark:border-slate-800 text-[11px] font-black text-slate-800 dark:text-slate-200 shadow-lg">
-
-            {/* Format Dropdown Button */}
-            <button
-              type="button"
-              onClick={() => setCoordMenuOpen(!coordMenuOpen)}
-              className="flex items-center gap-1 font-black text-slate-900 dark:text-white hover:text-geovision-blue dark:hover:text-geovision-blue cursor-pointer"
-            >
-              <span>{coordFormat}</span>
-              <ChevronUp className={`w-3.5 h-3.5 transition-transform duration-200 ${coordMenuOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {/* Coordinates Display Value */}
-            <span className="font-extrabold">{formatCoordinates(mapCenter[0], mapCenter[1], coordFormat)}</span>
-
-            <span className="h-3 w-px bg-slate-300 dark:bg-slate-700" />
-
-            {/* Scale */}
-            <span>Scale: 1:{Math.round(250000 / mapZoom)}</span>
-
           </div>
-
-        </div>
+        )}
 
       </div>
 
-      {/* Original Right Side Docked GeoVision AI Panel */}
-      <div
-        className={`transition-all duration-300 ${aiPanelOpen
-          ? 'fixed md:relative inset-x-0 bottom-0 top-auto z-[700] md:z-20 h-[65vh] max-h-[500px] md:max-h-none md:h-full w-full md:w-[430px] lg:w-[470px] rounded-t-3xl md:rounded-none shadow-2xl border-t md:border-t-0 border-slate-200 dark:border-slate-800'
-          : 'w-0 h-0 overflow-hidden hidden'
+      {/* Right Side Docked GeoVision AI Panel */}
+      {!pureMapMode && (
+        <div
+          style={{
+            width: aiPanelOpen ? `${panelWidth}px` : '0px',
+            maxWidth: '90vw',
+          }}
+          className={`transition-all ${isResizing ? 'duration-0 select-none' : 'duration-300'} ${
+            aiPanelOpen
+              ? 'fixed md:relative inset-x-0 bottom-0 top-auto z-[700] md:z-20 h-[65vh] max-h-[500px] md:max-h-none md:h-full rounded-t-3xl md:rounded-none shadow-2xl border-t md:border-t-0 border-slate-200 dark:border-slate-800'
+              : 'w-0 h-0 overflow-hidden hidden'
           } shrink-0`}
-      >
-        <GeoVisionPanel onClose={() => setAiPanelOpen(false)} />
-      </div>
+        >
+          <GeoVisionPanel
+            onClose={() => setAiPanelOpen(false)}
+            panelWidth={panelWidth}
+            setPanelWidth={setPanelWidth}
+            onStartResize={handleStartResize}
+            isResizing={isResizing}
+          />
+        </div>
+      )}
 
-      {/* AI Panel Toggle Button - Floating Pill at Bottom Right */}
-      {!aiPanelOpen && (
+      {/* AI Panel Toggle Button */}
+      {!pureMapMode && !aiPanelOpen && (
         <button
           onClick={() => setAiPanelOpen(true)}
           className="absolute bottom-3 sm:bottom-4 right-4 rtl:right-auto rtl:left-4 z-[600] flex items-center gap-2 px-4 py-2.5 rounded-full bg-geovision-blue text-white shadow-xl shadow-blue-500/35 hover:bg-blue-600 active:scale-95 transition-all cursor-pointer border border-white/30 text-xs font-black tracking-tight"

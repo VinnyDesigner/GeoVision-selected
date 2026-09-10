@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
+import { ensureAbuDhabiLocation } from '../../utils/locationUtils';
 import {
   Compass,
   Pencil,
@@ -14,6 +15,7 @@ import {
   MousePointer2,
   Menu,
   ChevronUp,
+  Printer,
 } from 'lucide-react';
 
 export const MapToolbar: React.FC = () => {
@@ -22,6 +24,8 @@ export const MapToolbar: React.FC = () => {
     setActiveTool,
     filterDrawerOpen,
     setFilterDrawerOpen,
+    printModalOpen,
+    setPrintModalOpen,
     mapCenter,
     mapZoom,
     setMapCenterAndZoom,
@@ -54,6 +58,12 @@ export const MapToolbar: React.FC = () => {
     setActiveTool(activeTool === 'legend' ? 'none' : 'legend');
   };
 
+  const handlePrintToggle = () => {
+    setFilterDrawerOpen(false);
+    setActiveTool('none');
+    setPrintModalOpen(!printModalOpen);
+  };
+
   const handleZoomIn = () => {
     const newZoom = Math.min(mapZoom + 1, 19);
     setMapCenterAndZoom(mapCenter, newZoom);
@@ -72,11 +82,24 @@ export const MapToolbar: React.FC = () => {
   };
 
   const handleLocateClick = () => {
-    showToast(language === 'ar' ? 'جاري تحديد الموقع الحالي...' : 'Locating current device position...');
-    setTimeout(() => {
+    showToast(language === 'ar' ? 'جاري تحديد الموقع في أبوظبي...' : 'Locating Abu Dhabi position...');
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const validLoc = ensureAbuDhabiLocation(pos.coords.latitude, pos.coords.longitude);
+          setMapCenterAndZoom(validLoc, 15);
+          showToast(language === 'ar' ? 'تم تحديد الموقع في أبوظبي' : 'Abu Dhabi location located successfully');
+        },
+        () => {
+          setMapCenterAndZoom([24.4539, 54.3773], 15);
+          showToast(language === 'ar' ? 'تم التوجيه لمركز أبوظبي' : 'Centered on Abu Dhabi location');
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
       setMapCenterAndZoom([24.4539, 54.3773], 15);
-      showToast(language === 'ar' ? 'تم تحديد الموقع بنجاح' : 'Position acquired: Zoomed to current location');
-    }, 800);
+      showToast(language === 'ar' ? 'تم التوجيه لمركز أبوظبي' : 'Centered on Abu Dhabi location');
+    }
   };
 
   const handleCompassClick = () => {
@@ -101,7 +124,7 @@ export const MapToolbar: React.FC = () => {
     }
   };
 
-  const isAnyMenuToolActive = filterDrawerOpen || activeTool !== 'none';
+  const isAnyMenuToolActive = filterDrawerOpen || printModalOpen || activeTool !== 'none';
 
   // High-Contrast Vivid Solid Blue Active Highlight
   const getToolBtnStyle = (isActive: boolean) => {
@@ -216,6 +239,18 @@ export const MapToolbar: React.FC = () => {
             >
               <List className="w-4 h-4 stroke-[2]" />
               <span className="text-[8px] font-extrabold tracking-tight leading-none">{language === 'ar' ? 'المفتاح' : 'Legend'}</span>
+            </button>
+
+            {/* Print */}
+            <button
+              onClick={handlePrintToggle}
+              className={`w-full py-1.5 px-0.5 rounded-xl flex flex-col items-center gap-0.5 transition-all cursor-pointer ${getToolBtnStyle(
+                printModalOpen
+              )}`}
+              title={language === 'ar' ? 'طباعة وتصدير الخريطة' : 'Print / Export Map'}
+            >
+              <Printer className="w-4 h-4 stroke-[2]" />
+              <span className="text-[8px] font-extrabold tracking-tight leading-none">{language === 'ar' ? 'طباعة' : 'Print'}</span>
             </button>
 
             {/* Divider */}

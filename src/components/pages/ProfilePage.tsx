@@ -93,7 +93,7 @@ export const ProfilePage: React.FC = () => {
         <div className="mt-8 pt-6 border-t border-white/15 grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
             <p className="text-2xl font-black text-amber-400">{favorites.length}</p>
-            <p className="text-[10px] font-black uppercase tracking-wider text-slate-300 mt-1">Saved Favorites</p>
+            <p className="text-[10px] font-black uppercase tracking-wider text-slate-300 mt-1">Favorites</p>
           </div>
           <div className="p-4 rounded-2xl bg-white/5 border border-white/10 text-center">
             <p className="text-2xl font-black text-cyan-400">{conversationSessions.length}</p>
@@ -187,7 +187,7 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div className="text-left rtl:text-right">
               <p className="text-sm font-black text-slate-900 dark:text-white">My Favorites</p>
-              <p className="text-xs text-slate-400 font-semibold">{favorites.length} items saved</p>
+              <p className="text-xs text-slate-400 font-semibold">{favorites.length} favorite items</p>
             </div>
           </div>
           <ArrowRight className="w-5 h-5 text-slate-400 group-hover:text-amber-500 group-hover:translate-x-1 transition-all rtl:rotate-180" />

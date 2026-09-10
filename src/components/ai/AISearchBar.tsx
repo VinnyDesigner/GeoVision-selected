@@ -5,11 +5,20 @@ import {
   Mic,
   ArrowRight,
   Compass,
-  Layers,
-  MapPin,
-  Flame,
-  Activity,
   X,
+  GraduationCap,
+  Activity,
+  ShieldCheck,
+  Bus,
+  Leaf,
+  Zap,
+  Building,
+  Landmark,
+  Waves,
+  Mountain,
+  Grid,
+  Building2,
+  Trees,
 } from 'lucide-react';
 import { VoiceSearchOverlay } from './VoiceSearchOverlay';
 
@@ -18,22 +27,134 @@ interface AISearchBarProps {
 }
 
 export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => {
-  const { sendAIMessage, language, t } = useAppState();
+  const { sendAIMessage, language } = useAppState();
   const [queryText, setQueryText] = useState('');
   const [voiceOpen, setVoiceOpen] = useState(false);
-  const [selectedMode, setSelectedMode] = useState<'natural' | 'compare' | 'risk' | 'buffer'>('natural');
-  const [autocompleteOpen, setAutocompleteOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  const SPATIAL_THEMES = [
+    {
+      id: 'education',
+      labelEn: 'Education',
+      labelAr: 'التعليم',
+      icon: GraduationCap,
+      queryEn: 'Show all schools in Abu Dhabi.',
+      queryAr: 'عرض جميع المدارس في أبوظبي.',
+    },
+    {
+      id: 'healthcare',
+      labelEn: 'Healthcare',
+      labelAr: 'الرعاية الصحية',
+      icon: Activity,
+      queryEn: 'Show all hospitals in Abu Dhabi.',
+      queryAr: 'عرض جميع المستشفيات في أبوظبي.',
+    },
+    {
+      id: 'public_safety',
+      labelEn: 'Public Safety',
+      labelAr: 'الأمن والسلامة العامة',
+      icon: ShieldCheck,
+      queryEn: 'Show police stations near me.',
+      queryAr: 'عرض مراكز الشرطة في أبوظبي.',
+    },
+    {
+      id: 'transportation',
+      labelEn: 'Transportation',
+      labelAr: 'النقل والمواصلات',
+      icon: Bus,
+      queryEn: 'Show bus stops near me.',
+      queryAr: 'عرض محطات الحافلات في أبوظبي.',
+    },
+    {
+      id: 'environment',
+      labelEn: 'Environment',
+      labelAr: 'البيئة والمحميات',
+      icon: Leaf,
+      queryEn: 'Show protected areas in Abu Dhabi.',
+      queryAr: 'عرض المحميات الطبيعية في أبوظبي.',
+    },
+    {
+      id: 'tourism',
+      labelEn: 'Tourism',
+      labelAr: 'السياحة والثقافة',
+      icon: Compass,
+      queryEn: 'Show tourist attractions near me.',
+      queryAr: 'عرض الوجهات السياحية في أبوظبي.',
+    },
+    {
+      id: 'utilities',
+      labelEn: 'Utilities',
+      labelAr: 'الخدمات والمرافق',
+      icon: Zap,
+      queryEn: 'Show petrol stations near me.',
+      queryAr: 'عرض محطات الوقود في أبوظبي.',
+    },
+    {
+      id: 'urban',
+      labelEn: 'Urban',
+      labelAr: 'التخطيط العمراني',
+      icon: Building,
+      queryEn: 'Show urban development projects.',
+      queryAr: 'عرض مشاريع التطوير العمراني.',
+    },
+    {
+      id: 'administrative',
+      labelEn: 'Administrative',
+      labelAr: 'الحدود الإدارية',
+      icon: Landmark,
+      queryEn: 'Show Abu Dhabi municipality boundaries.',
+      queryAr: 'عرض حدود بلديات أبوظبي.',
+    },
+    {
+      id: 'hydrography',
+      labelEn: 'Hydrography',
+      labelAr: 'السطوح المائية',
+      icon: Waves,
+      queryEn: 'Show water-related features in this area.',
+      queryAr: 'عرض المعالم المائية والهيدروغرافية.',
+    },
+    {
+      id: 'geology',
+      labelEn: 'Geology',
+      labelAr: 'الجيولوجيا',
+      icon: Mountain,
+      queryEn: 'Show geological features for this selected area.',
+      queryAr: 'عرض المعالم الجيولوجية.',
+    },
+    {
+      id: 'land_use',
+      labelEn: 'Land Use',
+      labelAr: 'استخدامات الأراضي',
+      icon: Grid,
+      queryEn: 'Show the land-use categories in this district.',
+      queryAr: 'عرض تصنيفات استخدامات الأراضي.',
+    },
+    {
+      id: 'government_services',
+      labelEn: 'Government Services',
+      labelAr: 'الخدمات الحكومية',
+      icon: Building2,
+      queryEn: 'Show TAMM customer happiness centers in Abu Dhabi.',
+      queryAr: 'عرض مراكز خدمة تم الحكومية في أبوظبي.',
+    },
+    {
+      id: 'parks_public_spaces',
+      labelEn: 'Parks & Public Spaces',
+      labelAr: 'الحدائق والمساحات العامة',
+      icon: Trees,
+      queryEn: 'Show public parks in Abu Dhabi.',
+      queryAr: 'عرض الحدائق العامة في أبوظبي.',
+    },
+  ];
 
   // Rotating placeholder prompts
   const placeholders = [
-    t('prompt.highRiskManufacturing'),
-    t('prompt.compareEmissions'),
-    t('prompt.whyHighRisk'),
-    t('prompt.hospitalsKhalifa'),
-    t('prompt.schoolsYas'),
-    t('prompt.parksAbuDhabi'),
-    t('prompt.govReem'),
+    'Show all schools in Abu Dhabi...',
+    'Show all hospitals in Abu Dhabi...',
+    'Show protected areas in Abu Dhabi...',
+    'Show tourist attractions near me...',
+    'Show bus stops near me...',
+    'Show public parks in Abu Dhabi...',
   ];
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -44,120 +165,23 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
     return () => clearInterval(interval);
   }, [placeholders.length]);
 
-  // Close autocomplete on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
-        setAutocompleteOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (queryText.trim()) {
       sendAIMessage(queryText);
       setQueryText('');
-      setAutocompleteOpen(false);
     }
   };
 
-  const handleSuggestedClick = (promptKey: string) => {
-    const text = t(promptKey);
-    sendAIMessage(text);
-    setAutocompleteOpen(false);
+  const handleThemeClick = (theme: typeof SPATIAL_THEMES[0]) => {
+    const query = language === 'ar' ? theme.queryAr : theme.queryEn;
+    sendAIMessage(query);
   };
-
-  const autocompleteSuggestions = [
-    {
-      titleEn: 'Show high-risk manufacturing facilities in Abu Dhabi',
-      titleAr: 'عرض المنشآت الصناعية عالية الخطورة في أبوظبي',
-      type: 'Industrial Risk',
-      icon: Flame,
-      color: 'text-rose-500 bg-rose-500/10',
-    },
-    {
-      titleEn: 'Compare emissions between Mussafah and KIZAD',
-      titleAr: 'مقارنة الانبعاثات بين مصفح وكيزاد',
-      type: 'Comparison Matrix',
-      icon: Layers,
-      color: 'text-blue-500 bg-blue-500/10',
-    },
-    {
-      titleEn: 'Why is this facility high risk?',
-      titleAr: 'لماذا هذه المنشأة عالية الخطورة؟',
-      type: 'Risk Evaluation',
-      icon: Activity,
-      color: 'text-amber-500 bg-amber-500/10',
-    },
-    {
-      titleEn: 'Show hospitals within 5 km of Khalifa City',
-      titleAr: 'عرض المستشفيات على بعد 5 كم من مدينة خليفة',
-      type: 'Healthcare Grid',
-      icon: MapPin,
-      color: 'text-emerald-500 bg-emerald-500/10',
-    },
-    {
-      titleEn: 'Find schools within 3 km of Yas Island',
-      titleAr: 'البحث عن المدارس ضمن 3 كم من جزيرة ياس',
-      type: 'Education Grid',
-      icon: Compass,
-      color: 'text-purple-500 bg-purple-500/10',
-    },
-  ].filter(item => {
-    if (!queryText.trim()) return true;
-    const q = queryText.toLowerCase();
-    return (
-      item.titleEn.toLowerCase().includes(q) ||
-      item.titleAr.includes(q) ||
-      item.type.toLowerCase().includes(q)
-    );
-  });
-
-  const queryModes = [
-    { id: 'natural', labelEn: '✨ Natural AI', labelAr: '✨ الذكاء المكاني', desc: 'Ask naturally' },
-    { id: 'compare', labelEn: '⚖️ Compare Zones', labelAr: '⚖️ مقارنة المناطق', desc: 'Mussafah vs KIZAD' },
-    { id: 'risk', labelEn: '⚠️ Risk & Emissions', labelAr: '⚠️ تقييم المخاطر', desc: 'Industrial EAD' },
-    { id: 'buffer', labelEn: '📐 Buffer & AOI', labelAr: '📐 النطاق الجغرافي', desc: 'Distance matrix' },
-  ];
 
   return (
     <div ref={searchContainerRef} className="w-full flex flex-col items-center gap-3 relative">
       {/* Voice Search Overlay Modal */}
       <VoiceSearchOverlay isOpen={voiceOpen} onClose={() => setVoiceOpen(false)} />
-
-      {/* Query Mode Badges (Interactive Intent Switcher) */}
-      {!compact && (
-        <div className="w-full flex items-center justify-start gap-2 px-1 overflow-x-auto scrollbar-none">
-          <div className="flex items-center gap-1.5">
-            {queryModes.map(mode => (
-              <button
-                key={mode.id}
-                type="button"
-                onClick={() => {
-                  setSelectedMode(mode.id as any);
-                  if (mode.id === 'compare') {
-                    setQueryText('Compare emissions between Mussafah and KIZAD');
-                  } else if (mode.id === 'risk') {
-                    setQueryText('Show high-risk manufacturing facilities in Abu Dhabi');
-                  } else if (mode.id === 'buffer') {
-                    setQueryText('Why is this facility high risk?');
-                  }
-                }}
-                className={`px-3 py-1.5 rounded-full text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
-                  selectedMode === mode.id
-                    ? 'bg-[#215A9E] text-white shadow-md shadow-[#215A9E]/30 scale-102'
-                    : 'bg-white/80 dark:bg-slate-900/80 text-slate-700 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700 hover:border-[#215A9E]'
-                }`}
-              >
-                <span>{language === 'ar' ? mode.labelAr : mode.labelEn}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Main 72px Floating AI Command Bar */}
       <form
@@ -176,11 +200,7 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
           <input
             type="text"
             value={queryText}
-            onChange={(e) => {
-              setQueryText(e.target.value);
-              setAutocompleteOpen(true);
-            }}
-            onFocus={() => setAutocompleteOpen(true)}
+            onChange={(e) => setQueryText(e.target.value)}
             placeholder={placeholders[placeholderIndex]}
             className="w-full bg-transparent text-[#063360] dark:text-white placeholder-[#545860] dark:placeholder-slate-400 text-sm sm:text-base font-semibold focus:outline-hidden"
           />
@@ -217,74 +237,28 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
         </div>
       </form>
 
-      {/* Smart Live Autocomplete Suggestions Dropdown */}
-      {autocompleteOpen && autocompleteSuggestions.length > 0 && (
-        <div className="absolute top-[100%] left-0 right-0 mt-2 z-50 rounded-2xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/90 dark:border-slate-700 shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
-          <div className="px-4 py-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between text-[11px] font-black text-slate-400 uppercase tracking-wider">
-            <span>{language === 'ar' ? 'اقتراحات الاستعلام الذكي' : 'Spatial Intelligence Queries'}</span>
-            <span className="text-[#215A9E] font-bold">{autocompleteSuggestions.length} available</span>
-          </div>
-
-          <div className="p-1.5 space-y-1 max-h-72 overflow-y-auto">
-            {autocompleteSuggestions.map((sugg, idx) => {
-              const IconComp = sugg.icon;
-              return (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => {
-                    const text = language === 'ar' ? sugg.titleAr : sugg.titleEn;
-                    sendAIMessage(text);
-                    setAutocompleteOpen(false);
-                    setQueryText('');
-                  }}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl hover:bg-blue-50 dark:hover:bg-slate-800 text-left rtl:text-right transition-all group cursor-pointer"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${sugg.color}`}>
-                      <IconComp className="w-4 h-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white truncate group-hover:text-[#215A9E] dark:group-hover:text-blue-400">
-                        {language === 'ar' ? sugg.titleAr : sugg.titleEn}
-                      </p>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                        {sugg.type}
-                      </span>
-                    </div>
-                  </div>
-                  <ArrowRight className="w-4 h-4 text-slate-400 group-hover:text-[#215A9E] group-hover:translate-x-1 rtl:group-hover:-translate-x-1 rtl:rotate-180 transition-all shrink-0 ml-2" />
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Suggested Prompt Chips */}
+      {/* Spatial Themes Pills */}
       {!compact && (
         <div className="w-full flex flex-wrap items-center justify-start gap-2 mt-1">
           <span className="text-xs font-black text-[#063360] dark:text-slate-200 mr-1 flex items-center gap-1">
             <Compass className="w-3.5 h-3.5 text-[#215A9E]" />
-            {t('hero.suggestedLabel')}
+            {language === 'ar' ? 'القطاعات والموضوعات المكانية:' : 'Spatial Themes:'}
           </span>
-          {[
-            'prompt.highRiskManufacturing',
-            'prompt.compareEmissions',
-            'prompt.whyHighRisk',
-            'prompt.hospitalsKhalifa',
-            'prompt.schoolsYas',
-            'prompt.parksAbuDhabi',
-            'prompt.govReem',
-          ].map((key, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleSuggestedClick(key)}
-              className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#7DA1C4]/10 dark:bg-slate-900/90 text-[#063360] dark:text-[#7DA1C4] border border-[#7DA1C4]/30 dark:border-slate-700 hover:border-[#215A9E] hover:bg-[#215A9E] hover:text-white dark:hover:bg-[#215A9E] dark:hover:text-white shadow-2xs transition-all transform hover:-translate-y-0.5 backdrop-blur-md cursor-pointer"
-            >
-              {t(key)}
-            </button>
-          ))}
+          {SPATIAL_THEMES.map((theme) => {
+            const IconComponent = theme.icon;
+            const label = language === 'ar' ? theme.labelAr : theme.labelEn;
+            return (
+              <button
+                key={theme.id}
+                type="button"
+                onClick={() => handleThemeClick(theme)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#7DA1C4]/10 dark:bg-slate-900/90 text-[#063360] dark:text-[#7DA1C4] border border-[#7DA1C4]/30 dark:border-slate-700 hover:border-[#215A9E] hover:bg-[#215A9E] hover:text-white dark:hover:bg-[#215A9E] dark:hover:text-white shadow-2xs transition-all transform hover:-translate-y-0.5 backdrop-blur-md cursor-pointer"
+              >
+                <IconComponent className="w-3.5 h-3.5 shrink-0" />
+                <span>{label}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
@@ -292,3 +266,4 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
 };
 
 export default AISearchBar;
+

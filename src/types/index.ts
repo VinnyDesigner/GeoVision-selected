@@ -119,35 +119,45 @@ export interface AIMessage {
     closedCount: number;
   };
   comparisonData?: {
-    titleEn: string;
-    titleAr: string;
+    titleEn?: string;
+    titleAr?: string;
     subtitleEn?: string;
     subtitleAr?: string;
-    entityA: { nameEn: string; nameAr: string; totalEmissions: string; badge: string; color?: string };
-    entityB: { nameEn: string; nameAr: string; totalEmissions: string; badge: string; color?: string };
-    metrics: {
-      labelEn: string;
-      labelAr: string;
-      valA: string;
-      valB: string;
-      percentA: number;
-      percentB: number;
+    metricNameEn?: string;
+    metricNameAr?: string;
+    entityA?: { nameEn: string; nameAr: string; totalEmissions: string; badge: string; color?: string };
+    entityB?: { nameEn: string; nameAr: string; totalEmissions: string; badge: string; color?: string };
+    metrics?: {
+      labelEn?: string;
+      labelAr?: string;
+      metricNameEn?: string;
+      metricNameAr?: string;
+      valA?: string;
+      valB?: string;
+      percentA?: number;
+      percentB?: number;
       unit?: string;
       highlight?: 'A' | 'B' | 'neutral';
     }[];
+    entities?: any[];
     takeawayEn?: string;
     takeawayAr?: string;
   };
+  comparisonChartData?: any;
   riskBreakdownData?: {
-    facilityNameEn: string;
-    facilityNameAr: string;
-    zoneEn: string;
-    zoneAr: string;
-    overallScore: number;
-    riskLevel: 'High' | 'Medium' | 'Low';
-    primaryReasonEn: string;
-    primaryReasonAr: string;
-    factors: {
+    facilityNameEn?: string;
+    facilityNameAr?: string;
+    zoneEn?: string;
+    zoneAr?: string;
+    overallScore?: number;
+    riskLevel?: 'High' | 'Medium' | 'Low';
+    primaryReasonEn?: string;
+    primaryReasonAr?: string;
+    highRiskCount?: number;
+    mediumRiskCount?: number;
+    lowRiskCount?: number;
+    totalAnalyzed?: number;
+    factors?: {
       categoryEn: string;
       categoryAr: string;
       score: number;
@@ -171,6 +181,92 @@ export interface AIMessage {
     zoom?: number;
     bufferKm?: number;
   };
+  aoiSummaryData?: AOIResult;
+  datasetProvenance?: DatasetProvenance;
+  aiUnderstanding?: AIUnderstanding;
+  contextUpdate?: AIContextState;
+  structuredGisRequest?: {
+    theme: string;
+    operation: string;
+    layer: string;
+    distance?: string;
+    location?: string;
+  };
+  crossLayerData?: {
+    titleEn: string;
+    titleAr: string;
+    targetLayerEn?: string;
+    targetLayerAr?: string;
+    referenceLayerEn?: string;
+    referenceLayerAr?: string;
+    primaryLayerNameEn?: string;
+    primaryLayerNameAr?: string;
+    secondaryLayerNameEn?: string;
+    secondaryLayerNameAr?: string;
+    intersectionCount?: number;
+    totalPrimaryCount?: number;
+    bufferDistance?: string;
+    bufferKm?: number;
+    totalFound?: number;
+    items?: {
+      nameEn: string;
+      nameAr: string;
+      distFromRefEn: string;
+      distFromRefAr: string;
+      refNameEn?: string;
+      refNameAr?: string;
+    }[];
+  };
+}
+
+export interface DatasetProvenance {
+  layersUsedEn: string[];
+  layersUsedAr: string[];
+  spatialOperationEn: string;
+  spatialOperationAr: string;
+  sourceProviderEn: string;
+  sourceProviderAr: string;
+  aiExplanationEn: string;
+  aiExplanationAr: string;
+}
+
+export interface AIUnderstanding {
+  facilityEn: string;
+  facilityAr: string;
+  locationEn: string;
+  locationAr: string;
+  distanceEn: string;
+  distanceAr: string;
+  datasetSelectedEn: string;
+  datasetSelectedAr: string;
+  intentEn?: string;
+  intentAr?: string;
+  gisLayersEn?: string[];
+  gisLayersAr?: string[];
+}
+
+export interface AIContextState {
+  locationEn?: string;
+  locationAr?: string;
+  selectedDatasetsEn?: string[];
+  selectedDatasetsAr?: string[];
+  activeFiltersEn?: string[];
+  activeFiltersAr?: string[];
+  radiusKm?: number;
+  previousResultCount?: number;
+}
+
+export interface SavedSearchItem {
+  id: string;
+  titleEn: string;
+  titleAr: string;
+  query: string;
+  date: string;
+  resultCount: number;
+  notes?: string;
+  mapCenter: [number, number];
+  mapZoom: number;
+  activeCategoryIds: string[];
 }
 
 export interface User {
@@ -203,7 +299,7 @@ export interface ConversationSession {
   messages: AIMessage[];
 }
 
-export type BasemapType = 'streets' | 'light' | 'satellite';
+export type BasemapType = 'dge' | 'light' | 'dark' | 'satellite';
 
 export type ActiveTool = 'none' | 'identify' | 'basemap' | 'legend' | 'buffer' | 'print' | 'sketch' | 'coordinates';
 
