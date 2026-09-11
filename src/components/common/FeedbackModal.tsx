@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
-import { Star, X, MessageSquare, Send } from 'lucide-react';
+import { FeedbackStarIcon } from './FeedbackStarIcon';
+import { Star, X, Send } from 'lucide-react';
 
 export const FeedbackModal: React.FC = () => {
   const { feedbackModalOpen, setFeedbackModalOpen, user, showToast, t } = useAppState();
@@ -31,7 +32,7 @@ export const FeedbackModal: React.FC = () => {
 
         <div className="flex items-center gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
           <div className="w-10 h-10 rounded-2xl bg-[#215A9E] text-white flex items-center justify-center font-bold shadow-md shadow-[#215A9E]/30">
-            <MessageSquare className="w-5 h-5" />
+            <FeedbackStarIcon className="w-5 h-5 text-white" />
           </div>
           <div>
             <h2 className="text-lg font-black text-[#063360] dark:text-white">
