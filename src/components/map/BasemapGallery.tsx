@@ -7,7 +7,7 @@ export const BasemapGallery: React.FC = () => {
   const { activeBasemap, setActiveBasemap, setActiveTool, language, t } = useAppState();
 
   const basemaps: { id: BasemapType; labelKey: string; icon: React.FC<{ className?: string }>; descEn: string; descAr: string; badge?: string }[] = [
-    { id: 'dge', labelKey: 'basemap.dge', icon: ShieldCheck, descEn: 'Official ArcGIS Map', descAr: 'خريطة أرسيجيس المعتمدة', badge: 'Default' },
+    { id: 'dge', labelKey: 'basemap.dge', icon: ShieldCheck, descEn: 'Official DGE Map (SDI)', descAr: 'خريطة تمكين المعتمدة (DGE)', badge: 'Default' },
     { id: 'light', labelKey: 'basemap.light', icon: Sun, descEn: 'Light Grey Canvas', descAr: 'خريطة رمادية فاتحة' },
     { id: 'dark', labelKey: 'basemap.dark', icon: Moon, descEn: 'Dark Grey Canvas', descAr: 'خريطة رمادية داكنة' },
     { id: 'satellite', labelKey: 'basemap.satellite', icon: Globe, descEn: 'High resolution imagery', descAr: 'صور أقمار صناعية بدقة عالية' },

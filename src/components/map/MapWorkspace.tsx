@@ -24,6 +24,8 @@ export const MapWorkspace: React.FC = () => {
     mapCenter,
     mapZoom,
     filteredFeatures,
+    selectedCategoryIds,
+    selectedSubcategoryIds,
     bufferRadiusKm,
     aoiResult,
     showToast,
@@ -142,8 +144,9 @@ export const MapWorkspace: React.FC = () => {
   };
 
   // Abu Dhabi DGE & ArcGIS Basemap Tile URLs
+  // Abu Dhabi DGE & ArcGIS Basemap Tile URLs
   const basemapUrls: Record<string, string> = {
-    dge: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+    dge: 'https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer',
     light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -151,30 +154,51 @@ export const MapWorkspace: React.FC = () => {
 
   const createBasemapLayer = (map: L.Map, type: string): L.Layer => {
     if (type === 'dge') {
-      const primaryUrl = 'https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer/tile/{z}/{y}/{x}';
-      const fallbackUrl = basemapUrls['dge'];
+      // Dynamic TileLayer that tiles official Abu Dhabi DGE_Color_Basemap_GCS via export
+      const DGEArcGISTileLayer = (L.TileLayer as any).extend({
+        getTileUrl: function (coords: L.Coords) {
+          const origin = -20037508.342789244;
+          const totalSize = 20037508.342789244 * 2;
+          const numTiles = Math.pow(2, coords.z);
+          const tileMercSize = totalSize / numTiles;
 
-      const layer = L.tileLayer(primaryUrl, {
-        maxZoom: 19,
-        attribution: '&copy; DGE Abu Dhabi Spatial Infrastructure (SDI)',
+          const minX = origin + coords.x * tileMercSize;
+          const maxX = origin + (coords.x + 1) * tileMercSize;
+          const maxY = -origin - coords.y * tileMercSize;
+          const minY = -origin - (coords.y + 1) * tileMercSize;
+
+          return `https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer/export?bbox=${minX},${minY},${maxX},${maxY}&bboxSR=3857&imageSR=3857&size=256,256&f=image&format=png32`;
+        },
+
+        createTile: function (coords: L.Coords, done: (error: any, tile: HTMLImageElement) => void) {
+          const tile = document.createElement('img');
+          tile.alt = '';
+          tile.setAttribute('role', 'presentation');
+
+          const primaryUrl = this.getTileUrl(coords);
+          const fallbackUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${coords.z}/${coords.y}/${coords.x}`;
+
+          tile.onload = () => {
+            done(null, tile);
+          };
+
+          tile.onerror = () => {
+            // If individual tile request times out or is outside coverage, fallback only this tile
+            if (tile.src !== fallbackUrl) {
+              tile.src = fallbackUrl;
+            } else {
+              done(new Error('Tile error'), tile);
+            }
+          };
+
+          tile.src = primaryUrl;
+          return tile;
+        },
       });
 
-      let fallbackDone = false;
-      layer.on('tileerror', () => {
-        if (!fallbackDone) {
-          fallbackDone = true;
-          try {
-            map.removeLayer(layer);
-            const fallback = L.tileLayer(fallbackUrl, {
-              maxZoom: 19,
-              attribution: '&copy; DGE Abu Dhabi Spatial Infrastructure (SDI)',
-            });
-            fallback.addTo(map);
-            tileLayerRef.current = fallback;
-          } catch {
-            // ignore
-          }
-        }
+      const layer = new DGEArcGISTileLayer('', {
+        maxZoom: 19,
+        attribution: '&copy; DGE Abu Dhabi Spatial Data Infrastructure (AD-SDI)',
       });
 
       return layer.addTo(map);
@@ -319,7 +343,17 @@ export const MapWorkspace: React.FC = () => {
     if (!selectedFeature) {
       mapInstanceRef.current?.closePopup();
     }
-  }, [filteredFeatures, language, selectedFeature]);
+
+    // If user filtered by category and features exist but none are in current view, frame them smoothly
+    if (mapInstanceRef.current && (selectedCategoryIds.length > 0 || selectedSubcategoryIds.length > 0) && displayFeatures.length > 0) {
+      const bounds = mapInstanceRef.current.getBounds();
+      const anyInView = displayFeatures.some(f => bounds.contains([f.lat, f.lng]));
+      if (!anyInView) {
+        const featureBounds = L.latLngBounds(displayFeatures.map(f => [f.lat, f.lng]));
+        mapInstanceRef.current.fitBounds(featureBounds, { padding: [60, 60], maxZoom: 14 });
+      }
+    }
+  }, [filteredFeatures, language, selectedFeature, selectedCategoryIds, selectedSubcategoryIds]);
 
   // Single Unified Map Camera Control Effect with Frame Coalescing
   const flyToTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

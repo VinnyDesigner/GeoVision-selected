@@ -1222,12 +1222,12 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
           else if (isStreetsRequest && !lower.includes('hospital') && !lower.includes('school') && !lower.includes('park') && !lower.includes('center') && !lower.includes('rehab')) {
             setActiveBasemap('dge');
             if (currentView !== 'map') setCurrentView('map');
-            responseEn = 'Basemap updated: Official ArcGIS Map.';
-            responseAr = 'خريطة الأساس النشطة: خريطة أرسيجيس المعتمدة.';
+            responseEn = 'Basemap updated: Abu Dhabi DGE Color Basemap (SDI).';
+            responseAr = 'خريطة الأساس النشطة: خريطة تمكين المعتمدة (DGE).';
             matchedFeats = [];
             recsEn = ['Switch to Satellite view', 'Switch to Light Canvas', 'Print / Export Map'];
             recsAr = ['التبديل إلى الصور الفضائية', 'التبديل إلى الخلفية الفاتحة', 'طباعة وتصدير الخريطة'];
-            showToast(language === 'ar' ? 'تم التبديل إلى خريطة أرسيجيس المعتمدة' : 'Basemap updated: Official ArcGIS Map');
+            showToast(language === 'ar' ? 'تم التبديل إلى خريطة تمكين المعتمدة (DGE)' : 'Basemap updated: Abu Dhabi DGE Color Basemap');
           }
           else if (isGenericBasemapRequest) {
             setActiveTool('basemap');

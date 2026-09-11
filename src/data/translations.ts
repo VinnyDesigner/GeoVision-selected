@@ -80,7 +80,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'identify.phone': 'Phone',
 
     // Basemaps
-    'basemap.dge': 'ArcGIS Map',
+    'basemap.dge': 'DGE Basemap',
     'basemap.light': 'Light Grey',
     'basemap.dark': 'Dark Grey',
     'basemap.satellite': 'Satellite',
@@ -331,7 +331,7 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'identify.phone': 'الهاتف',
 
     // Basemaps
-    'basemap.dge': 'خريطة أرسيجيس المعتمدة',
+    'basemap.dge': 'خريطة تمكين (DGE)',
     'basemap.light': 'خريطة رمادية فاتحة',
     'basemap.dark': 'خريطة رمادية داكنة',
     'basemap.satellite': 'صور أقمار صناعية',
