@@ -101,7 +101,7 @@ html {
     0 18px 45px rgba(6, 51, 96, 0.10);
 }
 
-/* Official DGE Home Spatial Background with Light Subtle Contours */
+/* Official Department of Government Enablement (DGE) Spatial Canvas Background */
 .bg-spatial-canvas {
   background:
     radial-gradient(circle at 20% 10%, rgba(125, 161, 196, 0.24), transparent 32%),
@@ -109,50 +109,54 @@ html {
     linear-gradient(135deg, #FFFFFF 0%, #F5F8FB 55%, rgba(125, 161, 196, 0.10) 100%);
 }
 
-/* DGE Dark Mode (Reliable Blue Foundation) */
+/* Premium Dark Mode Foundation (Obsidian Slate & Cyber Blue Spotlights) */
 .dark body,
 .dark,
 [data-theme="dark"] body,
 [data-theme="dark"] {
-  background-color: #041F3B;
-  color: #FFFFFF;
+  background-color: #070b14;
+  color: #F8FAFC;
 }
 
 .dark .bg-spatial-canvas,
 [data-theme="dark"] .bg-spatial-canvas {
   background:
-    radial-gradient(circle at 20% 15%, rgba(33, 90, 158, 0.35), transparent 35%),
-    radial-gradient(circle at 85% 40%, rgba(125, 161, 196, 0.20), transparent 32%),
-    linear-gradient(135deg, #041F3B 0%, #063360 50%, #03162B 100%);
+    radial-gradient(circle at 20% 15%, rgba(56, 189, 248, 0.12), transparent 42%),
+    radial-gradient(circle at 85% 65%, rgba(99, 102, 241, 0.10), transparent 42%),
+    linear-gradient(135deg, #070b14 0%, #0f172a 55%, #080c18 100%);
 }
 
 .dark .glass-level-1,
 [data-theme="dark"] .glass-level-1 {
-  background: rgba(6, 51, 96, 0.65);
+  background: rgba(15, 23, 42, 0.75);
   backdrop-filter: blur(20px) saturate(140%);
   -webkit-backdrop-filter: blur(20px) saturate(140%);
-  border: 1px solid rgba(125, 161, 196, 0.18);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
 }
 
 .dark .glass-level-2,
 .dark .glass-panel,
 [data-theme="dark"] .glass-level-2,
 [data-theme="dark"] .glass-panel {
-  background: rgba(6, 51, 96, 0.76);
-  backdrop-filter: blur(26px) saturate(150%);
-  -webkit-backdrop-filter: blur(26px) saturate(150%);
-  border: 1px solid rgba(125, 161, 196, 0.20);
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.50), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    0 20px 48px rgba(0, 0, 0, 0.60),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16);
 }
 
 .dark .glass-level-3,
 [data-theme="dark"] .glass-level-3 {
-  background: rgba(6, 51, 96, 0.85);
-  backdrop-filter: blur(32px) saturate(160%);
-  -webkit-backdrop-filter: blur(32px) saturate(160%);
-  border: 1px solid rgba(125, 161, 196, 0.24);
-  box-shadow: 0 22px 56px rgba(0, 0, 0, 0.60), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  background: rgba(11, 17, 32, 0.94);
+  backdrop-filter: blur(34px) saturate(160%);
+  -webkit-backdrop-filter: blur(34px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.70),
+    inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 .dark input,
@@ -163,6 +167,18 @@ html {
 [data-theme="dark"] textarea {
   color-scheme: dark;
   color: #F8FAFC;
+  background-color: rgba(15, 23, 42, 0.85);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.dark input:focus,
+.dark select:focus,
+.dark textarea:focus,
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus,
+[data-theme="dark"] textarea:focus {
+  border-color: #38BDF8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
 }
 
 .dark input::placeholder,
@@ -177,6 +193,33 @@ html {
 [data-theme="dark"] option {
   background-color: #0F172A;
   color: #F8FAFC;
+}
+
+/* High-Contrast Readability System Overrides for Dark Mode */
+.dark .text-slate-900,
+.dark .text-slate-800 {
+  color: #F8FAFC !important;
+}
+
+.dark .text-slate-700,
+.dark .text-slate-600 {
+  color: #E2E8F0 !important;
+}
+
+.dark .text-slate-500 {
+  color: #CBD5E1 !important;
+}
+
+.dark .text-slate-400 {
+  color: #94A3B8 !important;
+}
+
+.dark .text-\[\#063360\] {
+  color: #38BDF8 !important;
+}
+
+.dark .text-\[\#545860\] {
+  color: #CBD5E1 !important;
 }
 
 /* Custom Blue & Red Palette Helpers */
@@ -614,6 +657,18 @@ html {
     size: auto;
     margin: 8mm;
   }
+}
+
+/* Animated Route Line Animation */
+@keyframes routeDashMarch {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.animated-route-polyline {
+  stroke-dasharray: 8, 8;
+  animation: routeDashMarch 1.2s linear infinite;
 }
 
 

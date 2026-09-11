@@ -101,13 +101,13 @@ export const MapCategoryDock: React.FC = () => {
                   onClick={() => toggleCategorySelection(cat.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#215A9E]/15 dark:bg-[#215A9E]/30 text-[#215A9E] dark:text-[#7DA1C4] border border-[#215A9E]/40 shadow-2xs font-extrabold'
-                      : 'text-[#545860] dark:text-slate-200 hover:bg-[#7DA1C4]/15 dark:hover:bg-slate-800/90 hover:text-[#063360]'
+                      ? 'bg-[#215A9E]/15 dark:bg-sky-500/20 text-[#215A9E] dark:text-sky-300 border border-[#215A9E]/40 dark:border-sky-500/40 shadow-2xs font-extrabold'
+                      : 'text-[#545860] dark:text-slate-200 hover:bg-[#7DA1C4]/15 dark:hover:bg-slate-800/90 hover:text-[#063360] dark:hover:text-white'
                   }`}
                 >
                   <IconComp className="w-3.5 h-3.5" />
                   <span>{language === 'ar' ? cat.nameAr : cat.nameEn}</span>
-                  {isSelected && <Check className="w-3.5 h-3.5 text-[#215A9E] stroke-[3]" />}
+                  {isSelected && <Check className="w-3.5 h-3.5 text-[#215A9E] dark:text-sky-300 stroke-[3]" />}
                 </button>
               );
             })}

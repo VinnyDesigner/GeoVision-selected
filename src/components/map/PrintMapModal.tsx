@@ -1,14 +1,145 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import L from 'leaflet';
 import { useAppState } from '../../context/AppStateContext';
+import { createGeoVisionMarkerIcon } from '../../utils/markerUtils';
 import { Printer, X, Download, FileText, ShieldCheck, Compass, CheckCircle, BarChart2 } from 'lucide-react';
 import { triggerPrintDocument } from '../../utils/printUtils';
 
 export const PrintMapModal: React.FC = () => {
-  const { printModalOpen, setPrintModalOpen, showToast, t, language } = useAppState();
+  const {
+    printModalOpen,
+    setPrintModalOpen,
+    showToast,
+    t,
+    language,
+    selectedFeature,
+    filteredFeatures,
+    activeBasemap,
+    mapCenter,
+    mapZoom,
+    bufferRadiusKm,
+  } = useAppState();
+
   const [format, setFormat] = useState<'pdf' | 'png' | 'jpeg'>('pdf');
   const [layoutMode, setLayoutMode] = useState<'map' | 'summary' | 'ledger'>('map');
   const [orientation, setOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [printState, setPrintState] = useState<'idle' | 'generating' | 'ready'>('idle');
+
+  const printMapContainerRef = useRef<HTMLDivElement>(null);
+  const printMapInstanceRef = useRef<L.Map | null>(null);
+
+  // Target Location & Metadata Calculations
+  const targetLat = selectedFeature ? selectedFeature.lat : (mapCenter?.[0] || 24.4539);
+  const targetLng = selectedFeature ? selectedFeature.lng : (mapCenter?.[1] || 54.3773);
+  const targetZoom = selectedFeature ? 15 : (mapZoom || 12);
+
+  const featureTitle = selectedFeature
+    ? (language === 'ar' ? selectedFeature.nameAr : selectedFeature.nameEn)
+    : (language === 'ar' ? 'نطاق أبوظبي المكاني المحرك' : 'Abu Dhabi Spatial Hub Extent');
+
+  const featureAddress = selectedFeature
+    ? (language === 'ar' ? (selectedFeature.addressAr || selectedFeature.nameAr) : (selectedFeature.addressEn || selectedFeature.nameEn))
+    : (language === 'ar' ? 'مدينة أبوظبي - دولة الإمارات' : 'Abu Dhabi City, United Arab Emirates');
+
+  const featureCategory = selectedFeature
+    ? (selectedFeature.category.toUpperCase() + (selectedFeature.subcategory ? ` • ${selectedFeature.subcategory}` : ''))
+    : 'SDI MULTI-SECTOR GIS LAYER';
+
+  // Initialize Live Leaflet Preview Map inside Modal
+  useEffect(() => {
+    if (!printModalOpen || layoutMode !== 'map') {
+      if (printMapInstanceRef.current) {
+        printMapInstanceRef.current.remove();
+        printMapInstanceRef.current = null;
+      }
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (!printMapContainerRef.current) return;
+
+      if (printMapInstanceRef.current) {
+        printMapInstanceRef.current.remove();
+        printMapInstanceRef.current = null;
+      }
+
+      const map = L.map(printMapContainerRef.current, {
+        center: [targetLat, targetLng],
+        zoom: targetZoom,
+        zoomControl: false,
+        attributionControl: false,
+      });
+
+      const basemapUrls: Record<string, string> = {
+        dge: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        streets: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
+        satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      };
+
+      const tileUrl = basemapUrls[activeBasemap] || basemapUrls['dge'];
+      L.tileLayer(tileUrl, { maxZoom: 19 }).addTo(map);
+
+      // Add Scale Bar
+      L.control.scale({ position: 'bottomleft', imperial: false }).addTo(map);
+
+      // Add Selected Feature Pin or Filtered Pins
+      if (selectedFeature) {
+        const icon = createGeoVisionMarkerIcon(
+          selectedFeature.category || 'government',
+          selectedFeature.subcategory,
+          false,
+          true
+        );
+        const marker = L.marker([selectedFeature.lat, selectedFeature.lng], { icon }).addTo(map);
+        marker.bindPopup(
+          `<div style="font-weight:900; font-size:12px; color:#063360;">${featureTitle}</div><div style="font-size:10px; font-weight:bold; color:#64748b;">${featureAddress}</div>`
+        ).openPopup();
+
+        if (bufferRadiusKm && bufferRadiusKm > 0) {
+          L.circle([selectedFeature.lat, selectedFeature.lng], {
+            radius: bufferRadiusKm * 1000,
+            color: '#215A9E',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.15,
+            weight: 2,
+          }).addTo(map);
+        }
+      } else if (filteredFeatures && filteredFeatures.length > 0) {
+        filteredFeatures.slice(0, 15).forEach((feat) => {
+          const icon = createGeoVisionMarkerIcon(feat.category || 'government', feat.subcategory, true, false);
+          L.marker([feat.lat, feat.lng], { icon }).addTo(map);
+        });
+      }
+
+      printMapInstanceRef.current = map;
+
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 150);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      if (printMapInstanceRef.current) {
+        printMapInstanceRef.current.remove();
+        printMapInstanceRef.current = null;
+      }
+    };
+  }, [
+    printModalOpen,
+    layoutMode,
+    activeBasemap,
+    selectedFeature,
+    filteredFeatures,
+    targetLat,
+    targetLng,
+    targetZoom,
+    featureTitle,
+    featureAddress,
+    bufferRadiusKm,
+  ]);
 
   if (!printModalOpen) return null;
 
@@ -17,68 +148,92 @@ export const PrintMapModal: React.FC = () => {
     setTimeout(() => {
       setPrintState('ready');
       showToast(language === 'ar' ? 'تم تجهيز التقرير الجغرافي للتحميل' : 'Spatial map report generated successfully');
-    }, 1200);
+    }, 800);
   };
 
   const handleDownload = () => {
     showToast(language === 'ar' ? 'جاري تجهيز تقرير طباعة الخريطة الرسمي...' : 'Preparing official cartographic map report...');
 
+    const mapServiceName = activeBasemap === 'satellite'
+      ? 'World_Imagery'
+      : activeBasemap === 'light'
+      ? 'Canvas/World_Light_Gray_Base'
+      : activeBasemap === 'dark'
+      ? 'Canvas/World_Dark_Gray_Base'
+      : 'World_Street_Map';
+
+    const mapSnapshotUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/${mapServiceName}/MapServer/export?bbox=${targetLng - 0.035},${targetLat - 0.02},${targetLng + 0.035},${targetLat + 0.02}&bboxSR=4326&imageSR=4326&size=800,400&f=image`;
+
+    const displayItems = selectedFeature
+      ? [selectedFeature, ...filteredFeatures.filter((f) => f.id !== selectedFeature.id).slice(0, 5)]
+      : filteredFeatures.slice(0, 8);
+
     let sectionHtml = '';
     if (layoutMode === 'map') {
-      const mapSvgUri = `data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' width='100%25' height='100%25'%3E%3Crect width='800' height='500' fill='%23e0f2fe'/%3E%3Cpath d='M 0 60 Q 200 45 400 65 T 800 55 L 800 0 L 0 0 Z' fill='%23bae6fd' opacity='0.6'/%3E%3Cpath d='M 520 20 C 580 10 650 30 700 60 C 660 100 600 110 540 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 440 60 C 490 50 530 70 540 100 C 490 120 450 100 430 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 260 90 C 340 60 440 70 470 130 C 410 210 330 230 250 170 C 230 140 240 110 260 90 Z' fill='%23fef9c3' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 0 210 C 180 190 360 210 560 140 C 660 110 760 130 800 150 L 800 500 L 0 500 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 370 130 C 410 120 440 140 420 170 C 390 180 360 160 370 130 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 200 290 C 280 270 330 310 300 350 C 240 370 190 330 200 290 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 480 230 C 560 210 610 250 570 290 C 500 310 460 270 480 230 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23f59e0b' stroke-width='6' opacity='0.95'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-dasharray='10 6'/%3E%3Cpath d='M 290 170 C 410 180 540 200 800 230' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cpath d='M 270 340 C 390 360 540 390 750 440' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='160' y1='250' x2='360' y2='390'/%3E%3Cline x1='200' y1='230' x2='400' y2='370'/%3E%3Cline x1='240' y1='210' x2='440' y2='350'/%3E%3Cline x1='180' y1='350' x2='380' y2='230'/%3E%3Cline x1='220' y1='370' x2='420' y2='250'/%3E%3Cline x1='260' y1='390' x2='460' y2='270'/%3E%3C/g%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='470' y1='250' x2='670' y2='390'/%3E%3Cline x1='510' y1='230' x2='710' y2='370'/%3E%3Cline x1='550' y1='210' x2='750' y2='350'/%3E%3Cline x1='490' y1='370' x2='690' y2='250'/%3E%3Cline x1='530' y1='390' x2='730' y2='270'/%3E%3C/g%3E%3Ctext x='280' y='135' font-family='system-ui, sans-serif' font-weight='900' font-size='13' fill='%231e3a8a' opacity='0.75'%3EABU DHABI CITY%3C/text%3E%3Ctext x='250' y='310' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EKHALIFA CITY%3C/text%3E%3Ctext x='550' y='300' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EZAYED CITY%3C/text%3E%3Ctext x='580' y='175' font-family='system-ui, sans-serif' font-weight='900' font-size='12' fill='%23215A9E'%3EAL RAHA BEACH%3C/text%3E%3Ctext x='580' y='55' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3ESAADIYAT ISLAND%3C/text%3E%3Ctext x='450' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3EAL REEM ISLAND%3C/text%3E%3Ctext x='100' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='15' fill='%230284c7' opacity='0.8'%3EARABIAN GULF%3C/text%3E%3Ctext x='430' y='235' font-family='system-ui, sans-serif' font-weight='800' font-size='11' fill='%23b45309' transform='rotate(-12 430 235)'%3ESheikh Zayed Highway (E11)%3C/text%3E%3C/svg%3E`;
-
       sectionHtml = `
         <div class="map-frame" style="position: relative; overflow: hidden; border-radius: 14px; border: 2px solid #1e293b; background: #0f172a; padding: 0; margin-bottom: 20px;">
           <!-- Map Top Header Bar -->
           <div style="background: #0f172a; color: #ffffff; padding: 10px 16px; font-size: 11px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="display: inline-block; width: 10px; height: 10px; background: #10b981; border-radius: 50%;"></span>
-              <span>📍 Active Spatial Extent Canvas [Abu Dhabi SDI GIS Layer Map]</span>
+              <span>📍 Extent: ${featureTitle} [${featureCategory}]</span>
             </div>
-            <span style="font-family: monospace; color: #60a5fa;">Center: 24.4539° N, 54.3773° E</span>
+            <span style="font-family: monospace; color: #60a5fa;">Center: ${targetLat.toFixed(4)}° N, ${targetLng.toFixed(4)}° E</span>
           </div>
 
           <!-- Real Basemap Imagery & Pins Canvas -->
-          <div style="position: relative; width: 100%; height: 340px; background-image: url('${mapSvgUri}'); background-size: cover; background-position: center; border-top: 1px solid #334155; border-bottom: 1px solid #334155;">
+          <div style="position: relative; width: 100%; height: 360px; background-image: url('${mapSnapshotUrl}'); background-size: cover; background-position: center; border-top: 1px solid #334155; border-bottom: 1px solid #334155;">
 
             <!-- Compass Rose -->
-            <div style="position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: rgba(15, 23, 42, 0.9); border: 2px solid #60a5fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 11px; box-shadow: 0 4px 12px rgba(0,0,0,0.4);">
+            <div style="position: absolute; top: 12px; right: 12px; width: 36px; height: 36px; background: rgba(15, 23, 42, 0.9); border: 2px solid #60a5fa; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #ffffff; font-weight: 900; font-size: 11px; box-shadow: 0 4px 12px rgba(0,0,0,0.4); z-index: 20;">
               N ⬆
             </div>
 
             <!-- Scale Bar -->
-            <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid #475569; padding: 6px 12px; border-radius: 8px; color: #ffffff; font-size: 10px; font-weight: 900;">
+            <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.9); border: 1px solid #475569; padding: 6px 12px; border-radius: 8px; color: #ffffff; font-size: 10px; font-weight: 900; z-index: 20;">
               <div style="border-bottom: 2px solid #60a5fa; margin-bottom: 2px; width: 60px; text-align: center; font-size: 9px;">2 km</div>
               <span>Scale 1:25,000</span>
             </div>
 
-            <!-- Map Pins Spread Out Across Landmass -->
-            <div style="position: absolute; top: 48%; left: 28%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
-              <div style="background: #1e3a8a; color: white; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 2px solid #60a5fa;">
-                📍 Khalifa City Sector 1
+            <!-- Main Selected Feature Pin Centered on Map -->
+            <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 30;">
+              <div style="background: #063360; color: #ffffff; padding: 6px 14px; border-radius: 12px; font-weight: 900; font-size: 12px; white-space: nowrap; box-shadow: 0 6px 20px rgba(0,0,0,0.5); border: 2px solid #60a5fa; display: flex; align-items: center; gap: 6px;">
+                <span>📍</span>
+                <span>${featureTitle}</span>
               </div>
-              <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #60a5fa;"></div>
+              <div style="width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 10px solid #60a5fa;"></div>
             </div>
 
-            <div style="position: absolute; top: 30%; left: 52%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
-              <div style="background: #064e3b; color: white; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 2px solid #34d399;">
-                🏥 Cleveland Clinic Abu Dhabi
-              </div>
-              <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #34d399;"></div>
-            </div>
-
-            <div style="position: absolute; top: 62%; left: 65%; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 10;">
-              <div style="background: #581c87; color: white; padding: 5px 12px; border-radius: 10px; font-weight: 900; font-size: 11px; white-space: nowrap; box-shadow: 0 4px 14px rgba(0,0,0,0.4); border: 2px solid #c084fc;">
-                🏥 Sheikh Shakhbout Medical City
-              </div>
-              <div style="width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 8px solid #c084fc;"></div>
-            </div>
+            ${
+              displayItems.length > 1
+                ? displayItems
+                    .slice(1, 4)
+                    .map((item, idx) => {
+                      const offsets = [
+                        { top: '32%', left: '30%' },
+                        { top: '65%', left: '72%' },
+                        { top: '28%', left: '75%' },
+                      ];
+                      const pos = offsets[idx % offsets.length];
+                      const name = language === 'ar' ? item.nameAr : item.nameEn;
+                      return `
+                        <div style="position: absolute; top: ${pos.top}; left: ${pos.left}; transform: translate(-50%, -100%); display: flex; flex-direction: column; align-items: center; z-index: 20;">
+                          <div style="background: #1e293b; color: #f8fafc; padding: 4px 10px; border-radius: 8px; font-weight: 800; font-size: 10px; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.4); border: 1.5px solid #94a3b8;">
+                            <span>${name}</span>
+                          </div>
+                          <div style="width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 7px solid #94a3b8;"></div>
+                        </div>
+                      `;
+                    })
+                    .join('')
+                : ''
+            }
           </div>
 
           <!-- Bottom Coordinates Bar -->
           <div style="background: #0f172a; color: #cbd5e1; font-size: 10px; font-weight: bold; padding: 8px 14px; display: flex; justify-content: space-between; align-items: center;">
             <span>Grid Reference: UAE EPSG:32639</span>
-            <span>Cartographic Clearance: Grade A</span>
+            <span>Address: ${featureAddress}</span>
             <span>Security: Unclassified Public Spatial Record</span>
           </div>
         </div>
@@ -87,13 +242,13 @@ export const PrintMapModal: React.FC = () => {
       sectionHtml = `
         <div class="insights-box">
           <strong style="color: #1e3a8a; font-size: 13px; display: block; margin-bottom: 6px;">Executive Spatial Intelligence Summary</strong>
-          Comprehensive geospatial analysis conducted across Abu Dhabi Hub. Multi-sector layer overlays indicate high infrastructure readiness (85% active rate) with average drive time of ~8 minutes to major public facilities.
+          Geospatial extent centered on <strong>${featureTitle}</strong> (${featureCategory}). Location: ${featureAddress}. Coordinates: ${targetLat.toFixed(4)}° N, ${targetLng.toFixed(4)}° E. Multi-sector layer overlays indicate high infrastructure readiness (85% active rate) with average drive time of ~8 minutes to major public facilities.
         </div>
         <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
-          <div class="kpi-card"><div class="kpi-lbl">Spatial Features</div><div class="kpi-val">12 Features</div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Min Distance</div><div class="kpi-val">1.2 km</div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Average Drive</div><div class="kpi-val">~8 Mins</div></div>
-          <div class="kpi-card"><div class="kpi-lbl">Status Rate</div><div class="kpi-val">85% Active</div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Target Feature</div><div class="kpi-val" style="font-size: 13px;">${featureTitle}</div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Spatial Category</div><div class="kpi-val" style="font-size: 13px;">${selectedFeature?.category || 'GIS Layer'}</div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Geodetic Location</div><div class="kpi-val" style="font-size: 12px;">${targetLat.toFixed(3)}N, ${targetLng.toFixed(3)}E</div></div>
+          <div class="kpi-card"><div class="kpi-lbl">Status Rate</div><div class="kpi-val">100% Active</div></div>
         </div>
       `;
     } else {
@@ -104,33 +259,27 @@ export const PrintMapModal: React.FC = () => {
             <tr>
               <th>Ref #</th>
               <th>Feature Name</th>
+              <th>Category</th>
               <th>Coordinates</th>
-              <th>Proximity</th>
               <th>Status</th>
             </tr>
           </thead>
           <tbody>
-            <tr>
-              <td>1</td>
-              <td><strong>GEMS American Academy</strong></td>
-              <td style="font-family: monospace;">24.4539, 54.3773</td>
-              <td>1.2 km</td>
-              <td><span style="color: #166534; font-weight: bold;">Active</span></td>
-            </tr>
-            <tr>
-              <td>2</td>
-              <td><strong>Al Raha International School</strong></td>
-              <td style="font-family: monospace;">24.4412, 54.3810</td>
-              <td>2.4 km</td>
-              <td><span style="color: #166534; font-weight: bold;">Active</span></td>
-            </tr>
-            <tr>
-              <td>3</td>
-              <td><strong>Zayed City Medical Center</strong></td>
-              <td style="font-family: monospace;">24.4289, 54.3921</td>
-              <td>3.8 km</td>
-              <td><span style="color: #166534; font-weight: bold;">Operational</span></td>
-            </tr>
+            ${displayItems
+              .map((item, index) => {
+                const name = language === 'ar' ? item.nameAr : item.nameEn;
+                const isTarget = selectedFeature && item.id === selectedFeature.id;
+                return `
+                  <tr style="${isTarget ? 'background: #eff6ff; font-weight: bold;' : ''}">
+                    <td>${index + 1} ${isTarget ? '📍' : ''}</td>
+                    <td><strong>${name}</strong></td>
+                    <td style="text-transform: uppercase; font-size: 10px;">${item.category} (${item.subcategory})</td>
+                    <td style="font-family: monospace;">${item.lat.toFixed(4)}, ${item.lng.toFixed(4)}</td>
+                    <td><span style="color: #166534; font-weight: bold;">${item.openStatusEn || 'Active'}</span></td>
+                  </tr>
+                `;
+              })
+              .join('')}
           </tbody>
         </table>
       `;
@@ -154,7 +303,7 @@ export const PrintMapModal: React.FC = () => {
       </div>
 
       <div class="kpi-grid">
-        <div class="kpi-card"><div class="kpi-lbl">Spatial Extent</div><div class="kpi-val">Abu Dhabi Hub</div></div>
+        <div class="kpi-card"><div class="kpi-lbl">Selected Extent</div><div class="kpi-val" style="font-size: 13px;">${featureTitle}</div></div>
         <div class="kpi-card"><div class="kpi-lbl">Scale Ratio</div><div class="kpi-val">1:25,000</div></div>
         <div class="kpi-card"><div class="kpi-lbl">Geodetic Datum</div><div class="kpi-val">WGS 84</div></div>
         <div class="kpi-card"><div class="kpi-lbl">UTM Zone</div><div class="kpi-val">Zone 39N</div></div>
@@ -175,9 +324,8 @@ export const PrintMapModal: React.FC = () => {
     `;
 
     if (format === 'pdf') {
-      triggerPrintDocument('Official Cartographic Map Report - Abu Dhabi SDI', htmlContent, orientation);
+      triggerPrintDocument(`Official Cartographic Map Report - ${featureTitle}`, htmlContent, orientation);
     } else {
-      // Image Export (PNG / JPEG) fallback via SVG Blob download
       const svgString = `
         <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600">
           <foreignObject width="100%" height="100%">
@@ -345,62 +493,32 @@ export const PrintMapModal: React.FC = () => {
               <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
             </div>
 
-            {/* Map Canvas Preview Container */}
+            {/* Map Canvas Live Leaflet Preview Container */}
             {layoutMode === 'map' && (
               <div className="space-y-4">
-                <div
-                  className="h-72 sm:h-84 rounded-2xl border-2 border-slate-300 dark:border-slate-700 relative overflow-hidden flex flex-col justify-between p-4 shadow-xl bg-cover bg-center"
-                  style={{ backgroundImage: `url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 800 500' width='100%25' height='100%25'%3E%3Crect width='800' height='500' fill='%23e0f2fe'/%3E%3Cpath d='M 0 60 Q 200 45 400 65 T 800 55 L 800 0 L 0 0 Z' fill='%23bae6fd' opacity='0.6'/%3E%3Cpath d='M 520 20 C 580 10 650 30 700 60 C 660 100 600 110 540 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 440 60 C 490 50 530 70 540 100 C 490 120 450 100 430 80 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2'/%3E%3Cpath d='M 260 90 C 340 60 440 70 470 130 C 410 210 330 230 250 170 C 230 140 240 110 260 90 Z' fill='%23fef9c3' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 0 210 C 180 190 360 210 560 140 C 660 110 760 130 800 150 L 800 500 L 0 500 Z' fill='%23fef3c7' stroke='%23fcd34d' stroke-width='2.5'/%3E%3Cpath d='M 370 130 C 410 120 440 140 420 170 C 390 180 360 160 370 130 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 200 290 C 280 270 330 310 300 350 C 240 370 190 330 200 290 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 480 230 C 560 210 610 250 570 290 C 500 310 460 270 480 230 Z' fill='%23dcfce7' stroke='%2386efac' stroke-width='1.5'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23f59e0b' stroke-width='6' opacity='0.95'/%3E%3Cpath d='M 0 310 C 200 270 460 250 800 190' fill='none' stroke='%23ffffff' stroke-width='2.5' stroke-dasharray='10 6'/%3E%3Cpath d='M 290 170 C 410 180 540 200 800 230' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cpath d='M 270 340 C 390 360 540 390 750 440' fill='none' stroke='%23215A9E' stroke-width='4.5' opacity='0.9'/%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='160' y1='250' x2='360' y2='390'/%3E%3Cline x1='200' y1='230' x2='400' y2='370'/%3E%3Cline x1='240' y1='210' x2='440' y2='350'/%3E%3Cline x1='180' y1='350' x2='380' y2='230'/%3E%3Cline x1='220' y1='370' x2='420' y2='250'/%3E%3Cline x1='260' y1='390' x2='460' y2='270'/%3E%3C/g%3E%3Cg stroke='%2394a3b8' stroke-width='1.5' opacity='0.75'%3E%3Cline x1='470' y1='250' x2='670' y2='390'/%3E%3Cline x1='510' y1='230' x2='710' y2='370'/%3E%3Cline x1='550' y1='210' x2='750' y2='350'/%3E%3Cline x1='490' y1='370' x2='690' y2='250'/%3E%3C/g%3E%3Ctext x='280' y='135' font-family='system-ui, sans-serif' font-weight='900' font-size='13' fill='%231e3a8a' opacity='0.75'%3EABU DHABI CITY%3C/text%3E%3Ctext x='250' y='310' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EKHALIFA CITY%3C/text%3E%3Ctext x='550' y='300' font-family='system-ui, sans-serif' font-weight='900' font-size='14' fill='%230f172a'%3EZAYED CITY%3C/text%3E%3Ctext x='580' y='175' font-family='system-ui, sans-serif' font-weight='900' font-size='12' fill='%23215A9E'%3EAL RAHA BEACH%3C/text%3E%3Ctext x='580' y='55' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3ESAADIYAT ISLAND%3C/text%3E%3Ctext x='450' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='11' fill='%230369a1'%3EAL REEM ISLAND%3C/text%3E%3Ctext x='100' y='75' font-family='system-ui, sans-serif' font-weight='900' font-size='15' fill='%230284c7' opacity='0.8'%3EARABIAN GULF%3C/text%3E%3Ctext x='430' y='235' font-family='system-ui, sans-serif' font-weight='800' font-size='11' fill='%23b45309' transform='rotate(-12 430 235)'%3ESheikh Zayed Highway (E11)%3C/text%3E%3C/svg%3E")` }}
-                >
-                  {/* Overlay for contrast */}
-                  <div className="absolute inset-0 bg-slate-950/15 pointer-events-none" />
+                <div className="h-72 sm:h-84 rounded-2xl border-2 border-slate-300 dark:border-slate-700 relative overflow-hidden flex flex-col justify-between shadow-xl bg-slate-900">
+                  {/* Real Interactive Leaflet Canvas Container */}
+                  <div ref={printMapContainerRef} className="absolute inset-0 w-full h-full z-0 pointer-events-auto" />
 
-                  {/* Top Bar */}
-                  <div className="relative z-10 flex items-center justify-between text-white text-xs">
-                    <div className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700 font-black flex items-center gap-2 shadow-lg">
+                  {/* Top Floating Bar */}
+                  <div className="relative z-10 p-3 flex items-center justify-between pointer-events-none">
+                    <div className="px-3.5 py-1.5 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700 font-black flex items-center gap-2 shadow-lg text-white text-xs">
                       <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-                      <span>📍 Active Spatial Extent Canvas [Abu Dhabi SDI GIS Map]</span>
+                      <span>📍 Active Extent: {featureTitle}</span>
                     </div>
                     <div className="w-9 h-9 rounded-full bg-slate-900/90 border-2 border-blue-400 flex items-center justify-center text-blue-400 font-black text-xs shadow-lg backdrop-blur-md">
                       N ⬆
                     </div>
                   </div>
 
-                  {/* Absolute Positioned Map Pins */}
-                  <div className="absolute inset-0 z-10 pointer-events-none">
-                    <div className="absolute top-[48%] left-[28%] transform -translate-x-1/2 -translate-y-full flex flex-col items-center">
-                      <div className="bg-blue-900/95 text-white px-3 py-1.5 rounded-xl border-2 border-blue-400 text-xs font-black shadow-2xl backdrop-blur-md whitespace-nowrap flex items-center gap-1.5">
-                        <span>📍</span>
-                        <span>Khalifa City Sector 1</span>
-                      </div>
-                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-blue-400"></div>
-                    </div>
-
-                    <div className="absolute top-[30%] left-[52%] transform -translate-x-1/2 -translate-y-full flex flex-col items-center">
-                      <div className="bg-emerald-900/95 text-white px-3 py-1.5 rounded-xl border-2 border-emerald-400 text-xs font-black shadow-2xl backdrop-blur-md whitespace-nowrap flex items-center gap-1.5">
-                        <span>🏥</span>
-                        <span>Cleveland Clinic Abu Dhabi</span>
-                      </div>
-                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-emerald-400"></div>
-                    </div>
-
-                    <div className="absolute top-[62%] left-[65%] transform -translate-x-1/2 -translate-y-full flex flex-col items-center">
-                      <div className="bg-purple-900/95 text-white px-3 py-1.5 rounded-xl border-2 border-purple-400 text-xs font-black shadow-2xl backdrop-blur-md whitespace-nowrap flex items-center gap-1.5">
-                        <span>🏫</span>
-                        <span>Sheikh Shakhbout Medical City</span>
-                      </div>
-                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-purple-400"></div>
-                    </div>
-                  </div>
-
-                  {/* Bottom Bar */}
-                  <div className="relative z-10 flex items-center justify-between text-[10px] text-white font-bold bg-slate-900/90 backdrop-blur-md px-3.5 py-2 rounded-xl border border-slate-700 shadow-lg">
+                  {/* Bottom Floating Info Bar */}
+                  <div className="relative z-10 p-3 flex items-center justify-between text-[10px] text-white font-bold bg-slate-900/90 backdrop-blur-md border-t border-slate-700 shadow-lg pointer-events-none">
                     <div className="flex items-center gap-2">
                       <div className="w-12 h-1 bg-blue-400 rounded-full"></div>
                       <span>Scale 1:25,000 (2 km)</span>
                     </div>
-                    <span>Grid Datum: WGS 84 / UTM Zone 39N</span>
-                    <span>Coordinates: 24.4539° N, 54.3773° E</span>
+                    <span>Grid: WGS 84 / UTM Zone 39N</span>
+                    <span>Center: {targetLat.toFixed(4)}° N, {targetLng.toFixed(4)}° E</span>
                   </div>
                 </div>
               </div>
@@ -408,22 +526,30 @@ export const PrintMapModal: React.FC = () => {
 
             {/* Summary Preview */}
             {layoutMode === 'summary' && (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                  <span className="text-[10px] font-black text-slate-400 block uppercase">Spatial Features</span>
-                  <span className="text-lg font-black text-geovision-blue dark:text-blue-400">12 Features</span>
+              <div className="space-y-4">
+                <div className="p-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 text-xs font-semibold leading-relaxed text-slate-800 dark:text-slate-200">
+                  <strong className="text-geovision-blue dark:text-blue-400 font-black block mb-1">
+                    Spatial Extent Executive Intelligence
+                  </strong>
+                  Report generated for <strong>{featureTitle}</strong> ({featureCategory}). Geodetic Center: {targetLat.toFixed(4)}° N, {targetLng.toFixed(4)}° E. Multi-sector layer overlays indicate high infrastructure readiness with active GIS clearance.
                 </div>
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                  <span className="text-[10px] font-black text-slate-400 block uppercase">Min Distance</span>
-                  <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">1.2 km</span>
-                </div>
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                  <span className="text-[10px] font-black text-slate-400 block uppercase">Average Drive</span>
-                  <span className="text-lg font-black text-purple-600 dark:text-purple-400">~8 Mins</span>
-                </div>
-                <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-                  <span className="text-[10px] font-black text-slate-400 block uppercase">Status Rate</span>
-                  <span className="text-lg font-black text-amber-600 dark:text-amber-400">85% Active</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center text-xs">
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-black text-slate-400 block uppercase">Target Extent</span>
+                    <span className="text-sm font-black text-geovision-blue dark:text-blue-400 truncate block">{featureTitle}</span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-black text-slate-400 block uppercase">Coordinates</span>
+                    <span className="text-xs font-black text-emerald-600 dark:text-emerald-400 block font-mono">{targetLat.toFixed(3)}N, {targetLng.toFixed(3)}E</span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-black text-slate-400 block uppercase">Category</span>
+                    <span className="text-xs font-black text-purple-600 dark:text-purple-400 block truncate">{selectedFeature?.category || 'Multi-Sector'}</span>
+                  </div>
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+                    <span className="text-[10px] font-black text-slate-400 block uppercase">Status Rate</span>
+                    <span className="text-lg font-black text-amber-600 dark:text-amber-400 block">100% Active</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -436,23 +562,28 @@ export const PrintMapModal: React.FC = () => {
                     <tr>
                       <th className="p-2.5">Ref #</th>
                       <th className="p-2.5">Feature Name</th>
+                      <th className="p-2.5">Category</th>
                       <th className="p-2.5">Coordinates</th>
-                      <th className="p-2.5">Proximity</th>
+                      <th className="p-2.5">Status</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800 font-semibold text-[11px]">
-                    <tr>
-                      <td className="p-2.5 font-bold text-slate-400">1</td>
-                      <td className="p-2.5 font-black text-slate-900 dark:text-white">GEMS American Academy</td>
-                      <td className="p-2.5 font-mono text-[10px]">24.4539, 54.3773</td>
-                      <td className="p-2.5 font-black text-geovision-blue">1.2 km</td>
-                    </tr>
-                    <tr>
-                      <td className="p-2.5 font-bold text-slate-400">2</td>
-                      <td className="p-2.5 font-black text-slate-900 dark:text-white">Al Raha International School</td>
-                      <td className="p-2.5 font-mono text-[10px]">24.4412, 54.3810</td>
-                      <td className="p-2.5 font-black text-geovision-blue">2.4 km</td>
-                    </tr>
+                    {(selectedFeature
+                      ? [selectedFeature, ...filteredFeatures.filter((f) => f.id !== selectedFeature.id).slice(0, 4)]
+                      : filteredFeatures.slice(0, 5)
+                    ).map((item, idx) => {
+                      const isSel = selectedFeature && item.id === selectedFeature.id;
+                      const name = language === 'ar' ? item.nameAr : item.nameEn;
+                      return (
+                        <tr key={item.id} className={isSel ? 'bg-blue-50/80 dark:bg-blue-950/40 font-black' : ''}>
+                          <td className="p-2.5 font-bold text-slate-400">{idx + 1} {isSel ? '📍' : ''}</td>
+                          <td className="p-2.5 font-black text-slate-900 dark:text-white">{name}</td>
+                          <td className="p-2.5 text-slate-500 uppercase text-[10px]">{item.category}</td>
+                          <td className="p-2.5 font-mono text-[10px]">{item.lat.toFixed(4)}, {item.lng.toFixed(4)}</td>
+                          <td className="p-2.5 font-black text-emerald-600 dark:text-emerald-400">{item.openStatusEn || 'Active'}</td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -468,7 +599,7 @@ export const PrintMapModal: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />
-                  <span>High-Resolution GIS Extent Canvas</span>
+                  <span>High-Resolution GIS Selected Extent Canvas</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle className="w-3.5 h-3.5 text-emerald-500" />

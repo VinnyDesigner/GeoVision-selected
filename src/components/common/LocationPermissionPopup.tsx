@@ -1,18 +1,87 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import { ensureAbuDhabiLocation } from '../../utils/locationUtils';
 import { MapPin, X } from 'lucide-react';
 
+const PERMISSION_KEY = 'geovision_location_permission_handled';
+
 export const LocationPermissionPopup: React.FC = () => {
-  const { setUserLocation, setMapCenterAndZoom, showToast, language } = useAppState();
-  const [isOpen, setIsOpen] = useState(true);
+  const { currentView, setUserLocation, setMapCenterAndZoom, showToast, language } = useAppState();
+  const [isOpen, setIsOpen] = useState(false);
 
   const displayDomain =
     typeof window !== 'undefined' && window.location.host
       ? window.location.host
       : 'smartmap-phase2-s.vercel.app';
 
+  useEffect(() => {
+    // Popup must ONLY appear when opening the Explore Map tab
+    if (currentView !== 'map') {
+      setIsOpen(false);
+      return;
+    }
+
+    // Check if user has already made a choice (allowed, blocked, or dismissed)
+    const localStatus = localStorage.getItem(PERMISSION_KEY);
+    const sessionStatus = sessionStorage.getItem(PERMISSION_KEY);
+    const handledStatus = localStatus || sessionStatus;
+
+    if (handledStatus) {
+      setIsOpen(false);
+
+      // If user previously allowed location, silently update map center without showing popup UI
+      if (handledStatus === 'allowed' && 'geolocation' in navigator) {
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            const validLoc = ensureAbuDhabiLocation(pos.coords.latitude, pos.coords.longitude);
+            setUserLocation(validLoc);
+            setMapCenterAndZoom(validLoc, 14);
+          },
+          () => {}, // Silent fallback
+          { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+        );
+      }
+      return;
+    }
+
+    // Check native browser permissions API if available
+    if (navigator.permissions && navigator.permissions.query) {
+      navigator.permissions.query({ name: 'geolocation' }).then((result) => {
+        if (result.state === 'granted') {
+          localStorage.setItem(PERMISSION_KEY, 'allowed');
+          setIsOpen(false);
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const validLoc = ensureAbuDhabiLocation(pos.coords.latitude, pos.coords.longitude);
+              setUserLocation(validLoc);
+              setMapCenterAndZoom(validLoc, 14);
+            },
+            () => {},
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+          );
+        } else if (result.state === 'denied') {
+          localStorage.setItem(PERMISSION_KEY, 'blocked');
+          setIsOpen(false);
+        } else {
+          // 'prompt': show popup once on Explore Map view
+          setIsOpen(true);
+        }
+      }).catch(() => {
+        setIsOpen(true);
+      });
+    } else {
+      setIsOpen(true);
+    }
+  }, [currentView, setUserLocation, setMapCenterAndZoom]);
+
   const requestLocationPermission = (isJustOnce: boolean = false) => {
+    if (isJustOnce) {
+      sessionStorage.setItem(PERMISSION_KEY, 'just_once');
+    } else {
+      localStorage.setItem(PERMISSION_KEY, 'allowed');
+    }
+    setIsOpen(false);
+
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
@@ -28,14 +97,12 @@ export const LocationPermissionPopup: React.FC = () => {
               ? 'Abu Dhabi location enabled for this session'
               : 'Abu Dhabi location active'
           );
-          setIsOpen(false);
         },
         () => {
           const defaultLoc = ensureAbuDhabiLocation(0, 0);
           setUserLocation(defaultLoc);
           setMapCenterAndZoom(defaultLoc, 14);
           showToast(language === 'ar' ? 'تم ضبط الموقع الافتراضي في أبوظبي' : 'Defaulted to Abu Dhabi central position');
-          setIsOpen(false);
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
@@ -43,7 +110,6 @@ export const LocationPermissionPopup: React.FC = () => {
       const defaultLoc = ensureAbuDhabiLocation(0, 0);
       setUserLocation(defaultLoc);
       setMapCenterAndZoom(defaultLoc, 14);
-      setIsOpen(false);
     }
   };
 
@@ -56,11 +122,17 @@ export const LocationPermissionPopup: React.FC = () => {
   };
 
   const handleBlock = () => {
+    localStorage.setItem(PERMISSION_KEY, 'blocked');
     showToast(language === 'ar' ? 'تم حظر الوصول للموقع' : 'Location permission blocked');
     setIsOpen(false);
   };
 
-  if (!isOpen) return null;
+  const handleClose = () => {
+    localStorage.setItem(PERMISSION_KEY, 'dismissed');
+    setIsOpen(false);
+  };
+
+  if (!isOpen || currentView !== 'map') return null;
 
   return (
     <div className="fixed top-3 left-3 sm:left-6 z-[9999] animate-fade-in pointer-events-auto">
@@ -78,7 +150,7 @@ export const LocationPermissionPopup: React.FC = () => {
           </div>
           <button
             type="button"
-            onClick={() => setIsOpen(false)}
+            onClick={handleClose}
             className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full transition-colors cursor-pointer shrink-0"
             title="Close"
           >
@@ -134,3 +206,4 @@ export const LocationPermissionPopup: React.FC = () => {
 };
 
 export default LocationPermissionPopup;
+

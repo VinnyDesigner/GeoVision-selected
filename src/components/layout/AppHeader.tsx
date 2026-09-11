@@ -84,9 +84,9 @@ export const AppHeader: React.FC = () => {
         {/* Left: First Logo — Department of Government Enablement Brandmark */}
         <div className="flex items-center cursor-pointer shrink-0" onClick={() => handleNavClick('home')}>
           <img
-            src="./assets/logos/dge-logo.png"
+            src={theme === 'dark' ? './assets/logos/dge-logo-dark.png' : './assets/logos/dge-logo.png'}
             alt="Department of Government Enablement"
-            className="h-7 sm:h-9 md:h-10 max-w-[130px] sm:max-w-none object-contain dark:bg-white/90 dark:px-2 dark:py-1 dark:rounded-lg shrink-0 transition-transform hover:scale-105"
+            className="h-7 sm:h-9 md:h-10 max-w-[130px] sm:max-w-none object-contain shrink-0 transition-transform hover:scale-105"
           />
         </div>
 
@@ -291,9 +291,9 @@ export const AppHeader: React.FC = () => {
           {/* Rightmost: Second Logo — Abu Dhabi Spatial Data */}
           <div className="hidden md:flex items-center cursor-pointer shrink-0" onClick={() => handleNavClick('home')}>
             <img
-              src="./assets/logos/spatial-data-logo.png"
+              src={theme === 'dark' ? './assets/logos/spatial-data-logo-dark.png' : './assets/logos/spatial-data-logo.png'}
               alt="Abu Dhabi Spatial Data"
-              className="h-6 sm:h-7 md:h-8 max-w-[85px] sm:max-w-[110px] object-contain dark:bg-white/90 dark:px-2 dark:py-0.5 dark:rounded-lg shrink-0 transition-transform hover:scale-105"
+              className="h-6 sm:h-7 md:h-8 max-w-[85px] sm:max-w-[110px] object-contain shrink-0 transition-transform hover:scale-105"
             />
           </div>
         </div>

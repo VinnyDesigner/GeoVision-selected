@@ -1,7 +1,6 @@
 import React from 'react';
 import { AISearchBar } from '../ai/AISearchBar';
 import { useAppState } from '../../context/AppStateContext';
-import { MapPin } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
   const { language, theme } = useAppState();
@@ -21,12 +20,13 @@ export const LandingPage: React.FC = () => {
       {/* Hero & Search Launchpad */}
       <div className="relative z-10 w-full max-w-3xl text-left rtl:text-right space-y-4 my-auto flex flex-col items-start rtl:items-start">
         
-        {/* BIG GeoVision Hero Brand Title */}
-        <div className="flex items-center gap-3">
-          <h1 className="text-5xl sm:text-7xl md:text-8xl font-black text-[#063360] dark:text-white tracking-tight flex items-center gap-2 drop-shadow-md">
-            GeoVision
-            <MapPin className="w-10 h-10 sm:w-14 sm:h-14 md:w-16 md:h-16 text-[#215A9E] fill-[#215A9E] shrink-0" />
-          </h1>
+        {/* BIG GeoVision Hero Brand Logo */}
+        <div className="flex items-start justify-start w-full mb-1">
+          <img
+            src={theme === 'dark' ? '/assets/logos/geovision-logo-brand-dark.png' : '/assets/logos/geovision-logo-brand-light.png'}
+            alt="GeoVision"
+            className="h-20 sm:h-28 md:h-36 lg:h-40 max-w-full object-contain object-left rtl:object-right transition-all duration-300 drop-shadow-md -ml-1 rtl:-ml-0 rtl:-mr-1"
+          />
         </div>
 
         {/* Small Elegant Sub-Headline */}

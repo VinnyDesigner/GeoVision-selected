@@ -3,7 +3,7 @@ import { useAppState } from '../../context/AppStateContext';
 import { X, UserCheck } from 'lucide-react';
 
 export const GuestPromptModal: React.FC = () => {
-  const { guestPromptOpen, setGuestPromptOpen, setLoginModalOpen, language } = useAppState();
+  const { guestPromptOpen, setGuestPromptOpen, setLoginModalOpen, language, theme } = useAppState();
 
   if (!guestPromptOpen) return null;
 
@@ -22,15 +22,15 @@ export const GuestPromptModal: React.FC = () => {
         {/* Modal Top Header Row featuring both official logos */}
         <div className="flex items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4 pr-8 rtl:pl-8 rtl:pr-0">
           <img
-            src="./assets/logos/dge-logo.png"
+            src={theme === 'dark' ? './assets/logos/dge-logo-dark.png' : './assets/logos/dge-logo.png'}
             alt="Department of Government Enablement"
-            className="h-8 sm:h-9 object-contain dark:bg-white/90 dark:px-2 dark:py-0.5 dark:rounded-lg shrink-0"
+            className="h-8 sm:h-9 object-contain shrink-0"
           />
           <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 shrink-0" />
           <img
-            src="./assets/logos/spatial-data-logo.png"
+            src={theme === 'dark' ? './assets/logos/spatial-data-logo-dark.png' : './assets/logos/spatial-data-logo.png'}
             alt="Abu Dhabi Spatial Data"
-            className="h-7 sm:h-8 object-contain dark:bg-white/90 dark:px-2 dark:py-0.5 dark:rounded-lg shrink-0"
+            className="h-7 sm:h-8 object-contain shrink-0"
           />
         </div>
 

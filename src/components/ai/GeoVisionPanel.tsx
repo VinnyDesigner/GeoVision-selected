@@ -5,7 +5,6 @@ import {
   Send,
   History,
   User,
-  Bot,
   X,
   ChevronRight,
   Plus,
@@ -451,9 +450,11 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
       {/* Header Bar */}
       <div className="p-3.5 sm:p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between gap-2 shrink-0 z-20">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="w-9 h-9 rounded-2xl bg-geovision-blue text-white flex items-center justify-center font-bold shadow-md shadow-blue-500/25 shrink-0">
-            <Sparkles className="w-5 h-5 text-white animate-pulse" />
-          </div>
+          <img
+            src="/assets/logos/geovision-ai-avatar.png"
+            alt="Smart Maps AI Assistant"
+            className="w-9 h-9 object-contain shrink-0"
+          />
           <div className="min-w-0">
             <h2 className="text-sm font-black text-slate-900 dark:text-white truncate">
               Smart Maps AI Assistant
@@ -565,12 +566,16 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
             >
               {/* Sender Badge */}
               <div className="flex items-center gap-1.5 mb-1 text-[11px] font-bold text-slate-400">
-                <Bot className="w-3.5 h-3.5 text-geovision-blue" />
-                <span className="text-geovision-blue font-extrabold">Smart Maps AI Assistant</span>
+                <img
+                  src="/assets/logos/geovision-ai-avatar.png"
+                  alt="AI"
+                  className="w-4 h-4 object-contain shrink-0"
+                />
+                <span className="text-geovision-blue dark:text-sky-300 font-extrabold">Smart Maps AI Assistant</span>
               </div>
 
               {/* AI Response Bubble */}
-              <div className="max-w-[95%] sm:max-w-[90%] p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm font-semibold leading-relaxed shadow-sm bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+              <div className="max-w-[95%] sm:max-w-[90%] p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm font-semibold leading-relaxed shadow-sm bg-white dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-200/80 dark:border-slate-800 space-y-3">
                 
                 {/* Main Text Response */}
                 <div className="whitespace-pre-line leading-relaxed text-slate-800 dark:text-slate-100 font-bold">
@@ -584,9 +589,9 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
 
                 {/* Recommendations Section */}
                 {!msg.noResultsSuggestions && !msg.disambiguationOptions && ((isMsgAr ? msg.recommendationsAr : msg.recommendationsEn) || []).length > 0 && (
-                  <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-700/60 mt-3">
+                  <div className="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800 mt-3">
                     <p className="text-xs font-extrabold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-geovision-blue" />
+                      <Sparkles className="w-3.5 h-3.5 text-geovision-blue dark:text-sky-300" />
                       {t('ai.recommendationsTitle')}
                     </p>
 
@@ -595,10 +600,10 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
                         <button
                           key={idx}
                           onClick={() => sendAIMessage(recText)}
-                          className="w-full flex items-center justify-between p-2 px-3 rounded-xl bg-blue-50/80 hover:bg-blue-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-geovision-blue dark:text-blue-300 font-black border border-blue-200/80 dark:border-slate-700/70 hover:border-geovision-blue text-xs text-left rtl:text-right transition-all cursor-pointer shadow-2xs gap-2 min-w-0 group"
+                          className="w-full flex items-center justify-between p-2 px-3 rounded-xl bg-blue-50/80 hover:bg-blue-100 dark:bg-slate-900/90 dark:hover:bg-slate-800 text-geovision-blue dark:text-sky-300 font-black border border-blue-200/80 dark:border-slate-800 hover:border-geovision-blue dark:hover:border-sky-400 text-xs text-left rtl:text-right transition-all cursor-pointer shadow-2xs gap-2 min-w-0 group"
                         >
                           <span className="truncate whitespace-nowrap flex-1">{recText}</span>
-                          <ChevronRight className="w-4 h-4 shrink-0 text-geovision-blue dark:text-blue-300 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:rotate-180 transition-all" />
+                          <ChevronRight className="w-4 h-4 shrink-0 text-geovision-blue dark:text-sky-300 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:rotate-180 transition-all" />
                         </button>
                       ))}
                     </div>
@@ -614,7 +619,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
 
         {/* AI Thinking Step Indicator */}
         {aiProcessing && (
-          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-blue-50/80 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700 animate-pulse">
+          <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-blue-50/80 dark:bg-slate-900/90 border border-blue-200/60 dark:border-slate-800 animate-pulse">
             <div className="w-7 h-7 rounded-xl bg-geovision-blue text-white flex items-center justify-center font-bold shadow-sm">
               <Sparkles className="w-4 h-4 animate-spin" />
             </div>
@@ -622,7 +627,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
               <p className="text-xs font-black text-slate-900 dark:text-white">
                 GeoAI Engine is processing NLU & Spatial Join...
               </p>
-              <p className="text-[10px] text-geovision-blue font-extrabold uppercase tracking-wider">
+              <p className="text-[10px] text-geovision-blue dark:text-sky-300 font-extrabold uppercase tracking-wider">
                 {aiStepState || 'Converting Natural Language to Structured GIS Request'}
               </p>
             </div>

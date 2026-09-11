@@ -10,17 +10,14 @@ import {
   ExternalLink,
   Heart,
   Share2,
-  CheckCircle2,
   Clock,
   Phone,
-  Layers,
   Sparkles,
   Compass,
   FileText,
   ShieldCheck,
   Info,
   ChevronRight,
-  Send,
   Sliders,
   Car,
   Footprints,
@@ -97,65 +94,12 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
       .sort((a, b) => a.calculatedDist - b.calculatedDist);
   }, [currentFeature, nearbyRadiusKm]);
 
-  // Compute Related Spatial Layers & Themes
-  const relatedLayers = useMemo(() => {
-    const theme = currentFeature.category;
-    switch (theme) {
-      case 'healthcare':
-        return [
-          { nameEn: 'Emergency Trauma Response Grid', nameAr: 'شبكة الاستجابة للطوارئ والإصابات', code: 'HEALTH_EMERGENCY_V2', authority: 'DoH Abu Dhabi' },
-          { nameEn: 'Public Health Risk & Epidemic Monitoring Zone', nameAr: 'منطقة رصد المخاطر الصحية والأوبئة', code: 'HEALTH_RISK_ZONES', authority: 'ADPHC' },
-          { nameEn: 'Pharmacy & Medical Supply Proximity', nameAr: 'توزيع الصيدليات والإمدادات الطبية', code: 'PHARMA_NET_2026', authority: 'DoH Abu Dhabi' },
-        ];
-      case 'education':
-        return [
-          { nameEn: 'School Bus Route Corridor Density', nameAr: 'كثافة مسارات حافلات المدارس', code: 'EDU_BUS_ROUTES_2026', authority: 'ADEK' },
-          { nameEn: 'Early Education Catchment Zones', nameAr: 'نطاقات الخدمات التعليمية المبكرة', code: 'EDU_CATCHMENT_ZONES', authority: 'ADEK' },
-          { nameEn: 'Higher Education & Research Facilities', nameAr: 'المؤسسات التعليمية العالية والمراكز البحثية', code: 'HIGHER_EDU_MAP', authority: 'ADEK' },
-        ];
-      case 'transport':
-        return [
-          { nameEn: 'Express Bus Route Connectivity Layer', nameAr: 'طبقة اتصالية مسارات الحافلات السريعة', code: 'TRANSIT_BUS_EXPRESS', authority: 'ITC Abu Dhabi' },
-          { nameEn: 'Smart Traffic Flow Sensor Array', nameAr: 'شبكة مستشعرات الحركة المرورية الذكية', code: 'TRAFFIC_SENSORS_REALTIME', authority: 'Integrated Transport Centre' },
-          { nameEn: 'EV Charging Infrastructure Nodes', nameAr: 'نقاط شحن السيارات الكهربائية', code: 'EV_CHARGING_NODES', authority: 'Department of Energy' },
-        ];
-      default:
-        return [
-          { nameEn: 'Abu Dhabi Master Urban Plan 2030 Zoning', nameAr: 'مخطط أبوظبي العمراني الرئيسي 2030', code: 'AD_URBAN_ZONING_2030', authority: 'DPM Abu Dhabi' },
-          { nameEn: 'Authoritative SDI Basemap Index', nameAr: 'مؤشر الخرائط الأساسية الموثوقة', code: 'SDI_BASEMAP_AUTHORITATIVE', authority: 'ADDA' },
-          { nameEn: 'Environmental Sensitivity Index', nameAr: 'مؤشر الحساسية البيئية', code: 'ENV_SENSITIVITY_GRID', authority: 'Environment Agency AD' },
-        ];
-    }
-  }, [currentFeature]);
-
-  // Suggested AI Follow-up Prompts
-  const suggestedAiPrompts = [
-    {
-      en: `Find all schools and transit hubs within 2 km of ${currentFeature.nameEn}`,
-      ar: `عرض المدارس ومحطات النقل على بعد 2 كم من ${currentFeature.nameAr}`,
-    },
-    {
-      en: `What is the spatial accessibility rating for ${currentFeature.nameEn}?`,
-      ar: `ما هو تقييم الوصول المكاني لـ ${currentFeature.nameAr}؟`,
-    },
-    {
-      en: `Show land-use and environmental compliance for this sector`,
-      ar: `عرض الاستخدامات والأثر البيئي لهذا القطاع`,
-    },
-  ];
-
   const handleShare = () => {
     const text = `${currentFeature.nameEn} - Abu Dhabi GeoVision SDI: https://geovision.ad.gov.ae/poi/${currentFeature.id}`;
     navigator.clipboard.writeText(text);
     setCopiedLink(true);
     appState.showToast(language === 'ar' ? 'تم نسخ الرابط المكاني' : 'Spatial result link copied to clipboard!');
     setTimeout(() => setCopiedLink(false), 2500);
-  };
-
-  const handleAskAI = (promptText: string) => {
-    handleClose();
-    appState.setCurrentView('map');
-    appState.sendAIMessage(promptText);
   };
 
   return (
@@ -306,17 +250,6 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
             <span>{language === 'ar' ? 'التفاصيل والخصائص' : 'Details'}</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab('related')}
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs font-black rounded-t-xl transition-all border-b-2 cursor-pointer ${
-              activeTab === 'related'
-                ? 'border-geovision-blue text-geovision-blue dark:text-blue-400 bg-white dark:bg-slate-800 shadow-2xs'
-                : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            <span>{language === 'ar' ? 'المعلومات ذات الصلة' : 'Related Information'}</span>
-          </button>
         </div>
 
         {/* Tab Content Body */}
@@ -639,63 +572,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
             </div>
           )}
 
-          {/* TAB 4: RELATED INFORMATION */}
-          {activeTab === 'related' && (
-            <div className="space-y-5 animate-in fade-in duration-200">
-              {/* Connected Spatial Themes & GIS Layers */}
-              <div className="space-y-3">
-                <h4 className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider flex items-center gap-2">
-                  <Layers className="w-4 h-4 text-purple-600" />
-                  <span>{language === 'ar' ? 'الطبقات الجغرافية والمستويات ذات الصلة' : 'Connected Spatial Datasets & Layers'}</span>
-                </h4>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  {relatedLayers.map((layer) => (
-                    <div
-                      key={layer.code}
-                      className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-purple-500 transition-all space-y-2 shadow-2xs"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="px-2 py-0.5 rounded-md bg-purple-100 dark:bg-purple-950 text-purple-700 dark:text-purple-300 font-mono text-[9px] font-black">
-                          {layer.code}
-                        </span>
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
-                      </div>
-                      <h5 className="text-xs font-black text-slate-900 dark:text-white leading-snug">
-                        {language === 'ar' ? layer.nameAr : layer.nameEn}
-                      </h5>
-                      <p className="text-[10px] text-slate-400 font-semibold">
-                        Provider: {layer.authority}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Suggested AI Spatial Analysis Follow-ups */}
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-slate-800 dark:to-slate-800/80 border border-blue-200/80 dark:border-slate-700 space-y-3">
-                <div className="flex items-center gap-2 text-xs font-black text-geovision-blue dark:text-blue-400 uppercase tracking-wider">
-                  <Sparkles className="w-4 h-4" />
-                  <span>{language === 'ar' ? 'تحليلات ذكية مقترحة عبر GeoVision AI' : 'Suggested Spatial Follow-up Queries'}</span>
-                </div>
-
-                <div className="space-y-2">
-                  {suggestedAiPrompts.map((prompt, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleAskAI(language === 'ar' ? prompt.ar : prompt.en)}
-                      className="w-full p-3 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-geovision-blue dark:hover:border-blue-500 text-left rtl:text-right transition-all flex items-center justify-between gap-3 group cursor-pointer shadow-2xs"
-                    >
-                      <span className="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-geovision-blue dark:group-hover:text-blue-400">
-                        ✨ {language === 'ar' ? prompt.ar : prompt.en}
-                      </span>
-                      <Send className="w-3.5 h-3.5 text-slate-400 group-hover:text-geovision-blue shrink-0 rtl:rotate-180" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Modal Footer Bar */}

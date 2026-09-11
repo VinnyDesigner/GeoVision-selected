@@ -65,19 +65,19 @@ export const MapToolbar: React.FC = () => {
   };
 
   const handleZoomIn = () => {
-    const newZoom = Math.min(mapZoom + 1, 19);
-    setMapCenterAndZoom(mapCenter, newZoom);
-    showToast(language === 'ar' ? `مستوى التكبير: ${newZoom}` : `Zoom level: ${newZoom}`);
+    window.dispatchEvent(new CustomEvent('geovision:zoomIn'));
+    const nextZoom = Math.min(Math.floor(mapZoom) + 1, 19);
+    showToast(language === 'ar' ? `مستوى التكبير: ${nextZoom}` : `Zoom level: ${nextZoom}`);
   };
 
   const handleZoomOut = () => {
-    const newZoom = Math.max(mapZoom - 1, 3);
-    setMapCenterAndZoom(mapCenter, newZoom);
-    showToast(language === 'ar' ? `مستوى التكبير: ${newZoom}` : `Zoom level: ${newZoom}`);
+    window.dispatchEvent(new CustomEvent('geovision:zoomOut'));
+    const nextZoom = Math.max(Math.ceil(mapZoom) - 1, 3);
+    showToast(language === 'ar' ? `مستوى التكبير: ${nextZoom}` : `Zoom level: ${nextZoom}`);
   };
 
   const handleHomeClick = () => {
-    setMapCenterAndZoom([24.4539, 54.3773], 12);
+    window.dispatchEvent(new CustomEvent('geovision:resetHome'));
     showToast(language === 'ar' ? 'تمت إعادة ضبط الخريطة إلى النطاق الافتراضي لأبوظبي' : 'Map reset to Abu Dhabi default extent');
   };
 

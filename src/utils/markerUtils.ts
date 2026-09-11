@@ -70,18 +70,35 @@ export const getCategorySvgIcon = (category: string, subcategory?: string): stri
 export const createGeoVisionMarkerIcon = (
   category: string,
   subcategory?: string,
-  compact = false
+  compact = false,
+  isSelected = false
 ): L.DivIcon => {
   const color = getCategoryColor(category);
   const iconSvg = getCategorySvgIcon(category, subcategory);
 
-  const headSize = compact ? 28 : 32;
-  const totalWidth = compact ? 30 : 34;
-  const totalHeight = compact ? 36 : 42;
-  const arrowSize = compact ? 6 : 8;
+  const headSize = isSelected ? (compact ? 34 : 40) : (compact ? 28 : 32);
+  const totalWidth = isSelected ? (compact ? 36 : 42) : (compact ? 30 : 34);
+  const totalHeight = isSelected ? (compact ? 44 : 52) : (compact ? 36 : 42);
+  const arrowSize = isSelected ? (compact ? 7 : 10) : (compact ? 6 : 8);
+
+  const pulseRingHtml = isSelected
+    ? `<div style="
+        position: absolute;
+        top: -8px;
+        left: -8px;
+        width: ${headSize + 16}px;
+        height: ${headSize + 16}px;
+        border-radius: 50%;
+        background: ${color}40;
+        border: 2px solid ${color};
+        box-shadow: 0 0 24px ${color};
+        animation: ping 1.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+        z-index: 0;
+      "></div>`
+    : '';
 
   const markerHtml = `
-    <div class="geovision-map-pointer category-${category}" style="
+    <div class="geovision-map-pointer category-${category} ${isSelected ? 'selected-pin' : ''}" style="
       position: relative;
       width: ${totalWidth}px;
       height: ${totalHeight}px;
@@ -89,19 +106,21 @@ export const createGeoVisionMarkerIcon = (
       flex-direction: column;
       align-items: center;
       cursor: pointer;
-      filter: drop-shadow(0 6px 14px ${color}55);
+      filter: drop-shadow(0 8px 20px ${color}88);
+      z-index: ${isSelected ? 9999 : 1};
     ">
+      ${pulseRingHtml}
       <div style="
         width: ${headSize}px;
         height: ${headSize}px;
         border-radius: 50%;
         background: ${color};
-        border: 2.5px solid #ffffff;
+        border: ${isSelected ? '3.5px solid #ffffff' : '2.5px solid #ffffff'};
         display: flex;
         align-items: center;
         justify-content: center;
         color: #ffffff;
-        box-shadow: 0 4px 12px ${color}50, inset 0 1px 0 rgba(255, 255, 255, 0.4);
+        box-shadow: ${isSelected ? `0 0 0 3px #176BFF, 0 8px 24px ${color}90` : `0 4px 12px ${color}50, inset 0 1px 0 rgba(255, 255, 255, 0.4)`};
         z-index: 2;
       ">
         ${iconSvg}
@@ -109,18 +128,18 @@ export const createGeoVisionMarkerIcon = (
       <div style="
         width: 0;
         height: 0;
-        border-left: 5px solid transparent;
-        border-right: 5px solid transparent;
+        border-left: 6px solid transparent;
+        border-right: 6px solid transparent;
         border-top: ${arrowSize}px solid ${color};
         margin-top: -3px;
         z-index: 1;
-        filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.15));
+        filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
       "></div>
     </div>
   `;
 
   return L.divIcon({
-    className: 'custom-leaflet-marker-pin',
+    className: `custom-leaflet-marker-pin ${isSelected ? 'is-selected-marker' : ''}`,
     html: markerHtml,
     iconSize: [totalWidth, totalHeight],
     iconAnchor: [totalWidth / 2, totalHeight],

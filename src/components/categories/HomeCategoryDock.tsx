@@ -99,8 +99,8 @@ export const HomeCategoryDock: React.FC = () => {
                   onClick={() => handleCategoryClick(cat.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all shrink-0 cursor-pointer ${
                     isSelected
-                      ? 'bg-[#215A9E] text-white shadow-md shadow-[#215A9E]/25 scale-105'
-                      : 'bg-white/70 dark:bg-slate-900/70 text-[#545860] dark:text-slate-200 hover:bg-[#7DA1C4]/20 hover:text-[#063360]'
+                      ? 'bg-[#215A9E] text-white shadow-md shadow-blue-500/30 scale-105'
+                      : 'bg-white/70 dark:bg-slate-900/90 text-[#545860] dark:text-slate-200 hover:bg-[#7DA1C4]/20 dark:hover:bg-slate-800 hover:text-[#063360] dark:hover:text-white border border-transparent dark:border-slate-800'
                   }`}
                 >
                   <IconComp className="w-3.5 h-3.5" />

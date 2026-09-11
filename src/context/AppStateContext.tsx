@@ -82,6 +82,8 @@ interface AppStateContextType {
   mapCenter: [number, number];
   mapZoom: number;
   setMapCenterAndZoom: (center: [number, number], zoom: number) => void;
+  zoomIn: () => void;
+  zoomOut: () => void;
   aoiResult: AOIResult | null;
   setAoiResult: (res: AOIResult | null) => void;
   bufferRadiusKm: number;
@@ -178,6 +180,14 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const [mapCenter, setMapCenter] = useState<[number, number]>([24.4539, 54.3773]);
   const [mapZoom, setMapZoom] = useState<number>(14);
+
+  const zoomIn = () => {
+    setMapZoom((prev) => Math.min(Math.floor(prev) + 1, 19));
+  };
+
+  const zoomOut = () => {
+    setMapZoom((prev) => Math.max(Math.ceil(prev) - 1, 3));
+  };
 
   const [aoiResult, setAoiResult] = useState<AOIResult | null>(null);
   const [bufferRadiusKm, setBufferRadiusKm] = useState<number>(0);
@@ -545,6 +555,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
   const setMapCenterAndZoom = (center: [number, number], zoom: number) => {
     setMapCenter(center);
     setMapZoom(zoom);
+    window.dispatchEvent(new CustomEvent('geovision:flyTo', { detail: { center, zoom } }));
   };
 
   // Favorites Management
@@ -4147,6 +4158,8 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
         mapCenter,
         mapZoom,
         setMapCenterAndZoom,
+        zoomIn,
+        zoomOut,
         aoiResult,
         setAoiResult,
         bufferRadiusKm,

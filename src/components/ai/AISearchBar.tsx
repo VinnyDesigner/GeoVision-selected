@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import {
-  Sparkles,
   ArrowRight,
   Compass,
   X,
@@ -191,9 +190,11 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
       >
         <div className="flex items-center gap-3 px-2 h-full">
           {/* Animated GeoVision AI Icon */}
-          <div className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#215A9E] text-white shadow-md shadow-[#215A9E]/30 shrink-0">
-            <Sparkles className="w-5 h-5 animate-pulse" />
-          </div>
+          <img
+            src="/assets/logos/geovision-ai-avatar.png"
+            alt="GeoVision AI"
+            className="w-9 h-9 object-contain shrink-0"
+          />
 
           {/* Text Input with live focus */}
           <input
