@@ -156,7 +156,8 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const clearUserDrawnShapes = () => {
     setUserDrawnShapes([]);
-    showToast('All drawn shapes cleared');
+    setAoiResult(null);
+    showToast('All spatial drawings cleared');
   };
 
   const [selectedFeature, setSelectedFeature] = useState<GeoFeature | null>(null);
@@ -511,15 +512,6 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
       setSmartFilters(prev => ({ ...prev, categories: [] }));
     }
 
-    let updatedCatIds: string[];
-    if (selectedCategoryIds.includes(catId)) {
-      updatedCatIds = selectedCategoryIds.filter(id => id !== catId);
-    } else {
-      updatedCatIds = [...selectedCategoryIds, catId];
-    }
-    setSelectedCategoryIds(updatedCatIds);
-
-    // Sync subcategories for selected category
     const categorySubIds: Record<string, string[]> = {
       healthcare: ['hospitals', 'clinics', 'pharmacies'],
       education: ['charter_schools', 'nurseries', 'pod_schools', 'public_schools', 'private_schools', 'universities'],
@@ -527,12 +519,31 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
       government: ['tamm_centers', 'municipalities', 'registries'],
       parks: ['public_parks', 'beaches', 'sports_fields'],
       utilities: ['power_substations', 'recycling'],
+      public_safety: ['police_stations', 'civil_defense'],
+      tourism: ['museums', 'attractions', 'heritage'],
+      environment: ['protected_reserves', 'air_monitoring'],
+      agriculture: ['farms', 'agri_research'],
+      hydrography: ['coastal_zones', 'marine_reserves'],
+      ports_logistics: ['commercial_ports', 'freight_hubs'],
     };
 
-    if (updatedCatIds.includes(catId) && categorySubIds[catId]) {
-      const mergedSubs = Array.from(new Set([...selectedSubcategoryIds, ...categorySubIds[catId]]));
-      setSelectedSubcategoryIds(mergedSubs);
+    let updatedCatIds: string[];
+    let updatedSubIds = [...selectedSubcategoryIds];
+
+    if (selectedCategoryIds.includes(catId)) {
+      // DESELECTING category
+      updatedCatIds = selectedCategoryIds.filter(id => id !== catId);
+      const subsToRemove = categorySubIds[catId] || [];
+      updatedSubIds = updatedSubIds.filter(id => !subsToRemove.includes(id));
+    } else {
+      // SELECTING category
+      updatedCatIds = [...selectedCategoryIds, catId];
+      const subsToAdd = categorySubIds[catId] || [];
+      updatedSubIds = Array.from(new Set([...updatedSubIds, ...subsToAdd]));
     }
+
+    setSelectedCategoryIds(updatedCatIds);
+    setSelectedSubcategoryIds(updatedSubIds);
   };
 
   const toggleSubcategorySelection = (subId: string) => {
@@ -598,27 +609,55 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
       ? selectedCategoryIds
       : (smartFilters.categories.length > 0 ? smartFilters.categories : []);
 
-    // 1. Do not show features on the map unless a category or subcategory is explicitly selected
+    // 1. If NO category and NO subcategory is selected (unselected / cleared state), SHOW ALL features on the map by default!
     if (activeCats.length === 0 && selectedSubcategoryIds.length === 0) {
+      if (smartFilters.distanceKm !== null && feat.distanceKm !== undefined && feat.distanceKm > smartFilters.distanceKm) {
+        return false;
+      }
+      if (smartFilters.minRating !== null && feat.rating !== undefined && feat.rating < smartFilters.minRating) {
+        return false;
+      }
+      return true;
+    }
+
+    // 2. Category match check
+    const catMatch = activeCats.length > 0 && activeCats.includes(feat.category);
+
+    // 3. Subcategory checklist match check (with fuzzy subcategory mapping)
+    let subMatch = false;
+    if (selectedSubcategoryIds.length > 0) {
+      const featSub = (feat.subcategory || '').toLowerCase();
+      const featCat = (feat.category || '').toLowerCase();
+
+      subMatch = selectedSubcategoryIds.some(subId => {
+        const lowerSub = subId.toLowerCase();
+        return (
+          featSub === lowerSub ||
+          featSub.includes(lowerSub) ||
+          lowerSub.includes(featSub) ||
+          (featCat === 'education' && lowerSub.includes('school') && (featSub.includes('school') || featSub.includes('edu') || featSub.includes('academy') || featSub.includes('university'))) ||
+          (featCat === 'education' && lowerSub.includes('uni') && featSub.includes('uni')) ||
+          (featCat === 'healthcare' && lowerSub.includes('hosp') && featSub.includes('hosp')) ||
+          (featCat === 'healthcare' && lowerSub.includes('clinic') && featSub.includes('clinic')) ||
+          (featCat === 'healthcare' && lowerSub.includes('pharm') && featSub.includes('pharm')) ||
+          (featCat === 'parks' && (lowerSub.includes('park') || lowerSub.includes('beach')) && (featSub.includes('park') || featSub.includes('beach') || featSub.includes('rec'))) ||
+          (featCat === 'government' && (lowerSub.includes('tamm') || lowerSub.includes('muni') || lowerSub.includes('police') || lowerSub.includes('civil')) && (featSub.includes('tamm') || featSub.includes('muni') || featSub.includes('gov') || featSub.includes('police') || featSub.includes('civil'))) ||
+          (featCat === 'transport' && (lowerSub.includes('bus') || lowerSub.includes('parking') || lowerSub.includes('taxi') || lowerSub.includes('port')) && (featSub.includes('bus') || featSub.includes('station') || featSub.includes('park') || featSub.includes('taxi') || featSub.includes('port')))
+        );
+      });
+    }
+
+    // 4. Combine Category & Subcategory Matching
+    if (!catMatch && !subMatch) {
       return false;
     }
 
-    // 2. Category match: if active categories exist, feature category must match
-    if (activeCats.length > 0 && !activeCats.includes(feat.category)) {
-      return false;
-    }
-
-    // 3. Subcategory checklist match
-    if (feat.subcategory && selectedSubcategoryIds.length > 0 && !selectedSubcategoryIds.includes(feat.subcategory)) {
-      return false;
-    }
-
-    // 3. Distance filter
+    // 5. Distance filter
     if (smartFilters.distanceKm !== null && feat.distanceKm !== undefined) {
       if (feat.distanceKm > smartFilters.distanceKm) return false;
     }
 
-    // 4. Rating filter
+    // 6. Rating filter
     if (smartFilters.minRating !== null && feat.rating !== undefined) {
       if (feat.rating < smartFilters.minRating) return false;
     }

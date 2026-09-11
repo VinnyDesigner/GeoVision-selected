@@ -183,7 +183,60 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
 
     // About & Help
     'about.title': 'About GeoVision',
-    'about.body': 'GeoVision is Abu Dhabi’s premier AI-enabled spatial intelligence platform, developed for the Department of Government Enablement. It bridges ordinary citizens, urban planners, and GIS specialists through natural language geospatial AI.',
+    'about.body': 'A collaborative initiative uniting Abu Dhabi\'s leading government technology organizations to deliver seamless, integrated public services and spatial intelligence across the emirate.',
+    'about.tagline': 'Abu Dhabi Government GIS Initiative',
+    'about.exploreBtn': 'Explore GeoVision',
+    'about.dgeBtn': 'Visit DGE Website',
+    'about.sdiBtn': 'Visit AD-SDI Portal',
+    
+    // Stats
+    'about.stat1Num': '100%',
+    'about.stat1Label': 'DIGITAL TRANSFORMATION',
+    'about.stat2Num': '50+',
+    'about.stat2Label': 'GOVERNMENT STAKEHOLDERS',
+    'about.stat3Num': '500+',
+    'about.stat3Label': 'GEOSPATIAL DATASETS',
+    'about.stat4Num': '< 50ms',
+    'about.stat4Label': 'SPATIAL QUERY LATENCY',
+
+    // DGE Section
+    'about.dgeTag': 'GOVERNMENT PARTNER',
+    'about.dgeTitle': 'Department of Government Enablement',
+    'about.dgeBody1': 'The Department of Government Enablement (DGE) serves as a centralized government enabler, delivering high-quality services to Abu Dhabi government entities, employees, citizens, residents, and businesses.',
+    'about.dgeBody2': 'As the team behind the teams, DGE drives Abu Dhabi\'s transformation into a future-ready, digitally advanced government by building shared platforms and capabilities. DGE leads the Abu Dhabi Government Digital Strategy 2023-2027, steering 100% digitalization and automation of government services and platforms.',
+    'about.dgeCard1Title': 'Centralized Government Enabler',
+    'about.dgeCard1Desc': 'Delivers high-quality services to Abu Dhabi government entities, employees, citizens, and residents.',
+    'about.dgeCard2Title': 'Smart Digital Government',
+    'about.dgeCard2Desc': 'Leads the implementation of the Abu Dhabi Government Digital Strategy 2023-2027, driving digital transformation and automation.',
+    'about.dgeCard3Title': 'Team Behind the Teams',
+    'about.dgeCard3Desc': 'The driving force behind Abu Dhabi\'s transformation into a future-ready, digitally advanced government.',
+
+    // AD-SDI Section
+    'about.sdiTag': 'SPATIAL INFRASTRUCTURE',
+    'about.sdiTitle': 'Abu Dhabi Spatial Data Infrastructure',
+    'about.sdiBody1': 'Abu Dhabi Spatial Data Infrastructure (AD-SDI) is a government-wide network orchestrated by the Department of Government Enablement that enables the secure sharing and exchange of geospatial data among government entities and stakeholders.',
+    'about.sdiBody2': 'Through AD-SDI, the Abu Dhabi Spatial Data Information Center (AD-SDIC) has gained international recognition for its collaborative approach with key government stakeholder entities, delivering open, timely, and accurate geographic information.',
+    'about.sdiCard1Title': 'Geospatial Data Viewer',
+    'about.sdiCard1Desc': 'Provides easy access to view maps and analyze spatial data across Abu Dhabi.',
+    'about.sdiCard2Title': 'Open Data Sharing',
+    'about.sdiCard2Desc': 'Facilitates the sharing and exchange of geospatial data among government entities and stakeholders.',
+    'about.sdiCard3Title': 'Spatially Enabled Services',
+    'about.sdiCard3Desc': 'Promotes the increased GIS capabilities with easy and timely access to highly accurate spatial data.',
+
+    // Mission Section
+    'about.missionTitle': 'Our Mission & Principles',
+    'about.missionSubtitle': 'GeoVision empowers smarter public services across Abu Dhabi by combining digital government innovation with geospatial intelligence.',
+    'about.mCard1Title': 'Accessible Services',
+    'about.mCard1Desc': 'Instantly locate tourism, civic infrastructure, government, transit, healthcare, and education facilities through our intuitive spatial map interface.',
+    'about.mCard2Title': 'Authoritative Open Data',
+    'about.mCard2Desc': 'Leverages official Abu Dhabi government geospatial datasets to provide accurate, up-to-date, and authoritative spatial data.',
+    'about.mCard3Title': 'Smart Digital Government',
+    'about.mCard3Desc': 'Supports Abu Dhabi\'s vision toward a digitally transformed, AI-empowered intelligent government infrastructure.',
+
+    // CTA Section
+    'about.ctaTitle': 'Ready to Explore Abu Dhabi?',
+    'about.ctaSubtitle': 'Access real-time GIS datasets across Tourism, Government Facilities, Civic Infrastructure, Transit, Healthcare & Wellness, and Education.',
+    'about.ctaBtn': 'Open GeoVision Explorer',
     'help.title': 'GeoVision Help & Support Center',
     'help.searchPlaceholder': 'Search help topics and tutorials...',
     'help.faq1Q': 'How do I search for spatial data using natural language?',
@@ -381,8 +434,61 @@ export const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'feedback.success': 'شكراً لك! تم إرسال ملاحظاتك إلى فريق عمل منصة GeoVision.',
 
     // About & Help
-    'about.title': 'عن منصة GeoVision',
-    'about.body': 'منصة GeoVision هي المنصة الذكية الرائدة للمعلومات الجغرافية والمكانية في إمارة أبوظبي، طُورت لصالح دائرة التمكين الحكومي. تدمج المنصة الذكاء الاصطناعي التفاعلي مع نظم المعلومات الجغرافية لتقديم تجربة استكشاف مكانية سلسة.',
+    'about.title': 'استكشف أبوظبي عبر GeoVision',
+    'about.body': 'مبادرة تعاونية تجمع أبرز الجهات الحكومية التقنية في أبوظبي لتقديم خدمات حكومية مدمجة وذكاء مكاني متكامل في الإمارة.',
+    'about.tagline': 'مبادرة نظم المعلومات الجغرافية الحكومية لأبوظبي',
+    'about.exploreBtn': 'استكشاف GeoVision',
+    'about.dgeBtn': 'زيارة موقع التمكين الحكومي',
+    'about.sdiBtn': 'زيارة بوابة البيانات المكانية AD-SDI',
+    
+    // Stats
+    'about.stat1Num': '100%',
+    'about.stat1Label': 'تحول رقمي شامل',
+    'about.stat2Num': '50+',
+    'about.stat2Label': 'جهة حكومية شريكة',
+    'about.stat3Num': '500+',
+    'about.stat3Label': 'طبقة بيانات جغرافية',
+    'about.stat4Num': '< 50ms',
+    'about.stat4Label': 'سرعة استجابة الاستعلام المكاني',
+
+    // DGE Section
+    'about.dgeTag': 'الشريك الحكومي',
+    'about.dgeTitle': 'دائرة التمكين الحكومي',
+    'about.dgeBody1': 'تعمل دائرة التمكين الحكومي كممكن حكومي مركزي يقدم خدمات عالية الجودة للجهات الحكومية في أبوظبي والموظفين والمواطنين والمقيمين والشركات.',
+    'about.dgeBody2': 'باعتبارها الفريق الداعم لجميع فرق العمل، تقود دائرة التمكين الحكومي تحول أبوظبي نحو حكومة مستقبلية ومتقدمة رقمياً عبر بناء منصات وقدرات مشتركة. وتقود الدائرة استراتيجية حكومة أبوظبي الرقمية 2023-2027 لتوجيه التحول الرقمي الكامل.',
+    'about.dgeCard1Title': 'ممكن حكومي مركزي',
+    'about.dgeCard1Desc': 'يقدم خدمات عالية الجودة للجهات الحكومية في أبوظبي والموظفين والمواطنين والمقيمين.',
+    'about.dgeCard2Title': 'حكومة رقمية ذكية',
+    'about.dgeCard2Desc': 'يقود تنفيذ استراتيجية حكومة أبوظبي الرقمية 2023-2027 لدفع التحول الرقمي والأتمتة.',
+    'about.dgeCard3Title': 'الفريق الداعم لجميع الفرق',
+    'about.dgeCard3Desc': 'القوة الداقعة وراء تحول أبوظبي إلى حكومة ذكية جاهزة للمستقبل.',
+
+    // AD-SDI Section
+    'about.sdiTag': 'البنية التحتية المكانية',
+    'about.sdiTitle': 'البنية التحتية للبيانات المكانية لأبوظبي',
+    'about.sdiBody1': 'تعد البنية التحتية للبيانات المكانية في أبوظبي (AD-SDI) شبكة حكومية تشرف عليها دائرة التمكين الحكومي لتمكين المشاركة الآمنة وتبادل البيانات المكانية بين الجهات الحكومية.',
+    'about.sdiBody2': 'من خلال AD-SDI، حاز مركز أبوظبي للمعلومات الجغرافية المكانية على تقدير دولي لنهجه التعاوني مع الشركاء الحكوميين وتقديم معلومات جغرافية دقيقة وموثوقة.',
+    'about.sdiCard1Title': 'مستعرض البيانات المكانية',
+    'about.sdiCard1Desc': 'يوفر وصولاً سهلاً لاستعراض الخرائط وتحليل البيانات المكانية في إمارة أبوظبي.',
+    'about.sdiCard2Title': 'مشاركة البيانات المفتوحة',
+    'about.sdiCard2Desc': 'يسهل تبادل ومشاركة البيانات الجغرافية المكانية بين الجهات الحكومية والشركاء.',
+    'about.sdiCard3Title': 'خدمات جغرافية ممكّنة',
+    'about.sdiCard3Desc': 'يعزز قدرات نظم المعلومات الجغرافية مع إمكانية الوصول السريع والسهل للبيانات المكانية.',
+
+    // Mission Section
+    'about.missionTitle': 'رؤيتنا ومبادئنا',
+    'about.missionSubtitle': 'تمكّن GeoVision الخدمات العامة الأكثر ذكاءً في أبوظبي عبر دمج الابتكار الحكومي الرقمي مع الذكاء المكاني الجغرافي.',
+    'about.mCard1Title': 'خدمات سهلة الوصول',
+    'about.mCard1Desc': 'تحديد مواقع السياحة والبنية التحتية والخدمات الحكومية والنقل والرعاية الصحية والتعليم فوراً عبر خريطة تفاعلية.',
+    'about.mCard2Title': 'بيانات حكومية موثوقة ومفتوحة',
+    'about.mCard2Desc': 'تعتمد على البيانات الجغرافية الرسمية لحكومة أبوظبي لتقديم معلومات مكانية دقيقة ومحدثة.',
+    'about.mCard3Title': 'حكومة رقمية ذكية',
+    'about.mCard3Desc': 'تدعم رؤية أبوظبي نحو بنية تحتية حكومية ذكية ومتحولة رقمياً ومدعومة بالذكاء الاصطناعي.',
+
+    // CTA Section
+    'about.ctaTitle': 'جاهز لاستكشاف أبوظبي؟',
+    'about.ctaSubtitle': 'استكشف البيانات الجغرافية الفورية في مجالات السياحة والمنشآت الحكومية والبنية التحتية والنقل والرعاية الصحية والتعليم.',
+    'about.ctaBtn': 'فتح مستكشف GeoVision',
     'help.title': 'مركز المساعدة والدعم الفني',
     'help.searchPlaceholder': 'البحث في مواضيع المساعدة والإرشادات...',
     'help.faq1Q': 'كيف يمكنني البحث عن البيانات الجغرافية باللغة الطبيعية؟',

@@ -471,13 +471,29 @@ export const MapWorkspace: React.FC = () => {
     }
   }, [activeTool, aoiResult]);
 
+  const tempShapeRef = useRef<L.Layer | null>(null);
+  const tempPointsRef = useRef<L.LatLng[]>([]);
+  const isDrawingRef = useRef<boolean>(false);
+  const startLatLngRef = useRef<L.LatLng | null>(null);
+
   // Render User Drawn Shapes (Point, Circle, Polygon, Rectangle)
   useEffect(() => {
     if (!mapInstanceRef.current || !drawnLayersGroupRef.current) return;
 
     drawnLayersGroupRef.current.clearLayers();
 
+    if (tempShapeRef.current) {
+      tempShapeRef.current.remove();
+      tempShapeRef.current = null;
+    }
+    tempPointsRef.current = [];
+    isDrawingRef.current = false;
+    startLatLngRef.current = null;
 
+    if (userDrawnShapes.length === 0 && aoiPolygonRef.current) {
+      aoiPolygonRef.current.remove();
+      aoiPolygonRef.current = null;
+    }
 
     userDrawnShapes.forEach((shape) => {
       if (shape.type === 'point') {
@@ -528,11 +544,6 @@ export const MapWorkspace: React.FC = () => {
       }
     });
   }, [userDrawnShapes]);
-
-  const tempShapeRef = useRef<L.Layer | null>(null);
-  const tempPointsRef = useRef<L.LatLng[]>([]);
-  const isDrawingRef = useRef<boolean>(false);
-  const startLatLngRef = useRef<L.LatLng | null>(null);
 
   // Handle Map Click for Identify / Select Tool
   useEffect(() => {

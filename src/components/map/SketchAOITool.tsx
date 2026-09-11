@@ -162,6 +162,7 @@ export const SketchAOITool: React.FC = () => {
     setSketchState('drawing');
     setAoiResult(null);
     clearUserDrawnShapes();
+    showToast(language === 'ar' ? 'تم مسح جميع الرسومات والمناطق المكانية' : 'All spatial drawings & shapes cleared');
   };
 
   return (
