@@ -165,7 +165,20 @@ export const CategoryChecklistDrawer: React.FC<CategoryChecklistDrawerProps> = (
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
           </div>
 
-          <div className="flex justify-end">
+          <div className="flex items-center justify-between px-1 pt-0.5">
+            <button
+              onClick={() => {
+                const allCats = CATEGORIES.map((c) => c.id);
+                const allSubs = CATEGORIES.flatMap((c) => c.subcategories.map((s) => s.id));
+                setSelectedCategoryIds(allCats);
+                setSelectedSubcategoryIds(allSubs);
+                showToast('All spatial categories selected');
+              }}
+              className="text-[10px] font-black uppercase tracking-wider text-geovision-blue dark:text-blue-400 hover:underline cursor-pointer"
+            >
+              SELECT ALL
+            </button>
+
             <button
               onClick={handleClearAllGlobally}
               className="text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white cursor-pointer"

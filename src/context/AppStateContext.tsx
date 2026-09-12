@@ -470,22 +470,16 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
     return TRANSLATIONS[language][key] || key;
   };
 
-  // Dark mode side effect with persistence and basemap synchronization
+  // Dark mode side effect with persistence
   useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.setAttribute('data-theme', 'dark');
       document.body.classList.add('dark');
-      if (activeBasemap === 'dge' || activeBasemap === 'light') {
-        setActiveBasemap('dark');
-      }
     } else {
       document.documentElement.classList.remove('dark');
       document.documentElement.setAttribute('data-theme', 'light');
       document.body.classList.remove('dark');
-      if (activeBasemap === 'dark') {
-        setActiveBasemap('dge');
-      }
     }
     try {
       localStorage.setItem('geovision_theme', theme);
@@ -609,15 +603,9 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
       ? selectedCategoryIds
       : (smartFilters.categories.length > 0 ? smartFilters.categories : []);
 
-    // 1. If NO category and NO subcategory is selected (unselected / cleared state), SHOW ALL features on the map by default!
-    if (activeCats.length === 0 && selectedSubcategoryIds.length === 0) {
-      if (smartFilters.distanceKm !== null && feat.distanceKm !== undefined && feat.distanceKm > smartFilters.distanceKm) {
-        return false;
-      }
-      if (smartFilters.minRating !== null && feat.rating !== undefined && feat.rating < smartFilters.minRating) {
-        return false;
-      }
-      return true;
+    // 1. If NO category and NO subcategory is selected (cleared state), hide category features from map
+    if (selectedCategoryIds.length === 0 && selectedSubcategoryIds.length === 0 && smartFilters.categories.length === 0) {
+      return false;
     }
 
     // 2. Category match check

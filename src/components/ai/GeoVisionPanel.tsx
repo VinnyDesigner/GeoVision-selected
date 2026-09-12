@@ -311,19 +311,40 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
     }
   };
 
-  const scrollToLatestMessage = () => {
+  const scrollToStartOfLatestQuery = () => {
     if (!chatContainerRef.current) return;
+
+    // Find latest user message to scroll to the start of the user's query and result
+    const lastUserMsg = [...aiMessages].reverse().find((m) => m.sender === 'user');
+    const targetId = lastUserMsg
+      ? `msg-${lastUserMsg.id}`
+      : aiMessages.length > 0
+      ? `msg-${aiMessages[aiMessages.length - 1].id}`
+      : null;
+
+    if (targetId) {
+      const targetEl = chatContainerRef.current.querySelector(`#${targetId}`) as HTMLElement;
+      if (targetEl) {
+        const targetTop = targetEl.offsetTop - 12;
+        chatContainerRef.current.scrollTo({
+          top: Math.max(0, targetTop),
+          behavior: 'smooth',
+        });
+        return;
+      }
+    }
+
     chatContainerRef.current.scrollTo({
-      top: chatContainerRef.current.scrollHeight,
+      top: 0,
       behavior: 'smooth',
     });
   };
 
   useEffect(() => {
-    scrollToLatestMessage();
-    const timer1 = setTimeout(scrollToLatestMessage, 60);
-    const timer2 = setTimeout(scrollToLatestMessage, 200);
-    const timer3 = setTimeout(scrollToLatestMessage, 500);
+    scrollToStartOfLatestQuery();
+    const timer1 = setTimeout(scrollToStartOfLatestQuery, 60);
+    const timer2 = setTimeout(scrollToStartOfLatestQuery, 200);
+    const timer3 = setTimeout(scrollToStartOfLatestQuery, 500);
     return () => {
       clearTimeout(timer1);
       clearTimeout(timer2);
@@ -502,7 +523,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
             const isEditingThis = editingMsgId === msg.id;
 
             return (
-              <div key={msg.id} className="flex flex-col items-end scroll-mt-3 group/usermsg w-full">
+              <div key={msg.id} id={`msg-${msg.id}`} className="flex flex-col items-end scroll-mt-3 group/usermsg w-full">
                 <div className="flex items-center gap-2 mb-1 text-[11px] font-bold text-slate-400">
                   <button
                     onClick={() => handleStartEdit(msg.id, textToDisplay)}
@@ -562,6 +583,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
           return (
             <div
               key={msg.id}
+              id={`msg-${msg.id}`}
               className="flex flex-col items-start scroll-mt-3"
             >
               {/* Sender Badge */}

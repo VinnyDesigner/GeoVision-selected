@@ -138,7 +138,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
 
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                    isPriv ? 'bg-purple-500/80 text-white' : 'bg-emerald-500/80 text-white'
+                    isPriv ? 'bg-slate-700/80 text-white' : 'bg-blue-600/80 text-white'
                   }`}
                 >
                   {isPriv ? (language === 'ar' ? 'خاص' : 'Private') : (language === 'ar' ? 'عام' : 'Public')}
@@ -300,22 +300,22 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-purple-50/70 dark:bg-purple-950/40 border border-purple-200/60 dark:border-purple-800/60 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center shrink-0">
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-geovision-blue dark:text-blue-300 flex items-center justify-center shrink-0">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase">
                       {language === 'ar' ? 'تصنيف البيانات' : 'SDI Trust'}
                     </div>
-                    <div className="text-xs sm:text-sm font-black text-purple-700 dark:text-purple-300">
+                    <div className="text-xs sm:text-sm font-black text-geovision-blue dark:text-blue-300">
                       {currentFeature.isAuthoritative ? 'Level 1 Verified' : 'Standard SDI'}
                     </div>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-2xl bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-800/60 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-geovision-blue dark:text-blue-300 flex items-center justify-center shrink-0">
                     <MapPin className="w-5 h-5" />
                   </div>
                   <div>
@@ -341,7 +341,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
                       const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${currentFeature.lat},${currentFeature.lng}`;
                       window.open(gmapsUrl, '_blank');
                     }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black transition-all shadow-md shadow-emerald-600/20 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-[#063360] text-white text-xs font-black transition-all shadow-md shadow-blue-600/20 cursor-pointer"
                   >
                     <ExternalLink className="w-4 h-4" />
                     <span>{language === 'ar' ? 'التنقل عبر خرائط جوجل' : 'Navigate via Google Maps'}</span>
@@ -355,7 +355,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
                       appState.setCurrentView('map');
                       appState.showToast(`Zoomed to ${currentFeature.nameEn} on map workspace`);
                     }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-geovision-blue hover:bg-blue-600 text-white text-xs font-black transition-all shadow-md shadow-blue-500/20 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-geovision-blue hover:bg-[#063360] text-white text-xs font-black transition-all shadow-md shadow-blue-500/20 cursor-pointer"
                   >
                     <Navigation className="w-4 h-4" />
                     <span>{language === 'ar' ? 'التركيز في الخريطة' : 'Focus on Map Workspace'}</span>
@@ -370,7 +370,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
                       appState.setCurrentView('map');
                       appState.showToast(`Applied 3 km spatial buffer around ${currentFeature.nameEn}`);
                     }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-xs font-black transition-all shadow-md shadow-purple-600/20 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-geovision-blue hover:bg-[#063360] text-white text-xs font-black transition-all shadow-md shadow-blue-600/20 cursor-pointer"
                   >
                     <Sliders className="w-4 h-4" />
                     <span>{language === 'ar' ? 'إنشاء نطاق تحليلي (3 كم)' : 'Create 3 km Buffer Zone'}</span>

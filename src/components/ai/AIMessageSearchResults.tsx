@@ -52,16 +52,16 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
     return {
       icon: (
         <div className="relative flex items-center justify-center">
-          <Building2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+          <Building2 className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />
           <span className="absolute -top-1 -right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#215A9E]"></span>
           </span>
         </div>
       ),
-      bgGradient: 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-200/90 dark:border-emerald-500/30',
-      badgeBg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-300/80 dark:border-emerald-500/40',
-      accentColor: 'from-emerald-500 via-teal-500 to-cyan-500',
+      bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
+      badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
+      accentColor: 'from-[#063360] via-[#215A9E] to-sky-400',
     };
   }
 
@@ -73,10 +73,10 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
     subLower.includes('academy')
   ) {
     return {
-      icon: <GraduationCap className="w-4 h-4 text-amber-600 dark:text-amber-400" />,
-      bgGradient: 'bg-amber-50 dark:bg-amber-500/15 border-amber-200/90 dark:border-amber-500/30',
-      badgeBg: 'bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-300 border-amber-300/80 dark:border-amber-500/40',
-      accentColor: 'from-amber-500 via-orange-500 to-yellow-500',
+      icon: <GraduationCap className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+      bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
+      badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
+      accentColor: 'from-[#215A9E] via-blue-500 to-sky-400',
     };
   }
 
@@ -88,10 +88,10 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
     subLower.includes('garden')
   ) {
     return {
-      icon: <Trees className="w-4 h-4 text-green-600 dark:text-green-400" />,
-      bgGradient: 'bg-green-50 dark:bg-green-500/15 border-green-200/90 dark:border-green-500/30',
-      badgeBg: 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-300 border-green-300/80 dark:border-green-500/40',
-      accentColor: 'from-green-500 via-emerald-500 to-teal-500',
+      icon: <Trees className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+      bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
+      badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
+      accentColor: 'from-[#215A9E] via-sky-600 to-blue-400',
     };
   }
 
@@ -103,10 +103,10 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
     subLower.includes('civil')
   ) {
     return {
-      icon: <Landmark className="w-4 h-4 text-blue-600 dark:text-sky-400" />,
-      bgGradient: 'bg-blue-50 dark:bg-sky-500/15 border-blue-200/90 dark:border-sky-500/30',
-      badgeBg: 'bg-blue-100 text-blue-800 dark:bg-sky-500/20 dark:text-sky-300 border-blue-300/80 dark:border-sky-500/40',
-      accentColor: 'from-blue-600 via-indigo-600 to-sky-500',
+      icon: <Landmark className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+      bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
+      badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
+      accentColor: 'from-[#063360] via-[#215A9E] to-sky-500',
     };
   }
 
@@ -118,18 +118,18 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
     subLower.includes('hotel')
   ) {
     return {
-      icon: <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
-      bgGradient: 'bg-purple-50 dark:bg-purple-500/15 border-purple-200/90 dark:border-purple-500/30',
-      badgeBg: 'bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-300 border-purple-300/80 dark:border-purple-500/40',
-      accentColor: 'from-purple-500 via-fuchsia-500 to-pink-500',
+      icon: <Sparkles className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+      bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
+      badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
+      accentColor: 'from-[#215A9E] via-sky-500 to-blue-600',
     };
   }
 
   return {
-    icon: <Building className="w-4 h-4 text-sky-600 dark:text-sky-400" />,
-    bgGradient: 'bg-sky-50 dark:bg-sky-500/15 border-sky-200/90 dark:border-sky-500/30',
-    badgeBg: 'bg-sky-100 text-sky-800 dark:bg-sky-500/20 dark:text-sky-300 border-sky-300/80 dark:border-sky-500/40',
-    accentColor: 'from-sky-500 via-blue-500 to-indigo-500',
+    icon: <Building className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+    bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
+    badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
+    accentColor: 'from-[#063360] via-[#215A9E] to-sky-400',
   };
 };
 
@@ -219,6 +219,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
   const layerRef = useRef<HTMLDivElement>(null);
   const typeRef = useRef<HTMLDivElement>(null);
+  const featureListRef = useRef<HTMLDivElement>(null);
 
   const setGuestPromptOpen = appState.setGuestPromptOpen;
   const user = appState.user;
@@ -229,6 +230,12 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
       setSelectedCategories(appState.selectedCategoryIds);
     }
   }, [appState.selectedCategoryIds]);
+
+  useEffect(() => {
+    if (featureListRef.current) {
+      featureListRef.current.scrollTop = 0;
+    }
+  }, [selectedCategories, selectedType, searchFilter]);
 
   // Close menus when clicking anywhere outside of their respective containers
   useEffect(() => {
@@ -632,7 +639,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
           <button
             type="button"
             onClick={() => setShowAnalytics(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-50 dark:bg-slate-800 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-[11px] font-black border border-indigo-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white text-[11px] font-black border border-blue-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
             title={language === 'ar' ? 'تحليلات النتائج' : 'View Query Analytics'}
           >
             <BarChart2 className="w-3.5 h-3.5" />
@@ -642,7 +649,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
           <button
             type="button"
             onClick={() => setShowPrintReport(true)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 dark:bg-slate-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-600 hover:text-white text-[11px] font-black border border-emerald-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white text-[11px] font-black border border-blue-200 dark:border-slate-700 transition-all cursor-pointer shadow-2xs"
             title={language === 'ar' ? 'طباعة التقرير' : 'Print Search Report'}
           >
             <Printer className="w-3.5 h-3.5" />
@@ -779,7 +786,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
             <button
               type="button"
               onClick={handleClearFilters}
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-600 dark:bg-rose-950/60 text-rose-600 dark:text-rose-300 hover:text-white border border-rose-200 dark:border-rose-800/80 text-[10px] font-black transition-all cursor-pointer shadow-2xs"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-[#215A9E] hover:text-white border border-slate-200 dark:border-slate-700 text-[10px] font-black transition-all cursor-pointer shadow-2xs"
               title={language === 'ar' ? 'إعادة تعيين الفلاتر' : 'Reset all filters'}
             >
               <RotateCcw className="w-3 h-3" />
@@ -817,7 +824,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
           {language === 'ar' ? 'لا توجد نتائج مطابقة للتصفية المختارة.' : 'No spatial matches found for selected category/type filter.'}
         </div>
       ) : (
-        <div className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1 scrollbar-none">
+        <div ref={featureListRef} className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1 scrollbar-none">
           {displayedFeatures.map((feat) => {
             const isPriv = isFeaturePrivate(feat);
             const isFav = isFavorite(feat.nameEn);
@@ -857,15 +864,15 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
                   {/* Badges (Rating & Sector) */}
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="flex items-center gap-0.5 text-[10px] font-black text-amber-600 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/20 px-1.5 py-0.5 rounded-md border border-amber-200 dark:border-amber-500/40">
+                    <span className="flex items-center gap-0.5 text-[10px] font-black text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/80 px-1.5 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700">
                       <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
                       <span>4.8</span>
                     </span>
                     <span
                       className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border ${
                         isPriv
-                          ? 'bg-purple-50 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300 border-purple-200 dark:border-purple-500/40'
-                          : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border-emerald-200 dark:border-emerald-500/40'
+                          ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                          : 'bg-blue-50 text-geovision-blue dark:bg-slate-800 dark:text-blue-300 border-blue-200/80 dark:border-slate-700'
                       }`}
                     >
                       {isPriv ? 'Private' : 'Public'}
@@ -880,12 +887,12 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                     <span>{dist} km {language === 'ar' ? 'من موقعك' : 'away'}</span>
                   </span>
                   <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
-                    <Clock className="w-3.5 h-3.5" />
+                  <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-bold shrink-0">
+                    <Clock className="w-3.5 h-3.5 text-geovision-blue" />
                     <span>{language === 'ar' ? (feat.openStatusAr || feat.openStatusEn || 'مفتوح') : (feat.openStatusEn || 'Open 24/7')}</span>
                   </span>
                   <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <span className="flex items-center gap-1 text-blue-600 dark:text-blue-400 font-extrabold text-[10px] shrink-0">
+                  <span className="flex items-center gap-1 text-geovision-blue dark:text-blue-300 font-extrabold text-[10px] shrink-0">
                     <CheckCircle2 className="w-3.5 h-3.5 text-geovision-blue" />
                     <span>SDI Verified</span>
                   </span>
@@ -901,10 +908,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       window.open(gmapsUrl, '_blank');
                       showToast(language === 'ar' ? `فتح خرائط جوجل لـ ${feat.nameAr}` : `Opening Google Maps for ${feat.nameEn}`);
                     }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-50 hover:bg-emerald-600 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 hover:text-white border border-emerald-200 dark:border-emerald-800/80 transition-all cursor-pointer text-[10px] font-black group/btn shrink-0"
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-[#215A9E] dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:text-white border border-blue-200/80 dark:border-slate-700 transition-all cursor-pointer text-[10px] font-black group/btn shrink-0"
                     title={language === 'ar' ? 'التنقل عبر خرائط جوجل' : 'Navigate via Google Maps'}
                   >
-                    <ExternalLink className="w-3 h-3 text-emerald-600 dark:text-emerald-400 group-hover/btn:text-white transition-colors" />
+                    <ExternalLink className="w-3 h-3 text-geovision-blue dark:text-blue-300 group-hover/btn:text-white transition-colors" />
                     <span>{language === 'ar' ? 'خرائط جوجل' : 'Google Maps'}</span>
                   </button>
 
