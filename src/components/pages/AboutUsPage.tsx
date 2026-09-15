@@ -448,10 +448,10 @@ export const AboutUsPage: React.FC = () => {
 
             <button
               onClick={() => setCurrentView('map')}
-              className="flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-white text-[#063360] hover:bg-slate-100 font-black text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0"
+              className="flex items-center gap-2.5 px-8 py-4 rounded-2xl bg-white text-[#063360] dark:text-[#063360] hover:bg-slate-100 font-black text-xs sm:text-sm shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer shrink-0 dark-preserve-dark-text"
             >
-              <span>{t('about.ctaBtn')}</span>
-              <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+              <span className="text-[#063360] font-black">{t('about.ctaBtn')}</span>
+              <ArrowRight className="w-4 h-4 rtl:rotate-180 text-[#063360]" />
             </button>
           </div>
         </section>

@@ -231,6 +231,17 @@ html {
   color: #FFFFFF !important;
 }
 
+/* Exception: Preserve high-contrast dark text on solid light elements (e.g. white CTA buttons) in dark mode */
+.dark .bg-white.text-\[\#063360\],
+.dark .bg-white .text-\[\#063360\],
+.dark button.bg-white,
+.dark button.bg-white *,
+.dark .bg-white button,
+.dark .dark-preserve-dark-text,
+.dark .dark-preserve-dark-text * {
+  color: #063360 !important;
+}
+
 /* Custom Blue & Red Palette Helpers */
 .bg-geovision-blue {
   background-color: var(--geovision-blue);
