@@ -20,7 +20,6 @@ import {
   Info,
   RotateCcw,
   X,
-  Heart,
   Navigation,
   Printer,
   BarChart2,
@@ -200,7 +199,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
   const [selectedCategories, setSelectedCategories] = useState<string[]>(() => initialFeatureCategories);
   const [selectedType, setSelectedType] = useState<'all' | 'private' | 'public'>('all');
-  const [layerMenuOpen, setLayerMenuOpen] = useState(false);
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
   const [visibleCount, setVisibleCount] = useState(5);
@@ -217,7 +215,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
   const [printTemplate, setPrintTemplate] = useState<'briefing' | 'ledger' | 'map'>('briefing');
   const [printOrientation, setPrintOrientation] = useState<'portrait' | 'landscape'>('portrait');
 
-  const layerRef = useRef<HTMLDivElement>(null);
   const typeRef = useRef<HTMLDivElement>(null);
   const featureListRef = useRef<HTMLDivElement>(null);
 
@@ -240,9 +237,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
   // Close menus when clicking anywhere outside of their respective containers
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (layerRef.current && !layerRef.current.contains(e.target as Node)) {
-        setLayerMenuOpen(false);
-      }
       if (typeRef.current && !typeRef.current.contains(e.target as Node)) {
         setTypeMenuOpen(false);
       }
@@ -250,23 +244,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const toggleCategory = (catId: string) => {
-    let nextCats: string[];
-    if (catId === 'ALL') {
-      nextCats = [];
-    } else {
-      if (selectedCategories.includes(catId)) {
-        nextCats = selectedCategories.filter((c) => c !== catId);
-      } else {
-        nextCats = [...selectedCategories, catId];
-      }
-    }
-    setSelectedCategories(nextCats);
-    if (appState.setSelectedCategoryIds) {
-      appState.setSelectedCategoryIds(nextCats);
-    }
-  };
 
   const handleExportCSV = () => {
     if (!filteredFeatures || filteredFeatures.length === 0) return;
@@ -356,30 +333,14 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     return true;
   });
 
-  const getLayerButtonLabel = () => {
-    if (selectedCategories.length === 0 || selectedCategories.length >= ALL_LAYER_IDS.length) {
-      return language === 'ar' ? 'جميع الفئات' : 'All Categories';
-    }
-    if (selectedCategories.length === 1) {
-      const catId = selectedCategories[0];
-      const match = LAYER_OPTIONS.find(
-        (opt) => opt.id.toLowerCase() === catId.toLowerCase() || catId.toLowerCase().includes(opt.id.toLowerCase())
-      );
-      if (match) return language === 'ar' ? match.labelAr : match.labelEn;
-      return catId.charAt(0).toUpperCase() + catId.slice(1);
-    }
-    return `${selectedCategories.length} ${language === 'ar' ? 'محدد' : 'Selected'}`;
-  };
-
   const getTypeButtonLabel = () => {
     if (selectedType === 'all') return language === 'ar' ? 'جميع الأنواع' : 'All Types';
     if (selectedType === 'private') return language === 'ar' ? 'خاص' : 'Private';
     return language === 'ar' ? 'عام' : 'Public';
   };
 
-  const isLayerActive = selectedCategories.length > 0 && selectedCategories.length < ALL_LAYER_IDS.length && JSON.stringify(selectedCategories) !== JSON.stringify(initialFeatureCategories);
   const isTypeActive = selectedType !== 'all';
-  const hasActiveFilters = isLayerActive || isTypeActive || searchFilter.trim() !== '';
+  const hasActiveFilters = isTypeActive || searchFilter.trim() !== '';
   const displayedFeatures = filteredFeatures.slice(0, visibleCount);
   const isHighVolume = features.length >= 100 || filteredFeatures.length > 20;
 
@@ -671,67 +632,8 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
       {/* Control Bar: Filters & Quick Search Input (Single Horizontal Flex Row) */}
       <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70">
         
-        {/* Left Controls: Category & Type Dropdowns + Clear Filters Button */}
+        {/* Left Controls: Type Dropdown + Clear Filters Button */}
         <div className="flex items-center gap-2 flex-wrap min-w-0">
-          {/* Category Filter Dropdown */}
-          <div className="relative flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400" ref={layerRef}>
-            <span className="shrink-0">{language === 'ar' ? 'الفئة:' : 'Category:'}</span>
-            <button
-              type="button"
-              onClick={() => {
-                setLayerMenuOpen(!layerMenuOpen);
-                setTypeMenuOpen(false);
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition-all cursor-pointer shadow-2xs ${
-                layerMenuOpen || isLayerActive
-                  ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-400/20'
-                  : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 hover:border-geovision-blue'
-              }`}
-            >
-              <span>{getLayerButtonLabel()}</span>
-              <ChevronDown className={`w-3 h-3 transition-transform ${layerMenuOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {layerMenuOpen && (
-              <div className="absolute top-full left-0 mt-1.5 w-48 p-2 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl z-50 space-y-1 text-left rtl:text-right max-h-60 overflow-y-auto scrollbar-none">
-                <button
-                  type="button"
-                  onClick={() => {
-                    toggleCategory('ALL');
-                    setLayerMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border-b border-slate-100 dark:border-slate-800 pb-2 mb-1 ${
-                    selectedCategories.length === 0
-                      ? 'bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 font-extrabold'
-                      : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                  }`}
-                >
-                  <span>{language === 'ar' ? 'جميع الفئات' : 'All Categories'}</span>
-                  {selectedCategories.length === 0 && <Check className="w-3.5 h-3.5 text-geovision-blue shrink-0" />}
-                </button>
-
-                {LAYER_OPTIONS.map((opt) => {
-                  const isSelected = selectedCategories.includes(opt.id);
-                  return (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => toggleCategory(opt.id)}
-                      className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        isSelected
-                          ? 'bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 font-extrabold'
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-                      }`}
-                    >
-                      <span>{language === 'ar' ? opt.labelAr : opt.labelEn}</span>
-                      {isSelected && <Check className="w-3.5 h-3.5 text-geovision-blue shrink-0" />}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
           {/* Type Filter Dropdown */}
           <div className="relative flex items-center gap-1 text-[11px] font-bold text-slate-500 dark:text-slate-400" ref={typeRef}>
             <span className="shrink-0">{language === 'ar' ? 'النوع:' : 'Type:'}</span>
@@ -739,7 +641,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
               type="button"
               onClick={() => {
                 setTypeMenuOpen(!typeMenuOpen);
-                setLayerMenuOpen(false);
               }}
               className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition-all cursor-pointer shadow-2xs ${
                 typeMenuOpen || isTypeActive
@@ -899,22 +800,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                 </div>
 
                 {/* Actions Footer */}
-                <div className="flex items-center justify-between gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${feat.lat},${feat.lng}`;
-                      window.open(gmapsUrl, '_blank');
-                      showToast(language === 'ar' ? `فتح خرائط جوجل لـ ${feat.nameAr}` : `Opening Google Maps for ${feat.nameEn}`);
-                    }}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-[#215A9E] dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:text-white border border-blue-200/80 dark:border-slate-700 transition-all cursor-pointer text-[10px] font-black group/btn shrink-0"
-                    title={language === 'ar' ? 'التنقل عبر خرائط جوجل' : 'Navigate via Google Maps'}
-                  >
-                    <ExternalLink className="w-3 h-3 text-geovision-blue dark:text-blue-300 group-hover/btn:text-white transition-colors" />
-                    <span>{language === 'ar' ? 'خرائط جوجل' : 'Google Maps'}</span>
-                  </button>
-
+                <div className="flex items-center justify-end gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
@@ -983,12 +869,12 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       }}
                       className={`p-1 rounded-lg border transition-all cursor-pointer ${
                         isFav
-                          ? 'bg-rose-50 dark:bg-rose-950/60 border-rose-200 text-rose-500 hover:bg-rose-100'
-                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 text-slate-400 hover:text-rose-500 hover:bg-rose-50'
+                          ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 text-amber-500 hover:bg-amber-100'
+                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 text-slate-400 hover:text-amber-500 hover:bg-amber-50'
                       }`}
                       title={isFav ? 'Favorite' : 'Add to favorite'}
                     >
-                      <Heart className={`w-3 h-3 ${isFav ? 'fill-rose-500 text-rose-500' : ''}`} />
+                      <Star className={`w-3 h-3 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
                     </button>
 
                     <button

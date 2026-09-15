@@ -297,6 +297,7 @@ export interface ConversationSession {
   date: string;
   queryCount: number;
   messages: AIMessage[];
+  isPinned?: boolean;
 }
 
 export type BasemapType = 'dge' | 'light' | 'dark' | 'satellite';

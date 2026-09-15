@@ -7,8 +7,6 @@ import {
   Moon,
   User as UserIcon,
   LogOut,
-  Star,
-  History,
   HelpCircle,
   Info,
   Map,
@@ -30,7 +28,6 @@ export const AppHeader: React.FC = () => {
     setUser,
     setLoginModalOpen,
     setFeedbackModalOpen,
-    setGuestPromptOpen,
     t,
   } = useAppState();
 
@@ -96,8 +93,8 @@ export const AppHeader: React.FC = () => {
             onClick={() => handleNavClick('home')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               currentView === 'home'
-                ? 'bg-[#215A9E]/10 text-[#215A9E] dark:text-[#7DA1C4] font-extrabold shadow-2xs'
-                : 'text-slate-600 hover:text-[#063360] dark:text-slate-300 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
+                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-sky-500/20 dark:text-sky-300 font-extrabold shadow-2xs'
+                : 'text-slate-600 hover:text-[#063360] dark:text-slate-200 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
             }`}
           >
             <Home className="w-3.5 h-3.5" />
@@ -108,8 +105,8 @@ export const AppHeader: React.FC = () => {
             onClick={() => handleNavClick('map')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               currentView === 'map'
-                ? 'bg-[#215A9E]/10 text-[#215A9E] dark:text-[#7DA1C4] font-extrabold shadow-2xs'
-                : 'text-slate-600 hover:text-[#063360] dark:text-slate-300 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
+                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-sky-500/20 dark:text-sky-300 font-extrabold shadow-2xs'
+                : 'text-slate-600 hover:text-[#063360] dark:text-slate-200 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
             }`}
           >
             <Map className="w-3.5 h-3.5" />
@@ -120,8 +117,8 @@ export const AppHeader: React.FC = () => {
             onClick={() => handleNavClick('about')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               currentView === 'about'
-                ? 'bg-[#215A9E]/10 text-[#215A9E] dark:text-[#7DA1C4] font-extrabold shadow-2xs'
-                : 'text-slate-600 hover:text-[#063360] dark:text-slate-300 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
+                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-sky-500/20 dark:text-sky-300 font-extrabold shadow-2xs'
+                : 'text-slate-600 hover:text-[#063360] dark:text-slate-200 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
             }`}
           >
             <Info className="w-3.5 h-3.5" />
@@ -141,23 +138,23 @@ export const AppHeader: React.FC = () => {
             className="md:hidden p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer"
             title="Toggle Menu"
           >
-            {mobileMenuOpen ? <X className="w-4 h-4 text-geovision-blue" /> : <Menu className="w-4 h-4 text-geovision-blue" />}
+            {mobileMenuOpen ? <X className="w-4 h-4 text-geovision-blue dark:text-white" /> : <Menu className="w-4 h-4 text-geovision-blue dark:text-white" />}
           </button>
 
           {/* Language Switcher */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 border border-white/60 dark:border-slate-700 hover:border-geovision-blue hover:text-geovision-blue transition-all glass-level-1"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-100 border border-white/60 dark:border-slate-700 hover:border-geovision-blue hover:text-geovision-blue dark:hover:text-sky-300 transition-all glass-level-1"
             title="Switch Language"
           >
-            <Globe className="w-3.5 h-3.5 text-geovision-blue" />
+            <Globe className="w-3.5 h-3.5 text-geovision-blue dark:text-sky-300" />
             <span className="text-[11px] sm:text-xs">{t('nav.language')}</span>
           </button>
 
           {/* Theme Switcher */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer"
             title="Toggle Light/Dark Theme"
           >
             {theme === 'light' ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />}
@@ -168,12 +165,12 @@ export const AppHeader: React.FC = () => {
             onClick={() => handleNavClick('help')}
             className={`p-1.5 sm:p-2 rounded-xl transition-colors glass-level-1 cursor-pointer ${
               currentView === 'help'
-                ? 'bg-[#215A9E]/15 text-geovision-blue dark:text-blue-300 font-extrabold ring-1 ring-geovision-blue/30'
-                : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue'
+                ? 'bg-[#215A9E]/15 text-geovision-blue dark:bg-sky-500/20 dark:text-sky-300 font-extrabold ring-1 ring-geovision-blue/30'
+                : 'text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-sky-300'
             }`}
             title={t('nav.help')}
           >
-            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-geovision-blue" />
+            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-geovision-blue dark:text-sky-300" />
           </button>
 
           {/* Feedback Icon Button */}
@@ -182,10 +179,10 @@ export const AppHeader: React.FC = () => {
               setFeedbackModalOpen(true);
               setUserDropdownOpen(false);
             }}
-            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue transition-colors glass-level-1 cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-sky-300 transition-colors glass-level-1 cursor-pointer"
             title={t('nav.feedback')}
           >
-            <FeedbackStarIcon className="w-4 h-4 text-geovision-blue" />
+            <FeedbackStarIcon className="w-4 h-4 text-geovision-blue dark:text-sky-300" />
           </button>
 
           {/* User Account / Guest Controls */}
@@ -239,36 +236,6 @@ export const AppHeader: React.FC = () => {
                     >
                       <UserIcon className="w-4 h-4 text-slate-400 group-hover:text-geovision-blue dark:group-hover:text-blue-300 shrink-0" />
                       <span>{t('nav.profile')}</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        if (user.isGuest) {
-                          setGuestPromptOpen(true);
-                        } else {
-                          setCurrentView('favorites');
-                        }
-                        setUserDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-extrabold text-slate-800 dark:text-slate-100 hover:bg-amber-50/80 dark:hover:bg-slate-800 hover:text-amber-700 dark:hover:text-amber-400 transition-all cursor-pointer group"
-                    >
-                      <Star className="w-4 h-4 text-amber-500 shrink-0" />
-                      <span>{t('nav.favorites')}</span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        if (user.isGuest) {
-                          setGuestPromptOpen(true);
-                        } else {
-                          setCurrentView('history');
-                        }
-                        setUserDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-extrabold text-slate-800 dark:text-slate-100 hover:bg-blue-50 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-blue-300 transition-all cursor-pointer group"
-                    >
-                      <History className="w-4 h-4 text-geovision-blue shrink-0" />
-                      <span>{t('nav.history')}</span>
                     </button>
 
                     <div className="border-t border-slate-100 dark:border-slate-800 my-1" />

@@ -8,7 +8,7 @@ import {
   Building,
   Navigation,
   ExternalLink,
-  Heart,
+  Star,
   Share2,
   Clock,
   Phone,
@@ -179,12 +179,12 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
               }}
               className={`p-2.5 rounded-2xl border backdrop-blur-md transition-all cursor-pointer ${
                 isFav
-                  ? 'bg-rose-500 text-white border-rose-400'
+                  ? 'bg-amber-500 text-white border-amber-400'
                   : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
               }`}
               title={isFav ? 'Remove Favorite' : 'Save Favorite'}
             >
-              <Heart className={`w-4 h-4 ${isFav ? 'fill-white' : ''}`} />
+              <Star className={`w-4 h-4 ${isFav ? 'fill-white' : ''}`} />
             </button>
 
             <button

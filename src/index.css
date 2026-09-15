@@ -218,8 +218,17 @@ html {
   color: #38BDF8 !important;
 }
 
+.dark .text-\[\#215A9E\],
+.dark .text-geovision-blue {
+  color: #38BDF8 !important;
+}
+
 .dark .text-\[\#545860\] {
   color: #CBD5E1 !important;
+}
+
+.dark .text-\[\#7DA1C4\] {
+  color: #7DD3FC !important;
 }
 
 /* Custom Blue & Red Palette Helpers */

@@ -38,6 +38,7 @@ export const MapWorkspace: React.FC = () => {
     pureMapMode,
     userLocation,
     navigationTarget,
+    aiMessages,
   } = useAppState();
 
   const mapContainerRef = useRef<HTMLDivElement>(null);
@@ -144,7 +145,6 @@ export const MapWorkspace: React.FC = () => {
   };
 
   // Abu Dhabi DGE & ArcGIS Basemap Tile URLs
-  // Abu Dhabi DGE & ArcGIS Basemap Tile URLs
   const basemapUrls: Record<string, string> = {
     dge: 'https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer',
     light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
@@ -229,6 +229,7 @@ export const MapWorkspace: React.FC = () => {
         zoomDelta: 1,
         wheelDebounceTime: 40,
         wheelPxPerZoomLevel: 60,
+        preferCanvas: true,
       });
 
       const layer = createBasemapLayer(map, activeBasemap);
@@ -238,11 +239,13 @@ export const MapWorkspace: React.FC = () => {
       drawnLayersGroupRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
 
-      setTimeout(() => {
+      // Immediate size recalculation for instant non-blocking map rendering
+      map.invalidateSize();
+      requestAnimationFrame(() => {
         if (mapInstanceRef.current) {
           mapInstanceRef.current.invalidateSize();
         }
-      }, 100);
+      });
     }
 
     return () => {
@@ -289,15 +292,23 @@ export const MapWorkspace: React.FC = () => {
         mapInstanceRef.current.flyTo([24.4539, 54.3773], 12, { animate: true, duration: 1.2 });
       }
     };
+    const handleFlyToEvent = (e: any) => {
+      if (mapInstanceRef.current && e.detail && e.detail.center) {
+        mapInstanceRef.current.invalidateSize();
+        mapInstanceRef.current.flyTo(e.detail.center, e.detail.zoom || 15, { animate: true, duration: 1.2 });
+      }
+    };
 
     window.addEventListener('geovision:zoomIn', handleZoomInEvent);
     window.addEventListener('geovision:zoomOut', handleZoomOutEvent);
     window.addEventListener('geovision:resetHome', handleResetHomeEvent);
+    window.addEventListener('geovision:flyTo', handleFlyToEvent);
 
     return () => {
       window.removeEventListener('geovision:zoomIn', handleZoomInEvent);
       window.removeEventListener('geovision:zoomOut', handleZoomOutEvent);
       window.removeEventListener('geovision:resetHome', handleResetHomeEvent);
+      window.removeEventListener('geovision:flyTo', handleFlyToEvent);
     };
   }, []);
 
@@ -308,8 +319,18 @@ export const MapWorkspace: React.FC = () => {
     markersGroupRef.current.clearLayers();
     const newMarkersMap = new Map<string, L.Marker>();
 
-    // ALWAYS include selectedFeature so its location pin & highlight are guaranteed on the map
+    // ALWAYS include matchedFeatures from active AI message stream & selectedFeature
     const displayFeatures = [...filteredFeatures];
+
+    const lastMsgWithFeatures = [...aiMessages].reverse().find(m => m.matchedFeatures && m.matchedFeatures.length > 0);
+    if (lastMsgWithFeatures && lastMsgWithFeatures.matchedFeatures) {
+      lastMsgWithFeatures.matchedFeatures.forEach((feat: GeoFeature) => {
+        if (!displayFeatures.some((f) => f.id === feat.id || f.nameEn === feat.nameEn)) {
+          displayFeatures.push(feat);
+        }
+      });
+    }
+
     if (selectedFeature) {
       const exists = displayFeatures.some(
         (f) =>
@@ -344,8 +365,8 @@ export const MapWorkspace: React.FC = () => {
       mapInstanceRef.current?.closePopup();
     }
 
-    // If user filtered by category and features exist but none are in current view, frame them smoothly
-    if (mapInstanceRef.current && (selectedCategoryIds.length > 0 || selectedSubcategoryIds.length > 0) && displayFeatures.length > 0) {
+    // If user filtered by category and features exist but none are in current view, frame them smoothly (only when no selected feature is active)
+    if (!selectedFeature && mapInstanceRef.current && (selectedCategoryIds.length > 0 || selectedSubcategoryIds.length > 0) && displayFeatures.length > 0) {
       const bounds = mapInstanceRef.current.getBounds();
       const anyInView = displayFeatures.some(f => bounds.contains([f.lat, f.lng]));
       if (!anyInView) {

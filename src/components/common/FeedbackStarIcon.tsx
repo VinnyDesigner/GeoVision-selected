@@ -5,7 +5,7 @@ interface FeedbackStarIconProps {
 }
 
 export const FeedbackStarIcon: React.FC<FeedbackStarIconProps> = ({
-  className = 'w-4 h-4 text-geovision-blue',
+  className = 'w-4 h-4 text-geovision-blue dark:text-white',
 }) => {
   return (
     <svg

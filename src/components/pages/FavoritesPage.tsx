@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
+import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
+import type { GeoFeature } from '../../types';
 import {
   Star,
   MapPin,
@@ -9,6 +11,7 @@ import {
   Map,
   ShieldAlert,
   Building,
+  ArrowLeft,
 } from 'lucide-react';
 
 export const FavoritesPage: React.FC = () => {
@@ -19,6 +22,10 @@ export const FavoritesPage: React.FC = () => {
     user,
     setCurrentView,
     setMapCenterAndZoom,
+    setSelectedFeature,
+    setSelectedCategoryIds,
+    sendAIMessage,
+    showToast,
     setGuestPromptOpen,
     t,
   } = useAppState();
@@ -52,18 +59,79 @@ export const FavoritesPage: React.FC = () => {
   const filteredFavs = favorites.filter((f) => f.type === activeTab);
 
   const handleOpenOnMap = (fav: any) => {
-    if (fav.lat && fav.lng) {
-      setMapCenterAndZoom([fav.lat, fav.lng], 15);
+    if (fav.type === 'search') {
+      sendAIMessage(fav.nameEn || fav.nameAr || 'Show hospitals in Abu Dhabi');
+      setCurrentView('map');
+      return;
     }
+
+    // 1. Find matching GeoFeature in dataset or construct feature
+    const matched = GEO_FEATURES.find(
+      (f) =>
+        f.nameEn === fav.nameEn ||
+        (f.lat === fav.lat && f.lng === fav.lng) ||
+        f.id === fav.id
+    );
+
+    const featureToSelect: GeoFeature = matched || {
+      id: fav.id || `fav-feat-${Date.now()}`,
+      nameEn: fav.nameEn || 'Favorite Location',
+      nameAr: fav.nameAr || fav.nameEn || 'الموقع المفضل',
+      category: (fav.categoryEn || 'healthcare').toLowerCase(),
+      subcategory: fav.subcategory || fav.categoryEn || 'Location',
+      lat: fav.lat || 24.4539,
+      lng: fav.lng || 54.3773,
+      distanceKm: 1.5,
+      openStatusEn: 'Open 24/7',
+      openStatusAr: 'مفتوح 24/7',
+      rating: 4.8,
+      addressEn: `${fav.nameEn || 'Favorite'}, Abu Dhabi, UAE`,
+      addressAr: `${fav.nameAr || fav.nameEn || 'الموقع المفضل'}، أبوظبي`,
+      isAuthoritative: true,
+    };
+
+    // 2. Set as selected feature so Leaflet marker, popup, & highlight buffer are rendered on map
+    setSelectedFeature(featureToSelect);
+
+    // 3. Ensure category is enabled in category filter state
+    const catId = (featureToSelect.category || 'healthcare').toLowerCase();
+    if (setSelectedCategoryIds) {
+      setSelectedCategoryIds([catId]);
+    }
+
+    // 4. Center map camera on location
+    if (featureToSelect.lat && featureToSelect.lng) {
+      setMapCenterAndZoom([featureToSelect.lat, featureToSelect.lng], 15);
+    }
+
+    // 5. Navigate to map workspace
     setCurrentView('map');
+
+    showToast(
+      language === 'ar'
+        ? `عرض المعلم المفضل: ${featureToSelect.nameAr} على الخريطة`
+        : `Showing favorite location: ${featureToSelect.nameEn} on map workspace`
+    );
   };
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 lg:pt-36 pb-16 space-y-8 bg-spatial-canvas min-h-screen">
       
       {/* Full-Width WOW Hero Banner */}
-      <div className="relative overflow-hidden p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#041F3B] text-white shadow-2xl border border-[#7DA1C4]/30 glow-blue">
+      <div className="relative overflow-hidden p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#041F3B] text-white shadow-2xl border border-[#7DA1C4]/30 glow-blue space-y-4">
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -z-0 pointer-events-none" />
+
+        {/* Back Button Bar */}
+        <div className="relative z-10">
+          <button
+            onClick={() => setCurrentView('map')}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-black transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+            title={language === 'ar' ? 'العودة إلى الخريطة' : 'Back to Map'}
+          >
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+            <span>{language === 'ar' ? 'العودة إلى الخريطة' : 'Back to Map'}</span>
+          </button>
+        </div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5 text-center md:text-left rtl:md:text-right">
@@ -126,7 +194,8 @@ export const FavoritesPage: React.FC = () => {
           {filteredFavs.map((fav) => (
             <div
               key={fav.id}
-              className="glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between gap-5 shadow-xs hover:shadow-xl hover:border-amber-400 transition-all group"
+              onClick={() => handleOpenOnMap(fav)}
+              className="glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between gap-5 shadow-xs hover:shadow-xl hover:border-amber-400 transition-all cursor-pointer group"
             >
               <div className="flex items-start gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-100 to-amber-50 dark:from-amber-950/80 dark:to-slate-900 text-amber-600 flex items-center justify-center font-bold shrink-0 shadow-xs group-hover:scale-110 transition-transform">
@@ -150,7 +219,11 @@ export const FavoritesPage: React.FC = () => {
 
               <div className="pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between gap-2">
                 <button
-                  onClick={() => removeFavorite(fav.id)}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFavorite(fav.id);
+                  }}
                   className="p-2 text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
                   title="Remove from favorites"
                 >
@@ -158,7 +231,11 @@ export const FavoritesPage: React.FC = () => {
                 </button>
 
                 <button
-                  onClick={() => handleOpenOnMap(fav)}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleOpenOnMap(fav);
+                  }}
                   className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-geovision-blue text-white text-xs font-black hover:bg-blue-600 shadow-md shadow-blue-500/20 transition-all cursor-pointer"
                 >
                   <Map className="w-4 h-4" />
@@ -173,3 +250,5 @@ export const FavoritesPage: React.FC = () => {
     </div>
   );
 };
+
+export default FavoritesPage;

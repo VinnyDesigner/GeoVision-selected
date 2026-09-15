@@ -95,6 +95,7 @@ interface AppStateContextType {
   deleteSession: (id: string) => void;
   clearAllHistory: () => void;
   loadSession: (session: ConversationSession) => void;
+  togglePinSession: (id: string) => void;
   conversationContext: ConversationContext;
   resetConversationContext: () => void;
   startNewConversation: () => void;
@@ -141,7 +142,42 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
     }
     return 'light';
   });
-  const [currentView, setCurrentView] = useState<AppView>('home');
+  const [currentView, setCurrentViewInternal] = useState<AppView>(() => {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const hashView = window.location.hash.replace('#', '') as AppView;
+      if (['home', 'map', 'categories', 'about', 'help', 'favorites', 'history', 'profile'].includes(hashView)) {
+        return hashView;
+      }
+    }
+    return 'home';
+  });
+
+  const setCurrentView = (view: AppView) => {
+    setCurrentViewInternal(view);
+    try {
+      if (window.location.hash !== `#${view}`) {
+        window.history.pushState({ view }, '', `#${view}`);
+      }
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      let targetView: AppView = 'home';
+      if (event.state && event.state.view) {
+        targetView = event.state.view as AppView;
+      } else if (window.location.hash) {
+        const hashView = window.location.hash.replace('#', '') as AppView;
+        if (['home', 'map', 'categories', 'about', 'help', 'favorites', 'history', 'profile'].includes(hashView)) {
+          targetView = hashView;
+        }
+      }
+      setCurrentViewInternal(targetView);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
   const [user, setUser] = useState<User>(GUEST_USER);
 
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -443,12 +479,43 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const loadSession = (session: ConversationSession) => {
-    if (session.messages && session.messages.length > 0) {
-      setAiMessages(session.messages);
-    }
     setCurrentSessionId(session.id);
     setCurrentView('map');
+
+    const hasAIResponse = session.messages && session.messages.some(m => m.sender === 'ai');
+
+    if (hasAIResponse && session.messages && session.messages.length > 0) {
+      setAiMessages(session.messages);
+
+      // Find latest message in history session with matched spatial features
+      const lastWithFeatures = [...session.messages].reverse().find(m => m.matchedFeatures && m.matchedFeatures.length > 0);
+      if (lastWithFeatures && lastWithFeatures.matchedFeatures && lastWithFeatures.matchedFeatures.length > 0) {
+        const feats = lastWithFeatures.matchedFeatures;
+        setSelectedFeature(feats[0]);
+        setMapCenterAndZoom([feats[0].lat, feats[0].lng], 15);
+        const autoCats = Array.from(new Set(feats.map(f => f.category).filter(Boolean)));
+        if (autoCats.length > 0) {
+          setSelectedCategoryIds(autoCats);
+        }
+      }
+    } else {
+      // If session messages are empty or missing AI response, execute AI search for the session prompt to fetch & display complete results
+      const queryToRun = session.titleEn || session.titleAr || 'Show all schools in Abu Dhabi';
+      sendAIMessage(queryToRun);
+    }
+
     showToast(language === 'ar' ? `استئناف الجلسة: ${session.titleAr}` : `Resumed session: ${session.titleEn}`);
+  };
+
+  const togglePinSession = (id: string) => {
+    setConversationSessions(prev => {
+      const updated = prev.map(s => s.id === id ? { ...s, isPinned: !s.isPinned } : s);
+      try {
+        localStorage.setItem('geovision_chat_sessions', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+    showToast(language === 'ar' ? 'تم تحديث حالة تثبيت الجلسة' : 'Chat session pin updated');
   };
 
   // Initial welcome message from GeoVision AI
@@ -4123,7 +4190,40 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             setSelectedFeature(null);
           }
 
-          setAiMessages(prev => [...prev, aiRespMsg]);
+          setAiMessages(prev => {
+            const updatedMsgs = [...prev, aiRespMsg];
+            setConversationSessions(sessPrev => {
+              const sessId = currentSessionId || `sess-${Date.now()}`;
+              const existingIdx = sessPrev.findIndex(s => s.id === sessId);
+              if (existingIdx >= 0) {
+                const updatedSess = [...sessPrev];
+                updatedSess[existingIdx] = {
+                  ...updatedSess[existingIdx],
+                  messages: updatedMsgs,
+                  queryCount: updatedMsgs.filter(m => m.sender === 'user').length,
+                };
+                try {
+                  localStorage.setItem('geovision_chat_sessions', JSON.stringify(updatedSess));
+                } catch (e) {}
+                return updatedSess;
+              } else {
+                const newSess: ConversationSession = {
+                  id: sessId,
+                  titleEn: query,
+                  titleAr: query,
+                  date: `Today • ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`,
+                  queryCount: updatedMsgs.filter(m => m.sender === 'user').length,
+                  messages: updatedMsgs,
+                };
+                const updatedSess = [newSess, ...sessPrev];
+                try {
+                  localStorage.setItem('geovision_chat_sessions', JSON.stringify(updatedSess));
+                } catch (e) {}
+                return updatedSess;
+              }
+            });
+            return updatedMsgs;
+          });
     }, 50);
   };
 
@@ -4198,6 +4298,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
         deleteSession,
         clearAllHistory,
         loadSession,
+        togglePinSession,
         conversationContext,
         resetConversationContext,
         startNewConversation,

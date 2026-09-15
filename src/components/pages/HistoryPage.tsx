@@ -4,12 +4,14 @@ import {
   History,
   Sparkles,
   ArrowRight,
+  ArrowLeft,
   ShieldAlert,
   Trash2,
   Plus,
   MessageSquare,
   Calendar,
   Clock,
+  Pin,
 } from 'lucide-react';
 import type { ConversationSession } from '../../types';
 
@@ -24,6 +26,7 @@ export const HistoryPage: React.FC = () => {
     deleteSession,
     clearAllHistory,
     loadSession,
+    togglePinSession,
     startNewConversation,
     t,
   } = useAppState();
@@ -71,15 +74,39 @@ export const HistoryPage: React.FC = () => {
     ].filter((g) => g.items.length > 0);
   };
 
-  const groupedTimeline = groupSessionsByTime(conversationSessions);
+  const pinnedSessions = conversationSessions.filter((s) => s.isPinned);
+  const unpinnedSessions = conversationSessions.filter((s) => !s.isPinned);
+
+  const groupedTimeline = groupSessionsByTime(unpinnedSessions);
+
+  if (pinnedSessions.length > 0) {
+    groupedTimeline.unshift({
+      titleEn: 'Pinned Sessions',
+      titleAr: 'المحادثات المثبتة',
+      icon: Pin,
+      items: pinnedSessions,
+    });
+  }
 
   return (
     <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 sm:pt-32 lg:pt-36 pb-16 space-y-8 bg-spatial-canvas min-h-screen">
       
       {/* WOW Full-Width Hero Header */}
-      <div className="relative overflow-hidden p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#041F3B] text-white shadow-2xl border border-[#7DA1C4]/30 glow-blue">
+      <div className="relative overflow-hidden p-6 sm:p-10 rounded-3xl bg-gradient-to-r from-[#063360] via-[#215A9E] to-[#041F3B] text-white shadow-2xl border border-[#7DA1C4]/30 glow-blue space-y-4">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#215A9E]/20 rounded-full blur-3xl -z-0 pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-[#7DA1C4]/15 rounded-full blur-3xl -z-0 pointer-events-none" />
+
+        {/* Back Button Bar */}
+        <div className="relative z-10">
+          <button
+            onClick={() => setCurrentView('map')}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-xs font-black transition-all cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+            title={language === 'ar' ? 'العودة إلى الخريطة' : 'Back to Map'}
+          >
+            <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+            <span>{language === 'ar' ? 'العودة إلى الخريطة' : 'Back to Map'}</span>
+          </button>
+        </div>
 
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5 text-center md:text-left rtl:md:text-right">
@@ -230,7 +257,22 @@ export const HistoryPage: React.FC = () => {
                           GeoVision GIS Session
                         </span>
 
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              togglePinSession(sess.id);
+                            }}
+                            className={`p-2 rounded-xl transition-colors cursor-pointer ${
+                              sess.isPinned
+                                ? 'text-amber-500 bg-amber-50 dark:bg-amber-950/40 hover:bg-amber-100'
+                                : 'text-slate-400 hover:text-amber-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                            title={sess.isPinned ? 'Unpin Session' : 'Pin Session'}
+                          >
+                            <Pin className={`w-4 h-4 ${sess.isPinned ? 'fill-amber-500' : ''}`} />
+                          </button>
+
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

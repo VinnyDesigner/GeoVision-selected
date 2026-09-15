@@ -603,10 +603,10 @@ export const HelpPage: React.FC = () => {
                             className={`flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all cursor-pointer border ${
                               voteState === 'yes'
                                 ? 'bg-emerald-500 text-white border-emerald-500 shadow-sm'
-                                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:text-emerald-600'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white border-slate-200 dark:border-slate-700 hover:text-emerald-600 dark:hover:text-emerald-400'
                             }`}
                           >
-                            <ThumbsUp className="w-3.5 h-3.5" />
+                            <ThumbsUp className="w-3.5 h-3.5 text-emerald-600 dark:text-white" />
                             <span>{language === 'ar' ? 'نعم' : 'Yes'}</span>
                           </button>
                           <button
@@ -614,10 +614,10 @@ export const HelpPage: React.FC = () => {
                             className={`flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all cursor-pointer border ${
                               voteState === 'no'
                                 ? 'bg-rose-500 text-white border-rose-500 shadow-sm'
-                                : 'bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:text-rose-600'
+                                : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white border-slate-200 dark:border-slate-700 hover:text-rose-600 dark:hover:text-rose-400'
                             }`}
                           >
-                            <ThumbsDown className="w-3.5 h-3.5" />
+                            <ThumbsDown className="w-3.5 h-3.5 text-rose-600 dark:text-white" />
                             <span>{language === 'ar' ? 'لا' : 'No'}</span>
                           </button>
                         </div>

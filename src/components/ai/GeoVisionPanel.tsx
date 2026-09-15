@@ -3,11 +3,12 @@ import { useAppState } from '../../context/AppStateContext';
 import {
   Sparkles,
   Send,
-  History,
   User,
   X,
   ChevronRight,
   Plus,
+  Star,
+  History,
   BarChart2,
   Mic,
   GraduationCap,
@@ -442,14 +443,6 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
     setInputVal('');
   };
 
-  const handleHistoryClick = () => {
-    if (user.isGuest) {
-      setGuestPromptOpen(true);
-    } else {
-      setCurrentView('history');
-    }
-  };
-
   return (
     <div className="w-full h-full flex flex-col bg-white dark:bg-slate-900 border-l border-slate-200/90 dark:border-slate-800 shadow-2xl relative z-[700] overflow-hidden group">
       
@@ -485,20 +478,40 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
 
         <div className="flex items-center gap-1.5 shrink-0">
           <button
-            onClick={handleNewChat}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#215A9E] text-white hover:bg-[#063360] font-extrabold text-xs shadow-md shadow-[#215A9E]/25 transition-all cursor-pointer whitespace-nowrap shrink-0"
-            title={language === 'ar' ? 'محادثة جديدة' : 'New Chat'}
+            onClick={() => {
+              if (user?.isGuest) {
+                setGuestPromptOpen(true);
+              } else {
+                setCurrentView('favorites');
+              }
+            }}
+            className="p-1.5 sm:p-2 text-[#545860] hover:text-[#063360] dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-[#7DA1C4]/15 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            title={t('nav.favorites')}
           >
-            <Plus className="w-3.5 h-3.5 shrink-0" />
-            <span className="whitespace-nowrap">{language === 'ar' ? 'محادثة جديدة' : 'New Chat'}</span>
+            <Star className="w-4 h-4 text-amber-500 fill-amber-500/20" />
           </button>
 
           <button
-            onClick={handleHistoryClick}
-            className="p-1.5 sm:p-2 text-[#545860] hover:text-[#063360] dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-[#7DA1C4]/15 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            onClick={() => {
+              if (user?.isGuest) {
+                setGuestPromptOpen(true);
+              } else {
+                setCurrentView('history');
+              }
+            }}
+            className="p-1.5 sm:p-2 text-[#545860] hover:text-[#063360] dark:text-slate-300 dark:hover:text-white rounded-xl hover:bg-[#7DA1C4]/15 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
             title={t('nav.history')}
           >
-            <History className="w-4 h-4 text-[#215A9E]" />
+            <History className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />
+          </button>
+
+          <button
+            onClick={handleNewChat}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#215A9E] dark:bg-sky-600 text-white hover:bg-[#063360] dark:hover:bg-sky-500 font-extrabold text-xs shadow-md shadow-[#215A9E]/25 transition-all cursor-pointer whitespace-nowrap shrink-0"
+            title={language === 'ar' ? 'محادثة جديدة' : 'New Chat'}
+          >
+            <Plus className="w-3.5 h-3.5 shrink-0 text-white" />
+            <span className="whitespace-nowrap text-white">{language === 'ar' ? 'محادثة جديدة' : 'New Chat'}</span>
           </button>
 
           {onClose && (
@@ -622,10 +635,10 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
                         <button
                           key={idx}
                           onClick={() => sendAIMessage(recText)}
-                          className="w-full flex items-center justify-between p-2 px-3 rounded-xl bg-blue-50/80 hover:bg-blue-100 dark:bg-slate-900/90 dark:hover:bg-slate-800 text-geovision-blue dark:text-sky-300 font-black border border-blue-200/80 dark:border-slate-800 hover:border-geovision-blue dark:hover:border-sky-400 text-xs text-left rtl:text-right transition-all cursor-pointer shadow-2xs gap-2 min-w-0 group"
+                          className="w-full flex items-center justify-between p-2.5 px-3 rounded-xl bg-blue-50/90 hover:bg-blue-100 dark:bg-slate-800/90 dark:hover:bg-slate-700 text-[#063360] dark:text-sky-200 font-extrabold border border-blue-200/80 dark:border-slate-700 hover:border-geovision-blue dark:hover:border-sky-300 text-xs text-left rtl:text-right transition-all cursor-pointer shadow-2xs gap-2 min-w-0 group"
                         >
-                          <span className="truncate whitespace-nowrap flex-1">{recText}</span>
-                          <ChevronRight className="w-4 h-4 shrink-0 text-geovision-blue dark:text-sky-300 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:rotate-180 transition-all" />
+                          <span className="truncate flex-1 text-slate-800 dark:text-sky-200 font-extrabold">{recText}</span>
+                          <ChevronRight className="w-4 h-4 shrink-0 text-[#215A9E] dark:text-sky-300 group-hover:translate-x-0.5 rtl:group-hover:-translate-x-0.5 rtl:rotate-180 transition-all" />
                         </button>
                       ))}
                     </div>
