@@ -131,7 +131,7 @@ export const BufferTool: React.FC = () => {
       ) : (
         <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
           <div className="p-3.5 rounded-2xl bg-blue-50/80 dark:bg-slate-900 border border-blue-200/80 dark:border-slate-800 text-center">
-            <span className="text-sm font-black text-geovision-blue dark:text-blue-300 block">
+            <span className="text-sm font-black text-geovision-blue dark:text-white block">
               {filteredFeatures.length} {t('buffer.resultsFound')}
             </span>
             <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-300">

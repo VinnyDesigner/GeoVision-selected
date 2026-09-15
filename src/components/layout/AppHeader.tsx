@@ -93,7 +93,7 @@ export const AppHeader: React.FC = () => {
             onClick={() => handleNavClick('home')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               currentView === 'home'
-                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-sky-500/20 dark:text-sky-300 font-extrabold shadow-2xs'
+                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-white/15 dark:text-white font-extrabold shadow-2xs'
                 : 'text-slate-600 hover:text-[#063360] dark:text-slate-200 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
             }`}
           >
@@ -105,7 +105,7 @@ export const AppHeader: React.FC = () => {
             onClick={() => handleNavClick('map')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               currentView === 'map'
-                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-sky-500/20 dark:text-sky-300 font-extrabold shadow-2xs'
+                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-white/15 dark:text-white font-extrabold shadow-2xs'
                 : 'text-slate-600 hover:text-[#063360] dark:text-slate-200 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
             }`}
           >
@@ -117,7 +117,7 @@ export const AppHeader: React.FC = () => {
             onClick={() => handleNavClick('about')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               currentView === 'about'
-                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-sky-500/20 dark:text-sky-300 font-extrabold shadow-2xs'
+                ? 'bg-[#215A9E]/15 text-[#215A9E] dark:bg-white/15 dark:text-white font-extrabold shadow-2xs'
                 : 'text-slate-600 hover:text-[#063360] dark:text-slate-200 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800'
             }`}
           >
@@ -144,10 +144,10 @@ export const AppHeader: React.FC = () => {
           {/* Language Switcher */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-100 border border-white/60 dark:border-slate-700 hover:border-geovision-blue hover:text-geovision-blue dark:hover:text-sky-300 transition-all glass-level-1"
+            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-100 border border-white/60 dark:border-slate-700 hover:border-geovision-blue hover:text-geovision-blue dark:hover:text-white transition-all glass-level-1"
             title="Switch Language"
           >
-            <Globe className="w-3.5 h-3.5 text-geovision-blue dark:text-sky-300" />
+            <Globe className="w-3.5 h-3.5 text-geovision-blue dark:text-white" />
             <span className="text-[11px] sm:text-xs">{t('nav.language')}</span>
           </button>
 
@@ -157,7 +157,7 @@ export const AppHeader: React.FC = () => {
             className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer"
             title="Toggle Light/Dark Theme"
           >
-            {theme === 'light' ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />}
+            {theme === 'light' ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 dark:text-white" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 dark:text-white" />}
           </button>
 
           {/* Help Icon Button */}
@@ -165,12 +165,12 @@ export const AppHeader: React.FC = () => {
             onClick={() => handleNavClick('help')}
             className={`p-1.5 sm:p-2 rounded-xl transition-colors glass-level-1 cursor-pointer ${
               currentView === 'help'
-                ? 'bg-[#215A9E]/15 text-geovision-blue dark:bg-sky-500/20 dark:text-sky-300 font-extrabold ring-1 ring-geovision-blue/30'
-                : 'text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-sky-300'
+                ? 'bg-[#215A9E]/15 text-geovision-blue dark:bg-white/15 dark:text-white font-extrabold ring-1 ring-geovision-blue/30'
+                : 'text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-white'
             }`}
             title={t('nav.help')}
           >
-            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-geovision-blue dark:text-sky-300" />
+            <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-geovision-blue dark:text-white" />
           </button>
 
           {/* Feedback Icon Button */}
@@ -179,10 +179,10 @@ export const AppHeader: React.FC = () => {
               setFeedbackModalOpen(true);
               setUserDropdownOpen(false);
             }}
-            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-sky-300 transition-colors glass-level-1 cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-white transition-colors glass-level-1 cursor-pointer"
             title={t('nav.feedback')}
           >
-            <FeedbackStarIcon className="w-4 h-4 text-geovision-blue dark:text-sky-300" />
+            <FeedbackStarIcon className="w-4 h-4 text-geovision-blue dark:text-white" />
           </button>
 
           {/* User Account / Guest Controls */}
@@ -312,7 +312,7 @@ export const AppHeader: React.FC = () => {
               onClick={() => { setFeedbackModalOpen(true); setMobileMenuOpen(false); }}
               className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
-              <FeedbackStarIcon className="w-4 h-4 text-geovision-blue" />
+              <FeedbackStarIcon className="w-4 h-4 text-geovision-blue dark:text-white" />
               <span>{t('nav.feedback')}</span>
             </button>
           </div>

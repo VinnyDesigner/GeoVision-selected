@@ -11,6 +11,7 @@ import {
   Trees,
   Landmark,
   Star,
+  Bookmark,
   CheckCircle2,
   Clock,
   MapPin,
@@ -31,6 +32,7 @@ import {
   Phone,
   ShieldCheck,
   LayoutGrid,
+  ArrowLeft,
 } from 'lucide-react';
 import { triggerPrintDocument } from '../../utils/printUtils';
 import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
@@ -138,6 +140,7 @@ interface AIMessageSearchResultsProps {
   setSelectedFeature?: (feat: GeoFeature) => void;
   language?: 'en' | 'ar';
   messageId?: string;
+  onViewDetails?: (feat: GeoFeature) => void;
 }
 
 const LAYER_OPTIONS = [
@@ -162,6 +165,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
   matchedFeatures,
   setSelectedFeature: setSelectedFeatureProp,
   language: languageProp,
+  onViewDetails,
 }) => {
   const appState = useAppState();
   const setMapCenterAndZoom = appState.setMapCenterAndZoom;
@@ -566,6 +570,310 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     triggerPrintDocument('Official Spatial Intelligence Search Report - Abu Dhabi SDI', htmlContent, printOrientation);
   };
 
+  // STANDALONE DETAIL PAGE VIEW (When user clicks Details button)
+  if (expandedDetailsId) {
+    const detailFeat = (matchedFeatures || featuresProp || []).find((f) => f?.id === expandedDetailsId) || GEO_FEATURES.find((f) => f.id === expandedDetailsId);
+    if (detailFeat) {
+      const isPriv = isFeaturePrivate(detailFeat);
+      const isFav = isFavorite(detailFeat.nameEn);
+      const styleInfo = getCategoryIconAndStyle(detailFeat.category, detailFeat.subcategory);
+
+      return (
+        <div className="mt-3.5 space-y-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 animate-in fade-in duration-200">
+          {/* Navigation Top Bar with Back Button */}
+          <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-blue-50/90 dark:bg-slate-800/90 border border-blue-200/80 dark:border-slate-700 shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setExpandedDetailsId(null)}
+              className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-geovision-blue text-white hover:bg-[#063360] text-xs font-black transition-all cursor-pointer shadow-md shadow-blue-500/20 active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180 text-white" />
+              <span className="text-white">{language === 'ar' ? 'العودة لنتائج البحث' : 'Back to Search Results'}</span>
+            </button>
+
+            <div className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-white truncate max-w-[200px] sm:max-w-xs">
+              <span className="w-2 h-2 rounded-full bg-geovision-blue shrink-0" />
+              <span className="truncate">{language === 'ar' ? detailFeat.nameAr : detailFeat.nameEn}</span>
+            </div>
+          </div>
+
+          {/* Feature Detail Page Main Card */}
+          <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-3.5">
+            {/* Banner Header */}
+            <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <div className="flex items-start gap-3 min-w-0">
+                <div className={`w-11 h-11 rounded-2xl ${styleInfo.bgGradient} border flex items-center justify-center shrink-0 shadow-sm`}>
+                  {styleInfo.icon}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                    <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-blue-100 dark:bg-slate-800 text-geovision-blue dark:text-white">
+                      {detailFeat.category.toUpperCase()} • {detailFeat.subcategory.toUpperCase()}
+                    </span>
+                    {detailFeat.isAuthoritative && (
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                        <ShieldCheck className="w-3 h-3" />
+                        <span>SDI Verified</span>
+                      </span>
+                    )}
+                    <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${isPriv ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'bg-blue-50 text-geovision-blue dark:bg-slate-800 dark:text-blue-300'}`}>
+                      {isPriv ? 'Private' : 'Public'}
+                    </span>
+                  </div>
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
+                    {language === 'ar' ? detailFeat.nameAr : detailFeat.nameEn}
+                  </h3>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (user?.isGuest) {
+                      setGuestPromptOpen(true);
+                      return;
+                    }
+                    if (isFav) {
+                      const favItem = favorites.find(f => f.nameEn === detailFeat.nameEn);
+                      if (favItem) removeFavorite(favItem.id);
+                    } else {
+                      addFavorite({
+                        type: 'location',
+                        nameEn: detailFeat.nameEn,
+                        nameAr: detailFeat.nameAr,
+                        categoryEn: detailFeat.category,
+                        categoryAr: detailFeat.category,
+                        lat: detailFeat.lat,
+                        lng: detailFeat.lng,
+                      });
+                    }
+                  }}
+                  className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                    isFav ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 text-amber-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 text-slate-400'
+                  }`}
+                >
+                  <Bookmark className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            {/* 3 Interactive Tabs */}
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                onClick={() => setActiveInlineTab('overview')}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeInlineTab === 'overview'
+                    ? 'bg-geovision-blue text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'نظرة عامة' : 'Overview'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveInlineTab('nearby')}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeInlineTab === 'nearby'
+                    ? 'bg-geovision-blue text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'القريبة' : 'Nearby'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveInlineTab('details')}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeInlineTab === 'details'
+                    ? 'bg-geovision-blue text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'الخصائص' : 'Details'}</span>
+              </button>
+            </div>
+
+            {/* TAB 1: OVERVIEW */}
+            {activeInlineTab === 'overview' && (
+              <div className="space-y-3.5 text-xs">
+                <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                  {language === 'ar'
+                    ? `يعتبر ${detailFeat.nameAr} من المعالم والمرافق الرئيسية في إمارة أبوظبي ضمن فئة ${detailFeat.category}. البيانات موثوقة مكانياً في الفهرس الجغرافي SDI.`
+                    : `${detailFeat.nameEn} represents a key facility within Abu Dhabi's ${detailFeat.category} spatial layer, fully verified in the SDI catalog.`}
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2.5">
+                    <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">{language === 'ar' ? 'العنوان' : 'Physical Address'}</span>
+                      <span className="font-bold text-slate-900 dark:text-white text-xs">{language === 'ar' ? (detailFeat.addressAr || `${detailFeat.nameAr}، أبوظبي`) : (detailFeat.addressEn || `${detailFeat.nameEn}, Abu Dhabi, UAE`)}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2.5">
+                    <Phone className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">{language === 'ar' ? 'الهاتف' : 'Contact Phone'}</span>
+                      <a href={`tel:${detailFeat.phone || '+9712800555'}`} className="font-mono font-bold text-geovision-blue dark:text-white text-xs hover:underline">{detailFeat.phone || '+971 2 800 555'}</a>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2.5">
+                    <Clock className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">{language === 'ar' ? 'ساعات العمل' : 'Working Hours'}</span>
+                      <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">{language === 'ar' ? (detailFeat.openStatusAr || 'مفتوح 24/7') : (detailFeat.openStatusEn || 'Open 24/7')}</span>
+                    </div>
+                  </div>
+
+                  <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2.5">
+                    <Compass className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold block uppercase">{language === 'ar' ? 'الإحداثيات' : 'Geographic Coords'}</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-white text-xs">{detailFeat.lat.toFixed(4)}°N, {detailFeat.lng.toFixed(4)}°E</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons Bar */}
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFeature(detailFeat);
+                      setMapCenterAndZoom([detailFeat.lat, detailFeat.lng], 16);
+                      if (currentView !== 'map') setCurrentView('map');
+                      showToast(`Zoomed to ${detailFeat.nameEn} on map`);
+                    }}
+                    className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-geovision-blue text-white text-xs font-black hover:bg-blue-600 shadow-md cursor-pointer transition-all"
+                  >
+                    <ZoomIn className="w-4 h-4 text-white" />
+                    <span className="text-white">{language === 'ar' ? 'تركيز في الخريطة' : 'Focus on Map'}</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedFeature(detailFeat);
+                      setMapCenterAndZoom([detailFeat.lat, detailFeat.lng], 15);
+                      setExpandedDirectionsId(detailFeat.id);
+                    }}
+                    className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 text-geovision-blue dark:text-white text-xs font-black hover:bg-geovision-blue hover:text-white shadow-2xs cursor-pointer transition-all"
+                  >
+                    <Navigation className="w-4 h-4" />
+                    <span>{language === 'ar' ? 'الاتجاهات' : 'Directions'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* TAB 2: NEARBY */}
+            {activeInlineTab === 'nearby' && (
+              <div className="space-y-3 text-xs">
+                <div className="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                  <span className="font-bold text-slate-600 dark:text-slate-300 text-[11px]">{language === 'ar' ? 'نطاق البحث:' : 'Proximity Radius:'}</span>
+                  <div className="flex gap-1">
+                    {[1, 3, 5, 10].map((r) => (
+                      <button
+                        key={r}
+                        type="button"
+                        onClick={() => setNearbyRadiusKm(r)}
+                        className={`px-2.5 py-1 rounded-xl font-black text-[10px] transition-all cursor-pointer ${
+                          nearbyRadiusKm === r ? 'bg-geovision-blue text-white shadow-2xs' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                        }`}
+                      >
+                        {r} km
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+                  {GEO_FEATURES.filter(f => f.id !== detailFeat.id)
+                    .map(f => {
+                      const dLat = ((f.lat - detailFeat.lat) * Math.PI) / 180;
+                      const dLon = ((f.lng - detailFeat.lng) * Math.PI) / 180;
+                      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((detailFeat.lat * Math.PI) / 180) * Math.cos((f.lat * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                      const itemDist = Math.round(6371 * c * 10) / 10;
+                      return { ...f, itemDist };
+                    })
+                    .filter(f => f.itemDist <= nearbyRadiusKm)
+                    .sort((a, b) => a.itemDist - b.itemDist)
+                    .slice(0, 6)
+                    .map((nearItem) => (
+                      <div
+                        key={nearItem.id}
+                        onClick={() => {
+                          setSelectedFeature(nearItem);
+                          setMapCenterAndZoom([nearItem.lat, nearItem.lng], 15);
+                        }}
+                        className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between hover:border-geovision-blue cursor-pointer transition-all shadow-2xs"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="font-black text-slate-900 dark:text-white truncate text-xs">{language === 'ar' ? nearItem.nameAr : nearItem.nameEn}</div>
+                          <div className="text-[10px] text-slate-400 truncate mt-0.5">{nearItem.subcategory} • {nearItem.addressEn || nearItem.addressAr}</div>
+                        </div>
+                        <span className="text-[10px] font-black text-geovision-blue dark:text-white px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-700 shrink-0">
+                          {nearItem.itemDist} km
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
+            {/* TAB 3: DETAILS */}
+            {activeInlineTab === 'details' && (
+              <div className="space-y-3 text-xs">
+                <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-800/60">
+                  <table className="w-full text-[11px] text-left rtl:text-right">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                      <tr className="bg-white dark:bg-slate-900">
+                        <td className="px-3.5 py-2 font-extrabold text-slate-500 w-1/3">Feature ID</td>
+                        <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">{detailFeat.id}</td>
+                      </tr>
+                      <tr>
+                        <td className="px-3.5 py-2 font-extrabold text-slate-500">Category / Sub</td>
+                        <td className="px-3.5 py-2 font-bold text-slate-900 dark:text-white">{detailFeat.category} / {detailFeat.subcategory}</td>
+                      </tr>
+                      <tr className="bg-white dark:bg-slate-900">
+                        <td className="px-3.5 py-2 font-extrabold text-slate-500">Coordinates</td>
+                        <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">Lat: {detailFeat.lat.toFixed(5)} N, Lng: {detailFeat.lng.toFixed(5)} E</td>
+                      </tr>
+                      <tr>
+                        <td className="px-3.5 py-2 font-extrabold text-slate-500">Grid Datum</td>
+                        <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">UTM Zone 39N (EPSG:4326)</td>
+                      </tr>
+                      {detailFeat.phone && (
+                        <tr className="bg-white dark:bg-slate-900">
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500">Phone</td>
+                          <td className="px-3.5 py-2 font-bold text-geovision-blue dark:text-white">{detailFeat.phone}</td>
+                        </tr>
+                      )}
+                      {detailFeat.metadata && Object.entries(detailFeat.metadata).map(([k, v]) => (
+                        <tr key={k}>
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500">{k}</td>
+                          <td className="px-3.5 py-2 font-bold text-slate-900 dark:text-white">{String(v)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="mt-3.5 space-y-2.5 pt-3 border-t border-slate-200/80 dark:border-slate-700/80">
       
@@ -719,8 +1027,311 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
       </div>
 
-      {/* Feature Cards List with 4 Working Action Icons for EACH Item */}
-      {filteredFeatures.length === 0 ? (
+      {/* Feature Cards List OR Navigated Detail Page */}
+      {expandedDetailsId ? (() => {
+        const detailFeat = (matchedFeatures || featuresProp || []).find((f) => f?.id === expandedDetailsId) || GEO_FEATURES.find((f) => f.id === expandedDetailsId);
+        if (!detailFeat) return null;
+
+        const isPriv = isFeaturePrivate(detailFeat);
+        const isFav = isFavorite(detailFeat.nameEn);
+        const styleInfo = getCategoryIconAndStyle(detailFeat.category, detailFeat.subcategory);
+
+        return (
+          <div className="space-y-3 animate-in fade-in duration-200">
+            {/* Navigation Top Bar with Back Button */}
+            <div className="flex items-center justify-between p-2.5 px-3 rounded-2xl bg-blue-50/90 dark:bg-slate-800/90 border border-blue-200/80 dark:border-slate-700 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setExpandedDetailsId(null)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-geovision-blue text-white hover:bg-[#063360] text-xs font-black transition-all cursor-pointer shadow-md shadow-blue-500/20 active:scale-95"
+              >
+                <ArrowLeft className="w-4 h-4 rtl:rotate-180" />
+                <span>{language === 'ar' ? 'العودة لنتائج البحث' : 'Back to Search Results'}</span>
+              </button>
+
+              <div className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-white truncate max-w-[200px] sm:max-w-xs">
+                <span className="w-2 h-2 rounded-full bg-geovision-blue shrink-0" />
+                <span className="truncate">{language === 'ar' ? detailFeat.nameAr : detailFeat.nameEn}</span>
+              </div>
+            </div>
+
+            {/* Feature Detail Page Card */}
+            <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-3.5">
+              
+              {/* Banner Header */}
+              <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-start gap-3 min-w-0">
+                  <div className={`w-11 h-11 rounded-2xl ${styleInfo.bgGradient} border flex items-center justify-center shrink-0 shadow-sm`}>
+                    {styleInfo.icon}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 mb-1">
+                      <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-blue-100 dark:bg-slate-800 text-geovision-blue dark:text-white">
+                        {detailFeat.category.toUpperCase()} • {detailFeat.subcategory.toUpperCase()}
+                      </span>
+                      {detailFeat.isAuthoritative && (
+                        <span className="px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 flex items-center gap-1">
+                          <ShieldCheck className="w-3 h-3" />
+                          <span>SDI Verified</span>
+                        </span>
+                      )}
+                      <span className={`px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${isPriv ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200' : 'bg-blue-50 text-geovision-blue dark:bg-slate-800 dark:text-blue-300'}`}>
+                        {isPriv ? 'Private' : 'Public'}
+                      </span>
+                    </div>
+                    <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white leading-snug">
+                      {language === 'ar' ? detailFeat.nameAr : detailFeat.nameEn}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (user?.isGuest) {
+                        setGuestPromptOpen(true);
+                        return;
+                      }
+                      if (isFav) {
+                        const favItem = favorites.find(f => f.nameEn === detailFeat.nameEn);
+                        if (favItem) removeFavorite(favItem.id);
+                      } else {
+                        addFavorite({
+                          type: 'location',
+                          nameEn: detailFeat.nameEn,
+                          nameAr: detailFeat.nameAr,
+                          categoryEn: detailFeat.category,
+                          categoryAr: detailFeat.category,
+                          lat: detailFeat.lat,
+                          lng: detailFeat.lng,
+                        });
+                      }
+                    }}
+                    className={`p-2 rounded-xl border transition-all cursor-pointer ${
+                      isFav ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 text-amber-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 text-slate-400'
+                    }`}
+                  >
+                    <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* 3 Interactive Tabs */}
+              <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 dark:bg-slate-800/90 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <button
+                  type="button"
+                  onClick={() => setActiveInlineTab('overview')}
+                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    activeInlineTab === 'overview'
+                      ? 'bg-geovision-blue text-white shadow-md'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>{language === 'ar' ? 'نظرة عامة' : 'Overview'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveInlineTab('nearby')}
+                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    activeInlineTab === 'nearby'
+                      ? 'bg-geovision-blue text-white shadow-md'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>{language === 'ar' ? 'القريبة' : 'Nearby'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveInlineTab('details')}
+                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                    activeInlineTab === 'details'
+                      ? 'bg-geovision-blue text-white shadow-md'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{language === 'ar' ? 'الخصائص' : 'Details'}</span>
+                </button>
+              </div>
+
+              {/* TAB 1: OVERVIEW */}
+              {activeInlineTab === 'overview' && (
+                <div className="space-y-3.5 text-xs">
+                  <p className="text-slate-700 dark:text-slate-300 font-medium leading-relaxed bg-slate-50 dark:bg-slate-800/60 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700">
+                    {language === 'ar'
+                      ? `يعتبر ${detailFeat.nameAr} من المعالم والمرافق الرئيسية في إمارة أبوظبي ضمن فئة ${detailFeat.category}. البيانات موثوقة مكانياً في الفهرس الجغرافي SDI.`
+                      : `${detailFeat.nameEn} represents a key facility within Abu Dhabi's ${detailFeat.category} spatial layer, fully verified in the SDI catalog.`}
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2.5">
+                      <MapPin className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase">{language === 'ar' ? 'العنوان' : 'Physical Address'}</span>
+                        <span className="font-bold text-slate-900 dark:text-white text-xs">{language === 'ar' ? (detailFeat.addressAr || `${detailFeat.nameAr}، أبوظبي`) : (detailFeat.addressEn || `${detailFeat.nameEn}, Abu Dhabi, UAE`)}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2.5">
+                      <Phone className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase">{language === 'ar' ? 'الهاتف' : 'Contact Phone'}</span>
+                        <a href={`tel:${detailFeat.phone || '+9712800555'}`} className="font-mono font-bold text-geovision-blue dark:text-white text-xs hover:underline">{detailFeat.phone || '+971 2 800 555'}</a>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2.5">
+                      <Clock className="w-4 h-4 text-blue-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase">{language === 'ar' ? 'ساعات العمل' : 'Working Hours'}</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400 text-xs">{language === 'ar' ? (detailFeat.openStatusAr || 'مفتوح 24/7') : (detailFeat.openStatusEn || 'Open 24/7')}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 flex items-start gap-2.5">
+                      <Compass className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase">{language === 'ar' ? 'الإحداثيات' : 'Geographic Coords'}</span>
+                        <span className="font-mono font-bold text-slate-900 dark:text-white text-xs">{detailFeat.lat.toFixed(4)}°N, {detailFeat.lng.toFixed(4)}°E</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Action Buttons Bar */}
+                  <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFeature(detailFeat);
+                        setMapCenterAndZoom([detailFeat.lat, detailFeat.lng], 16);
+                        if (currentView !== 'map') setCurrentView('map');
+                        showToast(`Zoomed to ${detailFeat.nameEn} on map`);
+                      }}
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-geovision-blue text-white text-xs font-black hover:bg-blue-600 shadow-md cursor-pointer transition-all"
+                    >
+                      <ZoomIn className="w-4 h-4" />
+                      <span>{language === 'ar' ? 'تركيز في الخريطة' : 'Focus on Map'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFeature(detailFeat);
+                        setMapCenterAndZoom([detailFeat.lat, detailFeat.lng], 15);
+                        setExpandedDirectionsId(detailFeat.id);
+                      }}
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 text-geovision-blue dark:text-white text-xs font-black hover:bg-geovision-blue hover:text-white shadow-2xs cursor-pointer transition-all"
+                    >
+                      <Navigation className="w-4 h-4" />
+                      <span>{language === 'ar' ? 'الاتجاهات' : 'Directions'}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 2: NEARBY */}
+              {activeInlineTab === 'nearby' && (
+                <div className="space-y-3 text-xs">
+                  <div className="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <span className="font-bold text-slate-600 dark:text-slate-300 text-[11px]">{language === 'ar' ? 'نطاق البحث:' : 'Proximity Radius:'}</span>
+                    <div className="flex gap-1">
+                      {[1, 3, 5, 10].map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setNearbyRadiusKm(r)}
+                          className={`px-2.5 py-1 rounded-xl font-black text-[10px] transition-all cursor-pointer ${
+                            nearbyRadiusKm === r ? 'bg-geovision-blue text-white shadow-2xs' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                          }`}
+                        >
+                          {r} km
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1 custom-scrollbar">
+                    {GEO_FEATURES.filter(f => f.id !== detailFeat.id)
+                      .map(f => {
+                        const dLat = ((f.lat - detailFeat.lat) * Math.PI) / 180;
+                        const dLon = ((f.lng - detailFeat.lng) * Math.PI) / 180;
+                        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((detailFeat.lat * Math.PI) / 180) * Math.cos((f.lat * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                        const itemDist = Math.round(6371 * c * 10) / 10;
+                        return { ...f, itemDist };
+                      })
+                      .filter(f => f.itemDist <= nearbyRadiusKm)
+                      .sort((a, b) => a.itemDist - b.itemDist)
+                      .slice(0, 6)
+                      .map((nearItem) => (
+                        <div
+                          key={nearItem.id}
+                          onClick={() => {
+                            setSelectedFeature(nearItem);
+                            setMapCenterAndZoom([nearItem.lat, nearItem.lng], 15);
+                          }}
+                          className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between hover:border-geovision-blue cursor-pointer transition-all shadow-2xs"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="font-black text-slate-900 dark:text-white truncate text-xs">{language === 'ar' ? nearItem.nameAr : nearItem.nameEn}</div>
+                            <div className="text-[10px] text-slate-400 truncate mt-0.5">{nearItem.subcategory} • {nearItem.addressEn || nearItem.addressAr}</div>
+                          </div>
+                          <span className="text-[10px] font-black text-geovision-blue dark:text-white px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-700 shrink-0">
+                            {nearItem.itemDist} km
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* TAB 3: DETAILS */}
+              {activeInlineTab === 'details' && (
+                <div className="space-y-3 text-xs">
+                  <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-800/60">
+                    <table className="w-full text-[11px] text-left rtl:text-right">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                        <tr className="bg-white dark:bg-slate-900">
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500 w-1/3">Feature ID</td>
+                          <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">{detailFeat.id}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500">Category / Sub</td>
+                          <td className="px-3.5 py-2 font-bold text-slate-900 dark:text-white">{detailFeat.category} / {detailFeat.subcategory}</td>
+                        </tr>
+                        <tr className="bg-white dark:bg-slate-900">
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500">Coordinates</td>
+                          <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">Lat: {detailFeat.lat.toFixed(5)} N, Lng: {detailFeat.lng.toFixed(5)} E</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500">Grid Datum</td>
+                          <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">UTM Zone 39N (EPSG:4326)</td>
+                        </tr>
+                        {detailFeat.phone && (
+                          <tr className="bg-white dark:bg-slate-900">
+                            <td className="px-3.5 py-2 font-extrabold text-slate-500">Phone</td>
+                            <td className="px-3.5 py-2 font-bold text-geovision-blue dark:text-white">{detailFeat.phone}</td>
+                          </tr>
+                        )}
+                        {detailFeat.metadata && Object.entries(detailFeat.metadata).map(([k, v]) => (
+                          <tr key={k}>
+                            <td className="px-3.5 py-2 font-extrabold text-slate-500">{k}</td>
+                            <td className="px-3.5 py-2 font-bold text-slate-900 dark:text-white">{String(v)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+            </div>
+          </div>
+        );
+      })() : filteredFeatures.length === 0 ? (
         <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-900/80 border border-slate-200/60 dark:border-slate-800 text-center text-xs text-slate-400 font-bold">
           {language === 'ar' ? 'لا توجد نتائج مطابقة للتصفية المختارة.' : 'No spatial matches found for selected category/type filter.'}
         </div>
@@ -874,7 +1485,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       }`}
                       title={isFav ? 'Favorite' : 'Add to favorite'}
                     >
-                      <Star className={`w-3 h-3 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
+                      <Bookmark className={`w-3 h-3 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
                     </button>
 
                     <button
@@ -883,18 +1494,14 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         e.stopPropagation();
                         setSelectedFeature(feat);
                         setMapCenterAndZoom([feat.lat, feat.lng], 15);
-                        if (expandedDetailsId === feat.id) {
-                          setExpandedDetailsId(null);
+                        if (onViewDetails) {
+                          onViewDetails(feat);
                         } else {
                           setExpandedDetailsId(feat.id);
                           setExpandedDirectionsId(null);
                         }
                       }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-extrabold transition-all cursor-pointer ${
-                        expandedDetailsId === feat.id
-                          ? 'bg-geovision-blue text-white border-blue-600'
-                          : 'bg-blue-50 dark:bg-blue-950/80 border-blue-200 dark:border-blue-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white'
-                      }`}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-extrabold transition-all cursor-pointer bg-blue-50 dark:bg-blue-950/80 border-blue-200 dark:border-blue-800 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white"
                       title={language === 'ar' ? 'التفاصيل' : 'Details'}
                     >
                       <Info className="w-3 h-3" />

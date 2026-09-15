@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/AppStateContext';
+import type { GeoFeature } from '../../types';
+import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
 import {
   Sparkles,
   Send,
@@ -7,12 +9,12 @@ import {
   X,
   ChevronRight,
   Plus,
-  Star,
   History,
   BarChart2,
   Mic,
   GraduationCap,
   Building2,
+  Bookmark,
   MapPin,
   Shield,
   Compass,
@@ -24,8 +26,19 @@ import {
   Cpu,
   GripVertical,
   Pencil,
+  ArrowLeft,
+  ShieldCheck,
+  LayoutGrid,
+  Clock,
+  Phone,
+  ZoomIn,
+  Navigation,
+  FileText,
+  Crop,
 } from 'lucide-react';
 import { AIMessageSearchResults } from './AIMessageSearchResults';
+import { buildSpatialSnapshot } from '../../utils/spatialSnapshotUtils';
+import type { AttachedSpatialSnapshot } from '../../types';
 
 interface GeoVisionPanelProps {
   onClose?: () => void;
@@ -272,6 +285,15 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
     setGuestPromptOpen,
     showToast,
     t,
+    setSelectedFeature,
+    mapCenter,
+    setMapCenterAndZoom,
+    favorites,
+    addFavorite,
+    removeFavorite,
+    isFavorite,
+    currentView,
+    setNavigationTarget,
   } = useAppState();
 
   const [inputVal, setInputVal] = useState('');
@@ -279,6 +301,10 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
 
   const [editingMsgId, setEditingMsgId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState<string>('');
+
+  const [activeDetailFeature, setActiveDetailFeature] = useState<GeoFeature | null>(null);
+  const [activeDetailTab, setActiveDetailTab] = useState<'overview' | 'nearby' | 'details'>('overview');
+  const [nearbyRadiusKm, setNearbyRadiusKm] = useState<number>(3);
 
   const handleStartEdit = (msgId: string, currentText: string) => {
     setEditingMsgId(msgId);
@@ -303,6 +329,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   const handleNewChat = () => {
+    setActiveDetailFeature(null);
     startNewConversation();
     setInputVal('');
     setEditingMsgId(null);
@@ -436,11 +463,28 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
     }, 1800);
   };
 
+  const [pendingAttachment, setPendingAttachment] = useState<AttachedSpatialSnapshot | null>(null);
+
+  const handleCaptureMapExtent = () => {
+    const center = mapCenter || [24.4539, 54.3773];
+    const snapshot = buildSpatialSnapshot(
+      'map_extent',
+      center,
+      'Captured Spatial Map View',
+      'منطقة الخريطة الجغرافية',
+      4.8
+    );
+    setPendingAttachment(snapshot);
+    showToast(language === 'ar' ? 'تم التقاط لقطة الخريطة وإرفاقها بمحادثة AI' : 'Captured spatial map area image attached!');
+  };
+
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputVal.trim() || aiProcessing) return;
-    sendAIMessage(inputVal);
+    if ((!inputVal.trim() && !pendingAttachment) || aiProcessing) return;
+    const queryText = inputVal.trim() || (language === 'ar' ? 'تحليل المنطقة المكانية المرفقة' : 'Analyze attached spatial map area');
+    sendAIMessage(queryText, pendingAttachment || undefined);
     setInputVal('');
+    setPendingAttachment(null);
   };
 
   return (
@@ -488,7 +532,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
             className="p-1.5 sm:p-2 text-[#545860] hover:text-[#063360] dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-[#7DA1C4]/15 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
             title={t('nav.favorites')}
           >
-            <Star className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+            <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500/20" />
           </button>
 
           <button
@@ -526,8 +570,345 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
         </div>
       </div>
 
-      {/* Messages Stream */}
-      <div ref={chatContainerRef} className="flex-1 p-3.5 sm:p-4 overflow-y-auto space-y-4">
+      {/* Main Panel Content: Standalone Full Page Detail View OR Chat Messages Stream + Input Footer */}
+      {activeDetailFeature ? (
+        <div className="flex-1 flex flex-col overflow-hidden bg-slate-50/80 dark:bg-slate-900 animate-in fade-in duration-200">
+          {/* Top Sub-Bar Navigation with Back Button */}
+          <div className="p-3 px-4 bg-white/95 dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 backdrop-blur-md flex items-center justify-between gap-3 shrink-0 shadow-2xs z-10">
+            <button
+              type="button"
+              onClick={() => setActiveDetailFeature(null)}
+              className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-geovision-blue hover:bg-[#063360] text-white text-xs font-black transition-all cursor-pointer shadow-md shadow-blue-500/20 active:scale-95"
+            >
+              <ArrowLeft className="w-4 h-4 rtl:rotate-180 text-white" />
+              <span className="text-white">{language === 'ar' ? 'العودة للمحادثة' : 'Back to Chat'}</span>
+            </button>
+
+            <div className="flex items-center gap-2 text-xs font-black text-slate-800 dark:text-white truncate max-w-[200px] sm:max-w-xs">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0 animate-pulse" />
+              <span className="truncate">{language === 'ar' ? activeDetailFeature.nameAr : activeDetailFeature.nameEn}</span>
+            </div>
+          </div>
+
+          {/* Scrollable Detail Body Container */}
+          <div className="flex-1 p-4 overflow-y-auto space-y-4 custom-scrollbar">
+            
+            {/* Ultra-Premium Hero Header Card */}
+            <div className="relative overflow-hidden rounded-3xl bg-linear-to-br from-[#063360] via-[#1E4D8C] to-[#215A9E] text-white p-5 shadow-xl space-y-4">
+              {/* Decorative Subtle Radial Backdrop Accent */}
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-sky-400/20 rounded-full blur-3xl pointer-events-none" />
+              <div className="absolute -left-10 -bottom-10 w-40 h-40 bg-blue-500/15 rounded-full blur-3xl pointer-events-none" />
+
+              {/* Top Badges Row */}
+              <div className="flex flex-wrap items-center justify-between gap-2 relative z-10">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-white/15 backdrop-blur-md text-white border border-white/20">
+                    {activeDetailFeature.category.toUpperCase()} • {activeDetailFeature.subcategory.toUpperCase()}
+                  </span>
+                  {activeDetailFeature.isAuthoritative && (
+                    <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-500/25 backdrop-blur-md text-emerald-200 border border-emerald-400/30 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-300" />
+                      <span>SDI Verified</span>
+                    </span>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (user?.isGuest) {
+                      setGuestPromptOpen(true);
+                      return;
+                    }
+                    if (isFavorite(activeDetailFeature.nameEn)) {
+                      const favItem = favorites.find((f) => f.nameEn === activeDetailFeature.nameEn);
+                      if (favItem) removeFavorite(favItem.id);
+                    } else {
+                      addFavorite({
+                        type: 'location',
+                        nameEn: activeDetailFeature.nameEn,
+                        nameAr: activeDetailFeature.nameAr,
+                        categoryEn: activeDetailFeature.category,
+                        categoryAr: activeDetailFeature.category,
+                        lat: activeDetailFeature.lat,
+                        lng: activeDetailFeature.lng,
+                      });
+                    }
+                  }}
+                  className={`p-2.5 rounded-2xl backdrop-blur-md border transition-all cursor-pointer shadow-sm ${
+                    isFavorite(activeDetailFeature.nameEn)
+                      ? 'bg-amber-400/20 border-amber-300/40 text-amber-300'
+                      : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
+                  }`}
+                  title={isFavorite(activeDetailFeature.nameEn) ? 'Remove Favorite' : 'Save Favorite'}
+                >
+                  <Bookmark className={`w-5 h-5 ${isFavorite(activeDetailFeature.nameEn) ? 'fill-amber-300 text-amber-300' : ''}`} />
+                </button>
+              </div>
+
+              {/* Facility Title & Avatar */}
+              <div className="flex items-start gap-3.5 relative z-10 pt-1">
+                <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center shrink-0 shadow-inner text-white">
+                  <Building2 className="w-6 h-6 text-sky-200" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-base sm:text-lg font-black text-white leading-snug tracking-tight">
+                    {language === 'ar' ? activeDetailFeature.nameAr : activeDetailFeature.nameEn}
+                  </h3>
+                  {activeDetailFeature.nameAr && activeDetailFeature.nameEn && (
+                    <p className="text-xs font-bold text-sky-200/90 truncate mt-0.5">
+                      {language === 'ar' ? activeDetailFeature.nameEn : activeDetailFeature.nameAr}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Segmented Navigation Tabs */}
+            <div className="grid grid-cols-3 gap-1 p-1 rounded-2xl bg-slate-200/60 dark:bg-slate-800/80 border border-slate-300/50 dark:border-slate-700/60 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setActiveDetailTab('overview')}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeDetailTab === 'overview'
+                    ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'
+                }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'نظرة عامة' : 'Overview'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDetailTab('nearby')}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeDetailTab === 'nearby'
+                    ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'القريبة' : 'Nearby'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveDetailTab('details')}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  activeDetailTab === 'details'
+                    ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/20'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/60 dark:hover:bg-slate-700/60'
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>{language === 'ar' ? 'الخصائص' : 'Details'}</span>
+              </button>
+            </div>
+
+            {/* OVERVIEW TAB */}
+            {activeDetailTab === 'overview' && (
+              <div className="space-y-4 text-xs">
+                {/* Spatial Intelligence Summary Card */}
+                <div className="p-4 rounded-2xl bg-white dark:bg-slate-800/90 border border-slate-200/90 dark:border-slate-700/90 shadow-2xs space-y-1.5">
+                  <div className="flex items-center gap-2 text-geovision-blue dark:text-sky-300 text-xs font-black uppercase tracking-wider">
+                    <Sparkles className="w-4 h-4" />
+                    <span>{language === 'ar' ? 'التحليل المكاني الجغرافي' : 'Spatial Intelligence Overview'}</span>
+                  </div>
+                  <p className="text-slate-700 dark:text-slate-200 font-medium leading-relaxed text-xs sm:text-sm">
+                    {language === 'ar'
+                      ? `يعتبر ${activeDetailFeature.nameAr} من المعالم والمرافق الرئيسية في إمارة أبوظبي ضمن فئة ${activeDetailFeature.category}. البيانات موثوقة مكانياً في الفهرس الجغرافي SDI.`
+                      : `${activeDetailFeature.nameEn} represents a key facility within Abu Dhabi's ${activeDetailFeature.category} spatial layer, fully verified in the SDI catalog.`}
+                  </p>
+
+                  {/* 2x2 Info Grid Cards */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Physical Address */}
+                    <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-500 flex items-center justify-center shrink-0">
+                        <MapPin className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">{language === 'ar' ? 'العنوان الفعلي' : 'Physical Address'}</span>
+                        <span className="font-extrabold text-slate-900 dark:text-white text-xs leading-snug block mt-0.5">
+                          {language === 'ar' ? (activeDetailFeature.addressAr || `${activeDetailFeature.nameAr}، أبوظبي`) : (activeDetailFeature.addressEn || `${activeDetailFeature.nameEn}, Abu Dhabi, UAE`)}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Contact Phone */}
+                    <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-500 flex items-center justify-center shrink-0">
+                        <Phone className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">{language === 'ar' ? 'الهاتف' : 'Contact Phone'}</span>
+                        <a href={`tel:${activeDetailFeature.phone || '+9712800555'}`} className="font-mono font-extrabold text-geovision-blue dark:text-sky-300 text-xs block mt-0.5 hover:underline">
+                          {activeDetailFeature.phone || '+971 2 800 555'}
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Working Hours */}
+                    <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-sky-50 dark:bg-sky-950/60 text-sky-500 flex items-center justify-center shrink-0">
+                        <Clock className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">{language === 'ar' ? 'ساعات العمل' : 'Working Hours'}</span>
+                        <span className="font-extrabold text-emerald-600 dark:text-emerald-400 text-xs block mt-0.5">
+                          {language === 'ar' ? (activeDetailFeature.openStatusAr || 'مفتوح 24/7') : (activeDetailFeature.openStatusEn || 'Open 24/7')}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Geographic Coords */}
+                    <div className="p-3.5 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700/80 shadow-2xs flex items-start gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-500 flex items-center justify-center shrink-0">
+                        <Compass className="w-4 h-4" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-wider">{language === 'ar' ? 'الإحداثيات' : 'Geographic Coords'}</span>
+                        <span className="font-mono font-extrabold text-slate-900 dark:text-white text-xs block mt-0.5">
+                          {activeDetailFeature.lat.toFixed(4)}°N, {activeDetailFeature.lng.toFixed(4)}°E
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Primary Action Buttons */}
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFeature(activeDetailFeature);
+                        setMapCenterAndZoom([activeDetailFeature.lat, activeDetailFeature.lng], 16);
+                        if (currentView !== 'map') setCurrentView('map');
+                        showToast(`Zoomed to ${activeDetailFeature.nameEn} on map`);
+                      }}
+                      className="flex-1 min-w-[130px] py-3 px-4 rounded-2xl bg-linear-to-r from-[#063360] to-[#215A9E] hover:from-[#08427b] hover:to-[#2b6ebf] text-white font-black text-xs shadow-md shadow-blue-600/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <ZoomIn className="w-4 h-4 text-white" />
+                      <span className="text-white">{language === 'ar' ? 'تركيز في الخريطة' : 'Focus on Map'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedFeature(activeDetailFeature);
+                        setMapCenterAndZoom([activeDetailFeature.lat, activeDetailFeature.lng], 15);
+                        if (setNavigationTarget) setNavigationTarget(activeDetailFeature);
+                        showToast(`Routing to ${activeDetailFeature.nameEn}`);
+                      }}
+                      className="flex-1 min-w-[130px] py-3 px-4 rounded-2xl bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-black text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                    >
+                      <Navigation className="w-4 h-4 text-white" />
+                      <span className="text-white">{language === 'ar' ? 'الاتجاهات' : 'Directions'}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              )}
+
+              {/* NEARBY TAB */}
+              {activeDetailTab === 'nearby' && (
+                <div className="space-y-3 text-xs">
+                  <div className="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-2xl border border-slate-200 dark:border-slate-700">
+                    <span className="font-bold text-slate-600 dark:text-slate-300 text-[11px]">{language === 'ar' ? 'نطاق البحث:' : 'Proximity Radius:'}</span>
+                    <div className="flex gap-1">
+                      {[1, 3, 5, 10].map((r) => (
+                        <button
+                          key={r}
+                          type="button"
+                          onClick={() => setNearbyRadiusKm(r)}
+                          className={`px-2.5 py-1 rounded-xl font-black text-[10px] transition-all cursor-pointer ${
+                            nearbyRadiusKm === r ? 'bg-geovision-blue text-white shadow-2xs' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                          }`}
+                        >
+                          {r} km
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto pr-1 custom-scrollbar">
+                    {GEO_FEATURES.filter((f) => f.id !== activeDetailFeature.id)
+                      .map((f) => {
+                        const dLat = ((f.lat - activeDetailFeature.lat) * Math.PI) / 180;
+                        const dLon = ((f.lng - activeDetailFeature.lng) * Math.PI) / 180;
+                        const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos((activeDetailFeature.lat * Math.PI) / 180) * Math.cos((f.lat * Math.PI) / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                        const itemDist = Math.round(6371 * c * 10) / 10;
+                        return { ...f, itemDist };
+                      })
+                      .filter((f) => f.itemDist <= nearbyRadiusKm)
+                      .sort((a, b) => a.itemDist - b.itemDist)
+                      .slice(0, 8)
+                      .map((nearItem) => (
+                        <div
+                          key={nearItem.id}
+                          onClick={() => {
+                            setSelectedFeature(nearItem);
+                            setMapCenterAndZoom([nearItem.lat, nearItem.lng], 15);
+                          }}
+                          className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between hover:border-geovision-blue cursor-pointer transition-all shadow-2xs"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <div className="font-black text-slate-900 dark:text-white truncate text-xs">{language === 'ar' ? nearItem.nameAr : nearItem.nameEn}</div>
+                            <div className="text-[10px] text-slate-400 truncate mt-0.5">{nearItem.subcategory} • {nearItem.addressEn || nearItem.addressAr}</div>
+                          </div>
+                          <span className="text-[10px] font-black text-geovision-blue dark:text-white px-2.5 py-1 rounded-xl bg-blue-50 dark:bg-slate-900 border border-blue-200 dark:border-slate-700 shrink-0">
+                            {nearItem.itemDist} km
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* DETAILS TAB */}
+              {activeDetailTab === 'details' && (
+                <div className="space-y-3 text-xs">
+                  <div className="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden bg-slate-50 dark:bg-slate-800/60">
+                    <table className="w-full text-[11px] text-left rtl:text-right">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-700/60">
+                        <tr className="bg-white dark:bg-slate-900">
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500 w-1/3">Feature ID</td>
+                          <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">{activeDetailFeature.id}</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500">Category / Sub</td>
+                          <td className="px-3.5 py-2 font-bold text-slate-900 dark:text-white">{activeDetailFeature.category} / {activeDetailFeature.subcategory}</td>
+                        </tr>
+                        <tr className="bg-white dark:bg-slate-900">
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500">Coordinates</td>
+                          <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">Lat: {activeDetailFeature.lat.toFixed(5)} N, Lng: {activeDetailFeature.lng.toFixed(5)} E</td>
+                        </tr>
+                        <tr>
+                          <td className="px-3.5 py-2 font-extrabold text-slate-500">Grid Datum</td>
+                          <td className="px-3.5 py-2 font-mono font-bold text-slate-900 dark:text-white">UTM Zone 39N (EPSG:4326)</td>
+                        </tr>
+                        {activeDetailFeature.phone && (
+                          <tr className="bg-white dark:bg-slate-900">
+                            <td className="px-3.5 py-2 font-extrabold text-slate-500">Phone</td>
+                            <td className="px-3.5 py-2 font-bold text-geovision-blue dark:text-white">{activeDetailFeature.phone}</td>
+                          </tr>
+                        )}
+                        {activeDetailFeature.metadata && Object.entries(activeDetailFeature.metadata).map(([k, v]) => (
+                          <tr key={k}>
+                            <td className="px-3.5 py-2 font-extrabold text-slate-500">{k}</td>
+                            <td className="px-3.5 py-2 font-bold text-slate-900 dark:text-white">{String(v)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Messages Stream */}
+          <div ref={chatContainerRef} className="flex-1 p-3.5 sm:p-4 overflow-y-auto space-y-4">
         {aiMessages.map((msg) => {
           const isMsgAr = Boolean(msg.isArabicPrompt || language === 'ar');
 
@@ -585,8 +966,48 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
                     </div>
                   </form>
                 ) : (
-                  <div className="max-w-[85%] sm:max-w-[80%] p-3.5 rounded-2xl bg-geovision-blue text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 rounded-tr-none">
-                    {textToDisplay}
+                  <div className="flex flex-col items-end gap-2 max-w-[88%] sm:max-w-[82%]">
+                    {/* Attached Spatial Image Snapshot Thumbnail Card (ChatGPT style) */}
+                    {msg.attachedSpatialSnapshot && (
+                      <div
+                        onClick={() => {
+                          if (msg.attachedSpatialSnapshot?.center) {
+                            setMapCenterAndZoom(msg.attachedSpatialSnapshot.center, 15);
+                            if (currentView !== 'map') setCurrentView('map');
+                          }
+                        }}
+                        className="w-full p-2.5 rounded-2xl bg-slate-900 border border-slate-700/80 text-white shadow-lg overflow-hidden cursor-pointer hover:border-geovision-blue transition-all group/attachment"
+                      >
+                        {msg.attachedSpatialSnapshot.previewUrl && (
+                          <div className="relative rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+                            <img
+                              src={msg.attachedSpatialSnapshot.previewUrl}
+                              alt="Spatial Attachment"
+                              className="w-full h-32 sm:h-36 object-cover group-hover/attachment:scale-105 transition-transform duration-300"
+                            />
+                            <div className="absolute top-2 left-2 px-2.5 py-0.5 rounded-lg text-[9.5px] font-black uppercase tracking-wider bg-emerald-500 text-white shadow-sm flex items-center gap-1">
+                              <Crop className="w-3 h-3" />
+                              <span>Attached Spatial Map Area</span>
+                            </div>
+                            {msg.attachedSpatialSnapshot.areaKm2 && (
+                              <div className="absolute bottom-2 right-2 px-2 py-0.5 rounded-md text-[9.5px] font-mono font-bold bg-slate-950/85 text-sky-300 backdrop-blur-md border border-slate-700">
+                                {msg.attachedSpatialSnapshot.areaKm2.toFixed(1)} km²
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between px-1.5 pt-1.5 text-[11px] font-bold text-sky-200">
+                          <span>📍 {msg.attachedSpatialSnapshot.titleEn}</span>
+                          <span className="font-mono text-[10px] text-slate-400">
+                            {msg.attachedSpatialSnapshot.center[0].toFixed(3)}°N, {msg.attachedSpatialSnapshot.center[1].toFixed(3)}°E
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="w-full p-3.5 rounded-2xl bg-geovision-blue text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 rounded-tr-none">
+                      {textToDisplay}
+                    </div>
                   </div>
                 )}
               </div>
@@ -619,7 +1040,11 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
 
                 {/* Result Cards Display */}
                 {msg.matchedFeatures && msg.matchedFeatures.length > 0 && (
-                  <AIMessageSearchResults matchedFeatures={msg.matchedFeatures} messageId={msg.id} />
+                  <AIMessageSearchResults
+                    matchedFeatures={msg.matchedFeatures}
+                    messageId={msg.id}
+                    onViewDetails={(feat) => setActiveDetailFeature(feat)}
+                  />
                 )}
 
                 {/* Recommendations Section */}
@@ -671,19 +1096,60 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
       </div>
 
       {/* Input Form Footer */}
-      <div className="p-3 sm:p-4 border-t border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 shrink-0">
+      <div className="p-3 sm:p-4 border-t border-slate-200/80 dark:border-slate-800/80 bg-white dark:bg-slate-900 shrink-0 space-y-2">
+        {/* Pending Attached Spatial Snapshot Bar (if attached) */}
+        {pendingAttachment && (
+          <div className="flex items-center justify-between p-2 px-3 rounded-xl bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 animate-in fade-in duration-150">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-geovision-blue text-white flex items-center justify-center shrink-0">
+                <Crop className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[11px] font-extrabold text-slate-900 dark:text-white block truncate">
+                  📎 Attached Spatial Map Area: {pendingAttachment.titleEn}
+                </span>
+                <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 block truncate">
+                  {pendingAttachment.center[0].toFixed(3)}°N, {pendingAttachment.center[1].toFixed(3)}°E • {pendingAttachment.areaKm2 ? `${pendingAttachment.areaKm2.toFixed(1)} km²` : 'GIS Bounds'}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPendingAttachment(null)}
+              className="p-1 text-slate-400 hover:text-rose-500 rounded-lg cursor-pointer transition-colors"
+              title="Remove Attachment"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
         <form onSubmit={handleSend} className="relative flex items-center">
           <input
             type="text"
             value={inputVal}
             onChange={(e) => setInputVal(e.target.value)}
             placeholder={isListening ? (language === 'ar' ? 'جاري الاستماع لصوتك...' : 'Listening to your voice...') : t('ai.inputPlaceholder')}
-            className={`w-full pl-3.5 pr-20 py-2.5 sm:py-3 rtl:pr-3.5 rtl:pl-20 rounded-2xl border bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-geovision-blue transition-all ${
+            className={`w-full pl-3.5 pr-28 py-2.5 sm:py-3 rtl:pr-3.5 rtl:pl-28 rounded-2xl border bg-slate-50 dark:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-geovision-blue transition-all ${
               isListening ? 'border-rose-500 bg-rose-50/30 dark:bg-rose-950/20' : 'border-slate-200 dark:border-slate-700'
             }`}
           />
 
           <div className="absolute right-2 rtl:right-auto rtl:left-2 flex items-center gap-1">
+            {/* Capture Map Area / Attach Image Button */}
+            <button
+              type="button"
+              onClick={handleCaptureMapExtent}
+              className={`p-2 rounded-xl transition-all cursor-pointer ${
+                pendingAttachment
+                  ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/30'
+                  : 'text-slate-400 hover:text-geovision-blue dark:hover:text-blue-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+              }`}
+              title={language === 'ar' ? 'إرفاق لقطة الخريطة' : 'Capture & Attach Map Area Image'}
+            >
+              <Crop className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+
             <button
               type="button"
               onClick={handleVoiceInput}
@@ -698,7 +1164,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
             </button>
             <button
               type="submit"
-              disabled={!inputVal.trim() || aiProcessing}
+              disabled={(!inputVal.trim() && !pendingAttachment) || aiProcessing}
               className="p-2 rounded-xl bg-geovision-blue text-white hover:bg-blue-600 disabled:opacity-50 transition-all cursor-pointer shadow-md"
             >
               <Send className="w-3.5 h-3.5 sm:w-4 sm:h-4 rtl:rotate-180" />
@@ -706,6 +1172,8 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
           </div>
         </form>
       </div>
+    </>
+  )}
 
     </div>
   );

@@ -8,7 +8,7 @@ import {
   Building,
   Navigation,
   ExternalLink,
-  Star,
+  Bookmark,
   Share2,
   Clock,
   Phone,
@@ -184,7 +184,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
               }`}
               title={isFav ? 'Remove Favorite' : 'Save Favorite'}
             >
-              <Star className={`w-4 h-4 ${isFav ? 'fill-white' : ''}`} />
+              <Bookmark className={`w-4 h-4 ${isFav ? 'fill-white' : ''}`} />
             </button>
 
             <button
@@ -215,11 +215,11 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
             onClick={() => setActiveTab('overview')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-black rounded-t-xl transition-all border-b-2 cursor-pointer ${
               activeTab === 'overview'
-                ? 'border-geovision-blue text-geovision-blue dark:text-blue-400 bg-white dark:bg-slate-800 shadow-2xs'
+                ? 'border-geovision-blue text-geovision-blue dark:text-white bg-white dark:bg-slate-800 shadow-2xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <Info className="w-4 h-4" />
+            <Info className="w-4 h-4 text-geovision-blue dark:text-white" />
             <span>{language === 'ar' ? 'نظرة عامة' : 'Overview'}</span>
           </button>
 
@@ -227,13 +227,13 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
             onClick={() => setActiveTab('nearby')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-black rounded-t-xl transition-all border-b-2 cursor-pointer ${
               activeTab === 'nearby'
-                ? 'border-geovision-blue text-geovision-blue dark:text-blue-400 bg-white dark:bg-slate-800 shadow-2xs'
+                ? 'border-geovision-blue text-geovision-blue dark:text-white bg-white dark:bg-slate-800 shadow-2xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <Compass className="w-4 h-4" />
+            <Compass className="w-4 h-4 text-geovision-blue dark:text-white" />
             <span>{language === 'ar' ? 'المرافق القريبة' : 'Nearby'}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-blue-100 dark:bg-blue-950 text-geovision-blue dark:text-blue-300 font-extrabold">
+            <span className="px-1.5 py-0.5 rounded-full text-[9px] bg-blue-100 dark:bg-slate-800 text-geovision-blue dark:text-white font-extrabold">
               {nearbyFeatures.length}
             </span>
           </button>
@@ -242,11 +242,11 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
             onClick={() => setActiveTab('details')}
             className={`flex items-center gap-2 px-4 py-2.5 text-xs font-black rounded-t-xl transition-all border-b-2 cursor-pointer ${
               activeTab === 'details'
-                ? 'border-geovision-blue text-geovision-blue dark:text-blue-400 bg-white dark:bg-slate-800 shadow-2xs'
+                ? 'border-geovision-blue text-geovision-blue dark:text-white bg-white dark:bg-slate-800 shadow-2xs'
                 : 'border-transparent text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <FileText className="w-4 h-4" />
+            <FileText className="w-4 h-4 text-geovision-blue dark:text-white" />
             <span>{language === 'ar' ? 'التفاصيل والخصائص' : 'Details'}</span>
           </button>
 
@@ -259,8 +259,8 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
             <div className="space-y-5 animate-in fade-in duration-200">
               {/* Executive Spatial Summary Card */}
               <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/80 space-y-2">
-                <div className="flex items-center gap-2 text-xs font-black text-geovision-blue dark:text-blue-400 uppercase tracking-wider">
-                  <Sparkles className="w-4 h-4" />
+                <div className="flex items-center gap-2 text-xs font-black text-geovision-blue dark:text-white uppercase tracking-wider">
+                  <Sparkles className="w-4 h-4 text-geovision-blue dark:text-white" />
                   <span>{language === 'ar' ? 'الملخص المكاني التنفيذي' : 'Executive Spatial Summary'}</span>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
@@ -273,8 +273,8 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
               {/* Key Quick Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/60 dark:border-blue-800/60 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-geovision-blue dark:text-blue-400 flex items-center justify-center shrink-0">
-                    <Navigation className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-geovision-blue dark:text-white flex items-center justify-center shrink-0">
+                    <Navigation className="w-5 h-5 text-geovision-blue dark:text-white" />
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase">
@@ -301,22 +301,22 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-geovision-blue dark:text-blue-300 flex items-center justify-center shrink-0">
-                    <ShieldCheck className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-geovision-blue dark:text-white flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-5 h-5 text-geovision-blue dark:text-white" />
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase">
                       {language === 'ar' ? 'تصنيف البيانات' : 'SDI Trust'}
                     </div>
-                    <div className="text-xs sm:text-sm font-black text-geovision-blue dark:text-blue-300">
+                    <div className="text-xs sm:text-sm font-black text-geovision-blue dark:text-white">
                       {currentFeature.isAuthoritative ? 'Level 1 Verified' : 'Standard SDI'}
                     </div>
                   </div>
                 </div>
 
                 <div className="p-3.5 rounded-2xl bg-blue-50/70 dark:bg-slate-800/80 border border-blue-200/60 dark:border-slate-700 flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-geovision-blue dark:text-blue-300 flex items-center justify-center shrink-0">
-                    <MapPin className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-blue-500/10 text-geovision-blue dark:text-white flex items-center justify-center shrink-0">
+                    <MapPin className="w-5 h-5 text-geovision-blue dark:text-white" />
                   </div>
                   <div>
                     <div className="text-[10px] font-bold text-slate-400 uppercase">
@@ -386,7 +386,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
               {/* Distance Radius Filter Controls */}
               <div className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700">
                 <div className="flex items-center gap-2">
-                  <Compass className="w-4 h-4 text-geovision-blue dark:text-blue-400" />
+                  <Compass className="w-4 h-4 text-geovision-blue dark:text-white" />
                   <span className="text-xs font-black text-slate-800 dark:text-slate-200">
                     {language === 'ar' ? 'نطاق البحث القريب:' : 'Proximity Radius Filter:'}
                   </span>

@@ -6,6 +6,7 @@ import type {
   User,
   SmartFilterState,
   AIMessage,
+  AttachedSpatialSnapshot,
   FavoriteItem,
   BasemapType,
   ActiveTool,
@@ -72,7 +73,7 @@ interface AppStateContextType {
   GEO_FEATURES: GeoFeature[];
   aiMessages: AIMessage[];
   setAiMessages: React.Dispatch<React.SetStateAction<AIMessage[]>>;
-  sendAIMessage: (query: string) => void;
+  sendAIMessage: (query: string, attachedSnapshot?: AttachedSpatialSnapshot) => void;
   aiProcessing: boolean;
   aiStepState: string;
   favorites: FavoriteItem[];
@@ -721,7 +722,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
   });
 
   // Natural Language AI Processing Simulation
-  const sendAIMessage = (query: string) => {
+  const sendAIMessage = (query: string, attachedSnapshot?: AttachedSpatialSnapshot) => {
     if (!query.trim()) return;
 
     const lowerQ = query.toLowerCase();
@@ -745,6 +746,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
       textAr: query,
       timestamp: 'Just now',
       isArabicPrompt: isArabicQuery,
+      attachedSpatialSnapshot: attachedSnapshot,
     };
 
     setAiMessages(prev => [...prev, userMsg]);

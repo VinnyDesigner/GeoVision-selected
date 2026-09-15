@@ -12,6 +12,7 @@ import { SketchAOITool } from './SketchAOITool';
 import { GeoVisionPanel } from '../ai/GeoVisionPanel';
 import { SmartFilterPanel } from '../filters/SmartFilterPanel';
 import { createGeoVisionMarkerIcon } from '../../utils/markerUtils';
+import { buildSpatialSnapshot } from '../../utils/spatialSnapshotUtils';
 import { X, Layers, ChevronUp } from 'lucide-react';
 
 export const MapWorkspace: React.FC = () => {
@@ -471,25 +472,19 @@ export const MapWorkspace: React.FC = () => {
     }
   }, [selectedFeature, userLocation, language, navigationTarget]);
 
-  // Render Highlighted Circle around Selected Feature ONLY
+  // Render Highlighted Circle ONLY when Buffer Tool is explicitly active
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    if (!selectedFeature) {
-      if (bufferCircleRef.current) {
-        bufferCircleRef.current.remove();
-        bufferCircleRef.current = null;
-      }
-      return;
+    if (bufferCircleRef.current) {
+      bufferCircleRef.current.remove();
+      bufferCircleRef.current = null;
     }
 
-    const radiusMeters = (bufferRadiusKm && bufferRadiusKm > 0 ? bufferRadiusKm : 1.5) * 1000;
-    const centerLatLng: [number, number] = [selectedFeature.lat, selectedFeature.lng];
+    if (activeTool === 'buffer' && selectedFeature) {
+      const radiusMeters = (bufferRadiusKm && bufferRadiusKm > 0 ? bufferRadiusKm : 1.5) * 1000;
+      const centerLatLng: [number, number] = [selectedFeature.lat, selectedFeature.lng];
 
-    if (bufferCircleRef.current) {
-      bufferCircleRef.current.setLatLng(centerLatLng);
-      bufferCircleRef.current.setRadius(radiusMeters);
-    } else {
       const circle = L.circle(centerLatLng, {
         radius: radiusMeters,
         color: '#215A9E',
@@ -502,7 +497,7 @@ export const MapWorkspace: React.FC = () => {
 
       bufferCircleRef.current = circle;
     }
-  }, [selectedFeature, bufferRadiusKm]);
+  }, [selectedFeature, bufferRadiusKm, activeTool]);
 
   // Render AOI Polygon geometry
   useEffect(() => {
@@ -663,7 +658,8 @@ export const MapWorkspace: React.FC = () => {
         setUserDrawnShapes((prev) => [...prev, newShape]);
         showToast(`Point dropped at ${latlng.lat.toFixed(3)}°N, ${latlng.lng.toFixed(3)}°E`);
         setAiPanelOpen(true);
-        sendAIMessage(`Analyze drawn Point Marker at ${latlng.lat.toFixed(3)}°N, ${latlng.lng.toFixed(3)}°E`);
+        const snapshot = buildSpatialSnapshot('point', [latlng.lat, latlng.lng], 'Point Marker Pin', 'نقطة مكانية محددة');
+        sendAIMessage(`Analyze drawn Point Marker at ${latlng.lat.toFixed(3)}°N, ${latlng.lng.toFixed(3)}°E`, snapshot);
         return;
       }
 
@@ -705,7 +701,8 @@ export const MapWorkspace: React.FC = () => {
           setUserDrawnShapes((prev) => [...prev, newShape]);
           showToast(`Created Circle Buffer: ${radiusKm.toFixed(1)} km radius`);
           setAiPanelOpen(true);
-          sendAIMessage(`Analyze drawn Circle Buffer (${radiusKm.toFixed(1)} km radius)`);
+          const snapshot = buildSpatialSnapshot('circle', [center.lat, center.lng], `Circle Buffer (${radiusKm.toFixed(1)} km)`, `نطاق دئري (${radiusKm.toFixed(1)} كم)`, Math.PI * radiusKm * radiusKm, radiusKm);
+          sendAIMessage(`Analyze drawn Circle Buffer (${radiusKm.toFixed(1)} km radius)`, snapshot);
         }
         return;
       }
@@ -738,6 +735,11 @@ export const MapWorkspace: React.FC = () => {
           isDrawingRef.current = false;
           startLatLngRef.current = null;
 
+          const rectBounds: [[number, number], [number, number]] = [
+            [bounds.getSouth(), bounds.getWest()],
+            [bounds.getNorth(), bounds.getEast()],
+          ];
+
           const shapeId = `shape-${Date.now()}`;
           const newShape: DrawnShape = {
             id: shapeId,
@@ -745,15 +747,13 @@ export const MapWorkspace: React.FC = () => {
             lat: center.lat,
             lng: center.lng,
             radius: p1.distanceTo(p2) / 2,
-            bounds: [
-              [bounds.getSouth(), bounds.getWest()],
-              [bounds.getNorth(), bounds.getEast()],
-            ],
+            bounds: rectBounds,
           };
           setUserDrawnShapes((prev) => [...prev, newShape]);
           showToast('Created Rectangle Bounding Box');
           setAiPanelOpen(true);
-          sendAIMessage(`Analyze drawn Rectangle Bounding Box`);
+          const snapshot = buildSpatialSnapshot('rect', [center.lat, center.lng], 'Rectangle Box AOI', 'منطقة مستطيلة محددة', 4.8, undefined, rectBounds);
+          sendAIMessage(`Analyze drawn Rectangle Bounding Box`, snapshot);
         }
         return;
       }
@@ -806,6 +806,7 @@ export const MapWorkspace: React.FC = () => {
         }
         tempPointsRef.current = [];
 
+        const polygonPoints = points.map((p) => [p.lat, p.lng] as [number, number]);
         const shapeId = `shape-${Date.now()}`;
         const newShape: DrawnShape = {
           id: shapeId,
@@ -813,12 +814,13 @@ export const MapWorkspace: React.FC = () => {
           lat: centerLat,
           lng: centerLng,
           radius: 2000,
-          points: points.map((p) => [p.lat, p.lng] as [number, number]),
+          points: polygonPoints,
         };
         setUserDrawnShapes((prev) => [...prev, newShape]);
         showToast('Created Polygon Boundary AOI');
         setAiPanelOpen(true);
-        sendAIMessage(`Analyze drawn Polygon Boundary AOI`);
+        const snapshot = buildSpatialSnapshot('polygon', [centerLat, centerLng], 'Polygon Boundary AOI', 'منطقة مضلعة محددة', 4.8, undefined, undefined, polygonPoints);
+        sendAIMessage(`Analyze drawn Polygon Boundary AOI`, snapshot);
       }
     };
 

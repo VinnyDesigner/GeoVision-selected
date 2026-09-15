@@ -202,8 +202,8 @@ export const HistoryPage: React.FC = () => {
                 
                 {/* Timeline Header Badge */}
                 <div className="flex items-center gap-3 border-b border-slate-200/80 dark:border-slate-800 pb-2">
-                  <div className="p-2 rounded-xl bg-blue-100 dark:bg-slate-800 text-geovision-blue dark:text-blue-300">
-                    <GroupIcon className="w-4 h-4" />
+                  <div className="p-2 rounded-xl bg-blue-100 dark:bg-slate-800 text-geovision-blue dark:text-white">
+                    <GroupIcon className="w-4 h-4 text-geovision-blue dark:text-white" />
                   </div>
                   <h2 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-wider">
                     {language === 'ar' ? group.titleAr : group.titleEn}
@@ -230,8 +230,8 @@ export const HistoryPage: React.FC = () => {
                     >
                       {/* Top Row: Icon & Query Title */}
                       <div className="flex items-start gap-3.5">
-                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-50 to-indigo-100 dark:from-slate-800 dark:to-slate-900 text-geovision-blue flex items-center justify-center font-bold shrink-0 shadow-xs group-hover:bg-geovision-blue group-hover:text-white transition-all">
-                          <Sparkles className="w-5 h-5" />
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-blue-50 to-indigo-100 dark:from-slate-800 dark:to-slate-900 text-geovision-blue dark:text-white flex items-center justify-center font-bold shrink-0 shadow-xs group-hover:bg-geovision-blue group-hover:text-white transition-all">
+                          <Sparkles className="w-5 h-5 text-geovision-blue dark:text-white group-hover:text-white" />
                         </div>
                         <div className="min-w-0 flex-1">
                           <h3 className="text-sm font-black text-slate-900 dark:text-white leading-snug line-clamp-2">
@@ -239,12 +239,12 @@ export const HistoryPage: React.FC = () => {
                           </h3>
                           <div className="flex items-center gap-2 mt-1.5 text-[11px] font-semibold text-slate-400">
                             <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-geovision-blue" />
+                              <Clock className="w-3 h-3 text-geovision-blue dark:text-white" />
                               {sess.date}
                             </span>
                             <span>•</span>
                             <span className="flex items-center gap-1">
-                              <MessageSquare className="w-3 h-3 text-slate-400" />
+                              <MessageSquare className="w-3 h-3 text-slate-400 dark:text-slate-200" />
                               {sess.queryCount} {language === 'ar' ? 'تفاعلات' : 'interactions'}
                             </span>
                           </div>
@@ -253,7 +253,7 @@ export const HistoryPage: React.FC = () => {
 
                       {/* Bottom Row: Actions */}
                       <div className="pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-extrabold uppercase text-geovision-blue dark:text-blue-400">
+                        <span className="text-[10px] font-extrabold uppercase text-geovision-blue dark:text-white">
                           GeoVision GIS Session
                         </span>
 

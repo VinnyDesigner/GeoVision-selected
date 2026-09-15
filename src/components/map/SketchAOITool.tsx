@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import type { AOIResult } from '../../types';
 
+import { buildSpatialSnapshot } from '../../utils/spatialSnapshotUtils';
+
 export const SketchAOITool: React.FC = () => {
   const {
     language,
@@ -96,7 +98,12 @@ export const SketchAOITool: React.FC = () => {
       };
     }
 
-    setUserDrawnShapes((prev) => [...prev, newShape]);
+    // Check if user already drew a shape on map
+    const existingShape = userDrawnShapes.length > 0 ? userDrawnShapes[userDrawnShapes.length - 1] : newShape;
+    if (userDrawnShapes.length === 0) {
+      setUserDrawnShapes((prev) => [...prev, newShape]);
+    }
+
     showToast(`${drawTool.toUpperCase()} spatial drawing created on map`);
 
     const labelName =
@@ -108,7 +115,18 @@ export const SketchAOITool: React.FC = () => {
         ? 'Polygon Boundary'
         : 'Rectangle Box';
 
-    sendAIMessage(`Analyze drawn ${labelName}`);
+    const centerPos: [number, number] = [existingShape.lat, existingShape.lng];
+    const snapshot = buildSpatialSnapshot(
+      drawTool,
+      centerPos,
+      `Captured ${labelName}`,
+      `منطقة رسم مكانية (${labelName})`,
+      4.8,
+      existingShape.radius ? existingShape.radius / 1000 : 1.5,
+      existingShape.bounds
+    );
+
+    sendAIMessage(`Analyze drawn ${labelName}`, snapshot);
   };
 
   const handleAnalyzeAOI = () => {
@@ -155,7 +173,20 @@ export const SketchAOITool: React.FC = () => {
         ? 'Polygon Boundary'
         : 'Rectangle Box';
 
-    sendAIMessage(`Analyze drawn ${labelName} (4.8 km²)`);
+    const lastShape = userDrawnShapes.length > 0 ? userDrawnShapes[userDrawnShapes.length - 1] : null;
+    const centerPos: [number, number] = lastShape ? [lastShape.lat, lastShape.lng] : [24.4539, 54.3773];
+
+    const snapshot = buildSpatialSnapshot(
+      drawTool,
+      centerPos,
+      `Captured ${labelName} AOI`,
+      `المنطقة المحددة (${labelName})`,
+      4.8,
+      lastShape?.radius ? lastShape.radius / 1000 : 1.5,
+      lastShape?.bounds
+    );
+
+    sendAIMessage(`Analyze drawn ${labelName} (4.8 km²)`, snapshot);
   };
 
   const handleClearDrawings = () => {
@@ -197,7 +228,7 @@ export const SketchAOITool: React.FC = () => {
             onClick={() => setDrawTool('point')}
             className={`py-2 px-1 rounded-xl text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
               drawTool === 'point'
-                ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-blue-300 font-extrabold shadow-md scale-105'
+                ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-white font-extrabold shadow-md scale-105'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -210,7 +241,7 @@ export const SketchAOITool: React.FC = () => {
             onClick={() => setDrawTool('circle')}
             className={`py-2 px-1 rounded-xl text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
               drawTool === 'circle'
-                ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-blue-300 font-extrabold shadow-md scale-105'
+                ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-white font-extrabold shadow-md scale-105'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -223,7 +254,7 @@ export const SketchAOITool: React.FC = () => {
             onClick={() => setDrawTool('polygon')}
             className={`py-2 px-1 rounded-xl text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
               drawTool === 'polygon'
-                ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-blue-300 font-extrabold shadow-md scale-105'
+                ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-white font-extrabold shadow-md scale-105'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
@@ -236,7 +267,7 @@ export const SketchAOITool: React.FC = () => {
             onClick={() => setDrawTool('rect')}
             className={`py-2 px-1 rounded-xl text-xs flex flex-col items-center gap-1 transition-all cursor-pointer ${
               drawTool === 'rect'
-                ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-blue-300 font-extrabold shadow-md scale-105'
+                ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-white font-extrabold shadow-md scale-105'
                 : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
             }`}
           >

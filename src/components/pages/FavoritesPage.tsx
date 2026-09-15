@@ -3,7 +3,7 @@ import { useAppState } from '../../context/AppStateContext';
 import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
 import type { GeoFeature } from '../../types';
 import {
-  Star,
+  Bookmark,
   MapPin,
   Layers,
   Search,
@@ -136,7 +136,7 @@ export const FavoritesPage: React.FC = () => {
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-5 text-center md:text-left rtl:md:text-right">
             <div className="w-16 h-16 rounded-3xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center font-black shadow-xl shrink-0">
-              <Star className="w-8 h-8 fill-white" />
+              <Bookmark className="w-8 h-8 fill-white" />
             </div>
             <div>
               <h1 className="text-2xl sm:text-4xl font-black tracking-tight">{t('fav.title')}</h1>
@@ -167,7 +167,7 @@ export const FavoritesPage: React.FC = () => {
               onClick={() => setActiveTab(tab.id as any)}
               className={`flex-1 flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl text-xs font-black transition-all cursor-pointer ${
                 isSel
-                  ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-blue-300 shadow-md scale-[1.01]'
+                  ? 'bg-white dark:bg-slate-800 text-geovision-blue dark:text-white shadow-md scale-[1.01]'
                   : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
               }`}
             >
@@ -182,7 +182,7 @@ export const FavoritesPage: React.FC = () => {
       {filteredFavs.length === 0 ? (
         <div className="glass-panel p-12 rounded-3xl text-center space-y-3 border border-slate-200/80 dark:border-slate-800/80">
           <div className="w-14 h-14 rounded-3xl bg-amber-50 dark:bg-amber-950/50 text-amber-500 mx-auto flex items-center justify-center font-bold shadow-md">
-            <Star className="w-7 h-7 stroke-[1.5]" />
+            <Bookmark className="w-7 h-7 stroke-[1.5]" />
           </div>
           <h3 className="text-base font-black text-slate-800 dark:text-slate-200">{t('fav.empty')}</h3>
           <p className="text-xs text-slate-400 font-semibold max-w-md mx-auto leading-relaxed">
@@ -211,7 +211,7 @@ export const FavoritesPage: React.FC = () => {
                     {language === 'ar' ? fav.nameAr : fav.nameEn}
                   </h3>
                   <p className="text-[11px] text-slate-400 font-semibold mt-1 flex items-center gap-1.5">
-                    <MapPin className="w-3 h-3 text-geovision-blue shrink-0" />
+                    <MapPin className="w-3 h-3 text-geovision-blue dark:text-white shrink-0" />
                     <span>Added {fav.savedAt}</span>
                   </p>
                 </div>

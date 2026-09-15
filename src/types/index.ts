@@ -73,6 +73,18 @@ export interface ConversationContext {
   lastAIResponse: string | null;
 }
 
+export interface AttachedSpatialSnapshot {
+  shapeType: 'point' | 'circle' | 'polygon' | 'rect' | 'map_extent';
+  titleEn: string;
+  titleAr: string;
+  center: [number, number];
+  areaKm2?: number;
+  radiusKm?: number;
+  bounds?: [[number, number], [number, number]];
+  points?: [number, number][];
+  previewUrl?: string;
+}
+
 export interface AIMessage {
   id: string;
   sender: 'user' | 'ai';
@@ -80,6 +92,7 @@ export interface AIMessage {
   textAr: string;
   timestamp: string;
   isArabicPrompt?: boolean;
+  attachedSpatialSnapshot?: AttachedSpatialSnapshot;
   recommendationsEn?: string[];
   recommendationsAr?: string[];
   datasetChips?: string[];

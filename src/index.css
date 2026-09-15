@@ -215,12 +215,12 @@ html {
 }
 
 .dark .text-\[\#063360\] {
-  color: #38BDF8 !important;
+  color: #FFFFFF !important;
 }
 
 .dark .text-\[\#215A9E\],
 .dark .text-geovision-blue {
-  color: #38BDF8 !important;
+  color: #FFFFFF !important;
 }
 
 .dark .text-\[\#545860\] {
@@ -228,7 +228,7 @@ html {
 }
 
 .dark .text-\[\#7DA1C4\] {
-  color: #7DD3FC !important;
+  color: #FFFFFF !important;
 }
 
 /* Custom Blue & Red Palette Helpers */
