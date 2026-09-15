@@ -179,7 +179,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
               }}
               className={`p-2.5 rounded-2xl border backdrop-blur-md transition-all cursor-pointer ${
                 isFav
-                  ? 'bg-amber-500 text-white border-amber-400'
+                  ? 'bg-geovision-blue text-white border-blue-400'
                   : 'bg-white/10 hover:bg-white/20 text-white border-white/20'
               }`}
               title={isFav ? 'Remove Favorite' : 'Save Favorite'}

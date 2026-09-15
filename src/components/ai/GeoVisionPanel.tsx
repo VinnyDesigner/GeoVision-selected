@@ -532,7 +532,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
             className="p-1.5 sm:p-2 text-[#545860] hover:text-[#063360] dark:text-slate-400 dark:hover:text-slate-200 rounded-xl hover:bg-[#7DA1C4]/15 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
             title={t('nav.favorites')}
           >
-            <Bookmark className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+            <Bookmark className="w-4 h-4 text-geovision-blue dark:text-sky-400 fill-geovision-blue/20 dark:fill-sky-400/20" />
           </button>
 
           <button
@@ -637,12 +637,12 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
                   }}
                   className={`p-2.5 rounded-2xl backdrop-blur-md border transition-all cursor-pointer shadow-sm ${
                     isFavorite(activeDetailFeature.nameEn)
-                      ? 'bg-amber-400/20 border-amber-300/40 text-amber-300'
+                      ? 'bg-sky-400/25 border-sky-300/50 text-sky-200'
                       : 'bg-white/10 hover:bg-white/20 border-white/20 text-white'
                   }`}
                   title={isFavorite(activeDetailFeature.nameEn) ? 'Remove Favorite' : 'Save Favorite'}
                 >
-                  <Bookmark className={`w-5 h-5 ${isFavorite(activeDetailFeature.nameEn) ? 'fill-amber-300 text-amber-300' : ''}`} />
+                  <Bookmark className={`w-5 h-5 ${isFavorite(activeDetailFeature.nameEn) ? 'fill-sky-300 text-sky-300' : ''}`} />
                 </button>
               </div>
 

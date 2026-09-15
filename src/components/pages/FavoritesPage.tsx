@@ -140,7 +140,7 @@ export const FavoritesPage: React.FC = () => {
             </div>
             <div>
               <h1 className="text-2xl sm:text-4xl font-black tracking-tight">{t('fav.title')}</h1>
-              <p className="text-xs sm:text-sm font-bold text-amber-100 mt-1">
+              <p className="text-xs sm:text-sm font-bold text-sky-100 mt-1">
                 Favorite spatial locations, GIS layers, and search bookmarks for {user.name}
               </p>
             </div>
@@ -181,12 +181,12 @@ export const FavoritesPage: React.FC = () => {
       {/* 3-Column Full Width Favorites Grid */}
       {filteredFavs.length === 0 ? (
         <div className="glass-panel p-12 rounded-3xl text-center space-y-3 border border-slate-200/80 dark:border-slate-800/80">
-          <div className="w-14 h-14 rounded-3xl bg-amber-50 dark:bg-amber-950/50 text-amber-500 mx-auto flex items-center justify-center font-bold shadow-md">
+          <div className="w-14 h-14 rounded-3xl bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-sky-300 mx-auto flex items-center justify-center font-bold shadow-md">
             <Bookmark className="w-7 h-7 stroke-[1.5]" />
           </div>
           <h3 className="text-base font-black text-slate-800 dark:text-slate-200">{t('fav.empty')}</h3>
           <p className="text-xs text-slate-400 font-semibold max-w-md mx-auto leading-relaxed">
-            Click the star icon on any result card, map pin, or dataset layer to bookmark it here for instant access.
+            Click the bookmark icon on any result card, map pin, or dataset layer to save it here for instant access.
           </p>
         </div>
       ) : (
@@ -195,15 +195,15 @@ export const FavoritesPage: React.FC = () => {
             <div
               key={fav.id}
               onClick={() => handleOpenOnMap(fav)}
-              className="glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between gap-5 shadow-xs hover:shadow-xl hover:border-amber-400 transition-all cursor-pointer group"
+              className="glass-panel p-6 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 flex flex-col justify-between gap-5 shadow-xs hover:shadow-xl hover:border-geovision-blue transition-all cursor-pointer group"
             >
               <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-100 to-amber-50 dark:from-amber-950/80 dark:to-slate-900 text-amber-600 flex items-center justify-center font-bold shrink-0 shadow-xs group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-sky-300 flex items-center justify-center font-bold shrink-0 shadow-xs group-hover:scale-110 transition-transform">
                   <Building className="w-6 h-6" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-amber-100 dark:bg-amber-950/80 text-amber-700 dark:text-amber-300">
+                    <span className="px-2.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider bg-blue-100 dark:bg-slate-800 text-geovision-blue dark:text-sky-300">
                       {fav.categoryEn}
                     </span>
                   </div>

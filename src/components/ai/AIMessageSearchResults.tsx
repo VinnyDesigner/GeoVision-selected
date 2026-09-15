@@ -650,10 +650,12 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                     }
                   }}
                   className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                    isFav ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 text-amber-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 text-slate-400'
+                    isFav
+                      ? 'bg-geovision-blue text-white border-blue-600 shadow-md'
+                      : 'bg-blue-50 dark:bg-slate-800 border-blue-200 text-geovision-blue dark:text-sky-300 hover:bg-blue-100'
                   }`}
                 >
-                  <Bookmark className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
+                  <Bookmark className={`w-4 h-4 ${isFav ? 'fill-white text-white' : 'text-geovision-blue dark:text-sky-300'}`} />
                 </button>
               </div>
             </div>
@@ -1478,14 +1480,14 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                           });
                         }
                       }}
-                      className={`p-1 rounded-lg border transition-all cursor-pointer ${
+                      className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
                         isFav
-                          ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 text-amber-500 hover:bg-amber-100'
-                          : 'bg-slate-50 dark:bg-slate-800 border-slate-200/80 dark:border-slate-700 text-slate-400 hover:text-amber-500 hover:bg-amber-50'
+                          ? 'bg-geovision-blue text-white border-blue-600 shadow-sm'
+                          : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-sky-300 hover:bg-blue-100'
                       }`}
                       title={isFav ? 'Favorite' : 'Add to favorite'}
                     >
-                      <Bookmark className={`w-3 h-3 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
+                      <Bookmark className={`w-3.5 h-3.5 ${isFav ? 'fill-white text-white' : 'text-geovision-blue dark:text-sky-300'}`} />
                     </button>
 
                     <button
