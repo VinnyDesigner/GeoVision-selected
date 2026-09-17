@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAppState } from '../../context/AppStateContext';
+import { getAssetUrl } from '../../utils/assetUtils';
 import {
   HelpCircle,
   Search,
@@ -664,9 +665,9 @@ export const HelpPage: React.FC = () => {
                 controls
                 autoPlay
                 className="w-full h-full object-cover"
-                poster="/homepage bg light.png"
+                poster={getAssetUrl('homepage-bg-light.png')}
               >
-                <source src="/Homebackground.mp4" type="video/mp4" />
+                <source src={getAssetUrl('Homebackground.mp4')} type="video/mp4" />
                 {language === 'ar' ? 'متصفحك لا يدعم تشغيل الفيديو.' : 'Your browser does not support the video tag.'}
               </video>
             </div>

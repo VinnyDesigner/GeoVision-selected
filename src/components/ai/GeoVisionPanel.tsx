@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/AppStateContext';
+import { getAssetUrl } from '../../utils/assetUtils';
 import type { GeoFeature } from '../../types';
 import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
 import {
   Sparkles,
   Send,
-  User,
   X,
   ChevronRight,
   Plus,
@@ -509,7 +509,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
       <div className="p-3.5 sm:p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between gap-2 shrink-0 z-20">
         <div className="flex items-center gap-2.5 min-w-0">
           <img
-            src="/assets/logos/geovision-ai-avatar.png"
+            src={getAssetUrl('assets/logos/geovision-ai-avatar.png')}
             alt="Smart Maps AI Assistant"
             className="w-9 h-9 object-contain shrink-0"
           />
@@ -927,9 +927,16 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
                     <Pencil className="w-3 h-3" />
                     <span>{language === 'ar' ? 'تعديل السؤال' : 'Edit Query'}</span>
                   </button>
-                  <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <span>{language === 'ar' ? 'أنت' : 'You'}</span>
-                  <User className="w-3.5 h-3.5 text-slate-500" />
+                  <div className="w-5 h-5 rounded-full bg-[#215A9E] text-white font-extrabold flex items-center justify-center text-[9.5px] uppercase shadow-2xs shrink-0 tracking-tight">
+                    {(() => {
+                      if (!user?.name) return 'GU';
+                      const parts = user.name.trim().split(/\s+/);
+                      if (parts.length >= 2) {
+                        return (parts[0][0] + parts[1][0]).toUpperCase();
+                      }
+                      return user.name.slice(0, 2).toUpperCase();
+                    })()}
+                  </div>
                 </div>
 
                 {isEditingThis ? (
@@ -1023,11 +1030,10 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
               {/* Sender Badge */}
               <div className="flex items-center gap-1.5 mb-1 text-[11px] font-bold text-slate-400">
                 <img
-                  src="/assets/logos/geovision-ai-avatar.png"
+                  src={getAssetUrl('assets/logos/geovision-ai-avatar.png')}
                   alt="AI"
                   className="w-4 h-4 object-contain shrink-0"
                 />
-                <span className="text-geovision-blue dark:text-sky-300 font-extrabold">Smart Maps AI Assistant</span>
               </div>
 
               {/* AI Response Bubble */}

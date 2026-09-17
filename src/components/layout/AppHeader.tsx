@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/AppStateContext';
+import { getAssetUrl } from '../../utils/assetUtils';
 import { FeedbackStarIcon } from '../common/FeedbackStarIcon';
 import {
   Globe,
@@ -81,7 +82,7 @@ export const AppHeader: React.FC = () => {
         {/* Left: First Logo — Department of Government Enablement Brandmark */}
         <div className="flex items-center cursor-pointer shrink-0" onClick={() => handleNavClick('home')}>
           <img
-            src={theme === 'dark' ? './assets/logos/dge-logo-dark.png' : './assets/logos/dge-logo.png'}
+            src={getAssetUrl(theme === 'dark' ? 'assets/logos/dge-logo-dark.png' : 'assets/logos/dge-logo.png')}
             alt="Department of Government Enablement"
             className="h-7 sm:h-9 md:h-10 max-w-[130px] sm:max-w-none object-contain shrink-0 transition-transform hover:scale-105"
           />
@@ -258,7 +259,7 @@ export const AppHeader: React.FC = () => {
           {/* Rightmost: Second Logo — Abu Dhabi Spatial Data */}
           <div className="hidden md:flex items-center cursor-pointer shrink-0" onClick={() => handleNavClick('home')}>
             <img
-              src={theme === 'dark' ? './assets/logos/spatial-data-logo-dark.png' : './assets/logos/spatial-data-logo.png'}
+              src={getAssetUrl(theme === 'dark' ? 'assets/logos/spatial-data-logo-dark.png' : 'assets/logos/spatial-data-logo.png')}
               alt="Abu Dhabi Spatial Data"
               className="h-6 sm:h-7 md:h-8 max-w-[85px] sm:max-w-[110px] object-contain shrink-0 transition-transform hover:scale-105"
             />

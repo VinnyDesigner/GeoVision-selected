@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/AppStateContext';
+import { getAssetUrl } from '../../utils/assetUtils';
 import {
   ArrowRight,
   Compass,
   X,
   GraduationCap,
-  Activity,
+  Stethoscope,
   ShieldCheck,
   Bus,
   Leaf,
@@ -22,9 +23,10 @@ import { VoiceSearchOverlay } from './VoiceSearchOverlay';
 
 interface AISearchBarProps {
   compact?: boolean;
+  hideThemes?: boolean;
 }
 
-export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => {
+export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false, hideThemes = false }) => {
   const { sendAIMessage, language } = useAppState();
   const [queryText, setQueryText] = useState('');
   const [voiceOpen, setVoiceOpen] = useState(false);
@@ -43,7 +45,7 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
       id: 'healthcare',
       labelEn: 'Healthcare',
       labelAr: 'الرعاية الصحية',
-      icon: Activity,
+      icon: Stethoscope,
       queryEn: 'Show all hospitals in Abu Dhabi.',
       queryAr: 'عرض جميع المستشفيات في أبوظبي.',
     },
@@ -191,7 +193,7 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
         <div className="flex items-center gap-3 px-2 h-full">
           {/* Animated GeoVision AI Icon */}
           <img
-            src="/assets/logos/geovision-ai-avatar.png"
+            src={getAssetUrl('assets/logos/geovision-ai-avatar.png')}
             alt="GeoVision AI"
             className="w-9 h-9 object-contain shrink-0"
           />
@@ -228,7 +230,7 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false }) => 
       </form>
 
       {/* Spatial Themes Pills */}
-      {!compact && (
+      {!compact && !hideThemes && (
         <div className="w-full flex flex-wrap items-center justify-start gap-2 mt-1">
           <span className="text-xs font-black text-[#063360] dark:text-slate-200 mr-1 flex items-center gap-1">
             <Compass className="w-3.5 h-3.5 text-[#215A9E]" />

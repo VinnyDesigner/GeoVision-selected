@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import { useAppState } from '../../context/AppStateContext';
+import { getAssetUrl } from '../../utils/assetUtils';
 import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
 import type { DrawnShape, GeoFeature } from '../../types';
 import { MapToolbar } from './MapToolbar';
@@ -997,7 +998,7 @@ export const MapWorkspace: React.FC = () => {
           title="Open GeoVision AI Assistant"
         >
           <img
-            src="/assets/logos/geovision-ai-avatar.png"
+            src={getAssetUrl('assets/logos/geovision-ai-avatar.png')}
             alt="GeoVision AI"
             className="w-4 h-4 object-contain shrink-0 filter drop-shadow-xs"
           />
