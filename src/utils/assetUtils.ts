@@ -14,3 +14,7 @@ export const getAssetUrl = (path: string): string => {
   const normalizedBase = baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
   return normalizedBase + cleanPath;
 };
+
+
+
+
