@@ -183,20 +183,30 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false, hideT
       {/* Voice Search Overlay Modal */}
       <VoiceSearchOverlay isOpen={voiceOpen} onClose={() => setVoiceOpen(false)} />
 
-      {/* Main 72px Floating AI Command Bar */}
+      {/* Main Floating AI Command Bar */}
       <form
         onSubmit={handleSubmit}
-        className={`relative w-full glass-panel rounded-3xl shadow-xl border transition-all duration-200 focus-within:ring-2 focus-within:ring-[#215A9E] focus-within:border-[#215A9E] glow-blue ${
-          compact ? 'p-2' : 'p-3 sm:p-3.5 min-h-[68px] sm:min-h-[72px]'
+        className={`relative w-full glass-panel rounded-2xl sm:rounded-3xl shadow-xl border transition-all duration-200 focus-within:ring-2 focus-within:ring-[#215A9E] focus-within:border-[#215A9E] glow-blue ${
+          compact ? 'p-1.5' : 'py-2 px-3 sm:py-2.5 sm:px-4 min-h-[52px] sm:min-h-[56px]'
         }`}
       >
-        <div className="flex items-center gap-3 px-2 h-full">
-          {/* Animated GeoVision AI Icon */}
-          <img
-            src={getAssetUrl('assets/logos/geovision-ai-avatar.png')}
-            alt="GeoVision AI"
-            className="w-9 h-9 object-contain shrink-0"
-          />
+        <div className="flex items-center gap-3 px-1 sm:px-2 h-full">
+          {/* AI Star Icon */}
+          <div className={`flex items-center justify-center shrink-0 ${compact ? 'w-8 h-8' : 'w-10 sm:w-12 h-10 sm:h-12'}`}>
+            <svg
+              className={`text-[#0066FF] dark:text-[#3B82F6] shrink-0 drop-shadow-xs ${compact ? 'w-7 h-7' : 'w-10 sm:w-12 h-10 sm:h-12'}`}
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              {/* Large 4-pointed star bottom left */}
+              <path d="M10 21c0-4.5-1.5-6-6-6 4.5 0 6-1.5 6-6 0 4.5 1.5 6 6 6-4.5 0-6 1.5-6 6z" />
+              {/* Medium 4-pointed star top right */}
+              <path d="M18 13c0-3-1-4-4-4 3 0 4-1 4-4 0 3 1 4 4 4-3 0-4 1-4 4z" />
+              {/* Small 4-pointed star top center */}
+              <path d="M13.5 5.5c0-1.25-.5-1.75-1.75-1.75 1.25 0 1.75-.5 1.75-1.75 0 1.25.5 1.75 1.75 1.75-1.25 0-1.75.5-1.75 1.75z" />
+            </svg>
+          </div>
 
           {/* Text Input with live focus */}
           <input
@@ -222,7 +232,7 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false, hideT
           <button
             type="submit"
             disabled={!queryText.trim()}
-            className="flex items-center justify-center w-10 h-10 rounded-2xl bg-[#215A9E] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#063360] shadow-lg shadow-[#215A9E]/30 transition-all shrink-0 cursor-pointer"
+            className="flex items-center justify-center w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#215A9E] text-white disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#063360] shadow-lg shadow-[#215A9E]/30 transition-all shrink-0 cursor-pointer"
           >
             <ArrowRight className="w-5 h-5 rtl:rotate-180" />
           </button>

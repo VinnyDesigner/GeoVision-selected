@@ -23,7 +23,7 @@ const MainAppShell: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-200">
       {!isPureMap && <AppHeader />}
-      <main className={isPureMap ? 'w-full h-screen overflow-hidden' : (currentView === 'home' ? 'w-full min-h-screen overflow-hidden' : 'w-full min-h-[calc(100vh-4rem)]')}>
+      <main className={isPureMap || currentView === 'home' ? 'w-full h-screen overflow-hidden' : 'w-full min-h-[calc(100vh-4rem)]'}>
         {currentView === 'home' && <LandingPage />}
         {currentView === 'map' && <MapWorkspace />}
         {currentView === 'categories' && <CategoryExplorer />}
