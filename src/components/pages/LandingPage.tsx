@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { AISearchBar } from '../ai/AISearchBar';
 import { useAppState } from '../../context/AppStateContext';
 import { getAssetUrl } from '../../utils/assetUtils';
@@ -6,55 +6,15 @@ import {
   MapPin,
   GraduationCap,
   BarChart3,
-  Stethoscope,
-  Bus,
-  Leaf,
-  Map,
-  LayoutGrid,
   Sparkles,
+  Map,
   Layers,
-  ShieldCheck,
-  Compass,
-  Zap,
-  Building,
-  Landmark,
-  Waves,
-  Mountain,
-  Building2,
-  Trees,
-  ChevronUp,
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
   const { language, theme, setCurrentView, sendAIMessage } = useAppState();
-  const [showAllThemes, setShowAllThemes] = useState(false);
-
-  const SPATIAL_THEMES = [
-    { id: 'education', labelEn: 'Education', labelAr: 'التعليم', icon: GraduationCap, queryEn: 'Show all schools in Abu Dhabi.', queryAr: 'عرض جميع المدارس في أبوظبي.' },
-    { id: 'healthcare', labelEn: 'Healthcare', labelAr: 'الرعاية الصحية', icon: Stethoscope, queryEn: 'Show all hospitals in Abu Dhabi.', queryAr: 'عرض جميع المستشفيات في أبوظبي.' },
-    { id: 'transportation', labelEn: 'Transportation', labelAr: 'النقل والمواصلات', icon: Bus, queryEn: 'Show bus stops near me.', queryAr: 'عرض محطات الحافلات في أبوظبي.' },
-    { id: 'environment', labelEn: 'Environment', labelAr: 'البيئة والمحميات', icon: Leaf, queryEn: 'Show protected areas in Abu Dhabi.', queryAr: 'عرض المحميات الطبيعية في أبوظبي.' },
-    { id: 'land_use', labelEn: 'Land Use', labelAr: 'استخدامات الأراضي', icon: Map, queryEn: 'Show land-use categories in Abu Dhabi.', queryAr: 'عرض تصنيفات استخدامات الأراضي.' },
-    { id: 'public_safety', labelEn: 'Public Safety', labelAr: 'الأمن والسلامة العامة', icon: ShieldCheck, queryEn: 'Show police stations in Abu Dhabi.', queryAr: 'عرض مراكز الشرطة في أبوظبي.' },
-    { id: 'tourism', labelEn: 'Tourism', labelAr: 'السياحة وثقافة', icon: Compass, queryEn: 'Show tourist attractions in Abu Dhabi.', queryAr: 'عرض الوجهات السياحية في أبوظبي.' },
-    { id: 'utilities', labelEn: 'Utilities', labelAr: 'الخدمات والمرافق', icon: Zap, queryEn: 'Show petrol stations in Abu Dhabi.', queryAr: 'عرض محطات الوقود في أبوظبي.' },
-    { id: 'urban', labelEn: 'Urban Planning', labelAr: 'التخطيط العمراني', icon: Building, queryEn: 'Show urban development projects.', queryAr: 'عرض مشاريع التطوير العمراني.' },
-    { id: 'administrative', labelEn: 'Administrative', labelAr: 'الحدود الإدارية', icon: Landmark, queryEn: 'Show municipality boundaries.', queryAr: 'عرض حدود بلديات أبوظبي.' },
-    { id: 'hydrography', labelEn: 'Hydrography', labelAr: 'السطوح المائية', icon: Waves, queryEn: 'Show hydrography features.', queryAr: 'عرض المعالم المائية والهيدروغرافية.' },
-    { id: 'geology', labelEn: 'Geology', labelAr: 'الجيولوجيا', icon: Mountain, queryEn: 'Show geological features.', queryAr: 'عرض المعالم الجيولوجية.' },
-    { id: 'government', labelEn: 'Government Services', labelAr: 'الخدمات الحكومية', icon: Building2, queryEn: 'Show TAMM customer happiness centers in Abu Dhabi.', queryAr: 'عرض مراكز خدمة تم الحكومية في أبوظبي.' },
-    { id: 'parks', labelEn: 'Parks & Spaces', labelAr: 'الحدائق والمساحات العامة', icon: Trees, queryEn: 'Show public parks in Abu Dhabi.', queryAr: 'عرض الحدائق العامة في أبوظبي.' },
-  ];
-
-  const displayedThemes = showAllThemes ? SPATIAL_THEMES : SPATIAL_THEMES.slice(0, 5);
 
   const handleExampleClick = (queryEn: string, queryAr: string) => {
-    const q = language === 'ar' ? queryAr : queryEn;
-    sendAIMessage(q);
-    setCurrentView('map');
-  };
-
-  const handleThemeQueryClick = (queryEn: string, queryAr: string) => {
     const q = language === 'ar' ? queryAr : queryEn;
     sendAIMessage(q);
     setCurrentView('map');

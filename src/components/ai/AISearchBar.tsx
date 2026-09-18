@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAppState } from '../../context/AppStateContext';
-import { getAssetUrl } from '../../utils/assetUtils';
 import {
   ArrowRight,
   Compass,
