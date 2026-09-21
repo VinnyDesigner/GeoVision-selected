@@ -691,4 +691,71 @@ html {
   animation: routeDashMarch 1.2s linear infinite;
 }
 
+/* User Location GPS Indicator Pulse */
+@keyframes userLocationPulse {
+  0% {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  70% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.user-location-pulse {
+  animation: userLocationPulse 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+/* Dynamic Geographic Location Boundary Highlight Styles */
+@keyframes boundaryDashAnimation {
+  to {
+    stroke-dashoffset: -28;
+  }
+}
+
+.geovision-boundary-district-polygon {
+  stroke-dasharray: 8, 6;
+  animation: boundaryDashAnimation 3.5s linear infinite;
+  filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.45));
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.geovision-boundary-district-polygon:hover {
+  stroke-width: 4.5px !important;
+  fill-opacity: 0.24 !important;
+}
+
+.geovision-boundary-parcel-polygon {
+  filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.55));
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+}
+
+.geovision-boundary-parcel-polygon:hover {
+  stroke-width: 3.5px !important;
+  fill-opacity: 0.38 !important;
+}
+
+.geovision-boundary-tooltip {
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1.5px solid rgba(37, 99, 235, 0.4) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 25px rgba(6, 51, 96, 0.18) !important;
+  padding: 0 !important;
+}
+
+.dark .geovision-boundary-tooltip {
+  background: rgba(15, 23, 42, 0.95) !important;
+  border: 1.5px solid rgba(56, 189, 248, 0.45) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55) !important;
+}
+
 

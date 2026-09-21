@@ -1,76 +1,90 @@
 import React, { useEffect, useRef } from 'react';
 import { useAppState } from '../../context/AppStateContext';
-import { ensureAbuDhabiLocation } from '../../utils/locationUtils';
+import { ensureAbuDhabiLocation, isWithinAbuDhabi, ABU_DHABI_DEFAULT_CENTER } from '../../utils/locationUtils';
 
 const PERMISSION_KEY = 'geovision_location_permission_handled';
 
 export const LocationPermissionPopup: React.FC = () => {
-  const { currentView, setUserLocation, setMapCenterAndZoom, showToast, language } = useAppState();
-  const hasPromptedRef = useRef(false);
+  const { currentView, userLocation, setUserLocation, setMapCenterAndZoom, showToast, language } = useAppState();
+  const prevViewRef = useRef<string | null>(null);
+  const userLocationRef = useRef(userLocation);
+  userLocationRef.current = userLocation;
 
   useEffect(() => {
-    // Location permission request must ONLY execute when user opens Explore Map tab
-    if (currentView !== 'map') return;
-
-    // Prevent duplicate triggers in the same render lifecycle
-    if (hasPromptedRef.current) return;
-
-    const localStatus = localStorage.getItem(PERMISSION_KEY);
-    const sessionStatus = sessionStorage.getItem(PERMISSION_KEY);
-    const handledStatus = localStatus || sessionStatus;
-
-    if (handledStatus) {
-      // If user previously allowed location, update position silently without showing any popup
-      if ((handledStatus === 'allowed' || handledStatus === 'just_once') && 'geolocation' in navigator) {
-        navigator.geolocation.getCurrentPosition(
-          (pos) => {
-            const validLoc = ensureAbuDhabiLocation(pos.coords.latitude, pos.coords.longitude);
-            setUserLocation(validLoc);
-          },
-          () => {
-            setUserLocation([24.4539, 54.3773]);
-          },
-          { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
-        );
-      }
+    // Only execute when user lands on Explore Map view
+    if (currentView !== 'map') {
+      prevViewRef.current = currentView;
       return;
     }
 
-    // Mark as prompted in session memory so user is NEVER prompted twice
-    hasPromptedRef.current = true;
-    sessionStorage.setItem(PERMISSION_KEY, 'prompted');
+    const wasJustNavigated = prevViewRef.current !== 'map';
+    prevViewRef.current = currentView;
 
-    // Trigger browser native location permission prompt EXACTLY ONCE when opening Explore Map
+    if (!wasJustNavigated) return;
+
+    // If userLocation was already resolved, ensure it's in Abu Dhabi and land on it
+    if (userLocationRef.current) {
+      const validPreLoc = ensureAbuDhabiLocation(userLocationRef.current[0], userLocationRef.current[1]);
+      setMapCenterAndZoom(validPreLoc, 16);
+      window.dispatchEvent(new CustomEvent('geovision:flyTo', { detail: { center: validPreLoc, zoom: 16 } }));
+    }
+
+    // Trigger device geolocation to get fresh current position
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          localStorage.setItem(PERMISSION_KEY, 'allowed');
-          const validLoc = ensureAbuDhabiLocation(pos.coords.latitude, pos.coords.longitude);
+          try {
+            localStorage.setItem(PERMISSION_KEY, 'allowed');
+          } catch {}
+
+          const rawLat = pos.coords.latitude;
+          const rawLng = pos.coords.longitude;
+          const isRealAbuDhabi = isWithinAbuDhabi(rawLat, rawLng);
+          const validLoc = ensureAbuDhabiLocation(rawLat, rawLng);
+
           setUserLocation(validLoc);
-          setMapCenterAndZoom(validLoc, 14);
-          showToast(
-            language === 'ar'
-              ? 'تم تحديد موقعك في أبوظبي بنجاح'
-              : 'Abu Dhabi location active'
-          );
-        },
-        (err) => {
-          sessionStorage.setItem(PERMISSION_KEY, 'denied');
-          const defaultLoc: [number, number] = [24.4539, 54.3773];
-          setUserLocation(defaultLoc);
-          if (err.code !== err.PERMISSION_DENIED) {
+          setMapCenterAndZoom(validLoc, 16);
+          window.dispatchEvent(new CustomEvent('geovision:flyTo', { detail: { center: validLoc, zoom: 16 } }));
+
+          if (isRealAbuDhabi) {
             showToast(
               language === 'ar'
-                ? 'تم التوجيه لمركز أبوظبي الرئيسي'
-                : 'Centered on Abu Dhabi location'
+                ? 'تم التكبير إلى موقعك الحالي بنجاح في أبوظبي'
+                : 'Zoomed to your current Abu Dhabi location'
+            );
+          } else {
+            showToast(
+              language === 'ar'
+                ? 'تم التكبير إلى مركز أبوظبي - نطاق خريطة تمكين المعتمدة (DGE)'
+                : 'Zoomed to Abu Dhabi (Official DGE Basemap Coverage)'
             );
           }
         },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+        (err) => {
+          try {
+            localStorage.setItem(PERMISSION_KEY, 'denied');
+          } catch {}
+
+          const defaultLoc = ABU_DHABI_DEFAULT_CENTER;
+          setUserLocation(defaultLoc);
+          setMapCenterAndZoom(defaultLoc, 16);
+          window.dispatchEvent(new CustomEvent('geovision:flyTo', { detail: { center: defaultLoc, zoom: 16 } }));
+
+          if (err.code !== err.PERMISSION_DENIED) {
+            showToast(
+              language === 'ar'
+                ? 'تم التكبير لمركز الخريطة الافتراضي لأبوظبي'
+                : 'Zoomed to Abu Dhabi default location'
+            );
+          }
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 30000 }
       );
-    } else {
-      const defaultLoc: [number, number] = [24.4539, 54.3773];
+    } else if (!userLocationRef.current) {
+      const defaultLoc = ABU_DHABI_DEFAULT_CENTER;
       setUserLocation(defaultLoc);
+      setMapCenterAndZoom(defaultLoc, 16);
+      window.dispatchEvent(new CustomEvent('geovision:flyTo', { detail: { center: defaultLoc, zoom: 16 } }));
     }
   }, [currentView, setUserLocation, setMapCenterAndZoom, showToast, language]);
 

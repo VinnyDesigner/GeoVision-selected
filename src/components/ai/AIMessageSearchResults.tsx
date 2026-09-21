@@ -1410,11 +1410,32 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                     <CheckCircle2 className="w-3.5 h-3.5 text-geovision-blue" />
                     <span>SDI Verified</span>
                   </span>
+                  <span className="text-slate-300 dark:text-slate-700">•</span>
+                  <span className="flex items-center gap-1 text-blue-600 dark:text-sky-300 font-extrabold text-[10px] shrink-0">
+                    <Layers className="w-3 h-3 text-blue-500" />
+                    <span>{language === 'ar' ? 'نطاق جغرافي' : 'Boundary'}</span>
+                  </span>
                 </div>
 
                 {/* Actions Footer */}
                 <div className="flex items-center justify-end gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedFeature(feat);
+                        setMapCenterAndZoom([feat.lat, feat.lng], 15);
+                        if (currentView !== 'map') setCurrentView('map');
+                        showToast(language === 'ar' ? `تمييز حدود ${feat.nameAr}` : `Highlighting boundary for ${feat.nameEn}`);
+                      }}
+                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 border border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer text-[10px] font-extrabold"
+                      title={language === 'ar' ? 'تمييز حدود النطاق والقسيمة' : 'Highlight district and parcel boundaries'}
+                    >
+                      <Layers className="w-3 h-3" />
+                      <span>{language === 'ar' ? 'حدود' : 'Boundary'}</span>
+                    </button>
+
                     <button
                       type="button"
                       onClick={(e) => {

@@ -14,7 +14,9 @@ import { GeoVisionPanel } from '../ai/GeoVisionPanel';
 import { SmartFilterPanel } from '../filters/SmartFilterPanel';
 import { createGeoVisionMarkerIcon } from '../../utils/markerUtils';
 import { buildSpatialSnapshot } from '../../utils/spatialSnapshotUtils';
-import { X, Layers, ChevronUp } from 'lucide-react';
+import { ensureAbuDhabiLocation, ABU_DHABI_DEFAULT_CENTER } from '../../utils/locationUtils';
+import { resolveLocationBoundary, type LocationBoundary } from '../../utils/boundaryUtils';
+import { X, Layers, ChevronUp, MapPin, Scan } from 'lucide-react';
 
 export const MapWorkspace: React.FC = () => {
   const {
@@ -53,6 +55,14 @@ export const MapWorkspace: React.FC = () => {
   const aoiPolygonRef = useRef<L.Polygon | null>(null);
   const activeRouteLineRef = useRef<L.Polyline | null>(null);
   const activeRouteStartMarkerRef = useRef<L.Marker | null>(null);
+  const userLocationMarkerRef = useRef<L.Marker | null>(null);
+  const boundaryGroupRef = useRef<L.LayerGroup | null>(null);
+
+  const [activeBoundary, setActiveBoundary] = useState<{
+    district: LocationBoundary | null;
+    parcel: LocationBoundary | null;
+    feature: GeoFeature;
+  } | null>(null);
 
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [panelWidth, setPanelWidth] = useState<number>(480);
@@ -148,7 +158,7 @@ export const MapWorkspace: React.FC = () => {
 
   // Abu Dhabi DGE & ArcGIS Basemap Tile URLs
   const basemapUrls: Record<string, string> = {
-    dge: 'https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer',
+    dge: 'https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_WM/MapServer/tile/{z}/{y}/{x}',
     light: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     dark: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
@@ -156,60 +166,38 @@ export const MapWorkspace: React.FC = () => {
 
   const createBasemapLayer = (map: L.Map, type: string): L.Layer => {
     if (type === 'dge') {
-      // Dynamic TileLayer that tiles official Abu Dhabi DGE_Color_Basemap_GCS via export
-      const DGEArcGISTileLayer = (L.TileLayer as any).extend({
-        getTileUrl: function (coords: L.Coords) {
-          const origin = -20037508.342789244;
-          const totalSize = 20037508.342789244 * 2;
-          const numTiles = Math.pow(2, coords.z);
-          const tileMercSize = totalSize / numTiles;
+      // 1. Instant global base layer that renders in <30ms from Esri CDN (no blank screen)
+      const fastBaseLayer = L.tileLayer(
+        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+        {
+          maxZoom: 19,
+          attribution: '&copy; Abu Dhabi Spatial Data Infrastructure (AD-SDI) / DGE',
+          keepBuffer: 4,
+        }
+      );
 
-          const minX = origin + coords.x * tileMercSize;
-          const maxX = origin + (coords.x + 1) * tileMercSize;
-          const maxY = -origin - coords.y * tileMercSize;
-          const minY = -origin - (coords.y + 1) * tileMercSize;
+      // 2. Official Abu Dhabi DGE Color Basemap using cached Web Mercator tiles
+      const dgeTileLayer = L.tileLayer(
+        'https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_WM/MapServer/tile/{z}/{y}/{x}',
+        {
+          maxZoom: 19,
+          attribution: '&copy; DGE Abu Dhabi Spatial Data Infrastructure (AD-SDI)',
+          errorTileUrl: 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+          keepBuffer: 4,
+          updateWhenIdle: false,
+          updateWhenZooming: true,
+        }
+      );
 
-          return `https://arcgis.sdi.abudhabi.ae/agshost/rest/services/Basemap/DGE_Color_Basemap_GCS/MapServer/export?bbox=${minX},${minY},${maxX},${maxY}&bboxSR=3857&imageSR=3857&size=256,256&f=image&format=png32`;
-        },
-
-        createTile: function (coords: L.Coords, done: (error: any, tile: HTMLImageElement) => void) {
-          const tile = document.createElement('img');
-          tile.alt = '';
-          tile.setAttribute('role', 'presentation');
-
-          const primaryUrl = this.getTileUrl(coords);
-          const fallbackUrl = `https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/${coords.z}/${coords.y}/${coords.x}`;
-
-          tile.onload = () => {
-            done(null, tile);
-          };
-
-          tile.onerror = () => {
-            // If individual tile request times out or is outside coverage, fallback only this tile
-            if (tile.src !== fallbackUrl) {
-              tile.src = fallbackUrl;
-            } else {
-              done(new Error('Tile error'), tile);
-            }
-          };
-
-          tile.src = primaryUrl;
-          return tile;
-        },
-      });
-
-      const layer = new DGEArcGISTileLayer('', {
-        maxZoom: 19,
-        attribution: '&copy; DGE Abu Dhabi Spatial Data Infrastructure (AD-SDI)',
-      });
-
-      return layer.addTo(map);
+      const group = L.layerGroup([fastBaseLayer, dgeTileLayer]);
+      return group.addTo(map);
     }
 
     const tileUrl = basemapUrls[type] || basemapUrls['dge'];
     return L.tileLayer(tileUrl, {
       maxZoom: 19,
       attribution: '&copy; ArcGIS / DGE Abu Dhabi Spatial Infrastructure (SDI)',
+      keepBuffer: 4,
     }).addTo(map);
   };
 
@@ -218,9 +206,13 @@ export const MapWorkspace: React.FC = () => {
     if (!mapContainerRef.current) return;
 
     if (!mapInstanceRef.current) {
+      const targetLoc = userLocation
+        ? ensureAbuDhabiLocation(userLocation[0], userLocation[1])
+        : ABU_DHABI_DEFAULT_CENTER;
+
       const map = L.map(mapContainerRef.current, {
-        center: mapCenter,
-        zoom: mapZoom,
+        center: targetLoc,
+        zoom: 12,
         zoomControl: false,
         attributionControl: false,
         scrollWheelZoom: true,
@@ -234,11 +226,9 @@ export const MapWorkspace: React.FC = () => {
         preferCanvas: true,
       });
 
-      const layer = createBasemapLayer(map, activeBasemap);
-      tileLayerRef.current = layer as any;
-
       markersGroupRef.current = L.layerGroup().addTo(map);
       drawnLayersGroupRef.current = L.layerGroup().addTo(map);
+      boundaryGroupRef.current = L.layerGroup().addTo(map);
       mapInstanceRef.current = map;
 
       // Immediate size recalculation for instant non-blocking map rendering
@@ -248,9 +238,29 @@ export const MapWorkspace: React.FC = () => {
           mapInstanceRef.current.invalidateSize();
         }
       });
+
+      // Smooth cinematic zoom directly to the location pointer on landing
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+          mapInstanceRef.current.flyTo(targetLoc, 16, {
+            animate: true,
+            duration: 1.5,
+          });
+        }
+      }, 200);
     }
 
     return () => {
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.remove();
+        userLocationMarkerRef.current = null;
+      }
+      if (boundaryGroupRef.current) {
+        boundaryGroupRef.current.clearLayers();
+        boundaryGroupRef.current.remove();
+        boundaryGroupRef.current = null;
+      }
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -297,7 +307,7 @@ export const MapWorkspace: React.FC = () => {
     const handleFlyToEvent = (e: any) => {
       if (mapInstanceRef.current && e.detail && e.detail.center) {
         mapInstanceRef.current.invalidateSize();
-        mapInstanceRef.current.flyTo(e.detail.center, e.detail.zoom || 15, { animate: true, duration: 1.2 });
+        mapInstanceRef.current.flyTo(e.detail.center, e.detail.zoom || 16, { animate: true, duration: 1.4 });
       }
     };
 
@@ -399,7 +409,17 @@ export const MapWorkspace: React.FC = () => {
         const routeBounds = L.latLngBounds([origin, destination]);
         mapInst.flyToBounds(routeBounds, { padding: [90, 90], maxZoom: 15, duration: 1.2 });
       } else if (selectedFeature) {
-        mapInst.flyTo([selectedFeature.lat, selectedFeature.lng], 15, { animate: true, duration: 1.2 });
+        const { districtBoundary } = resolveLocationBoundary(selectedFeature);
+        if (districtBoundary && districtBoundary.coordinates.length > 0) {
+          const districtBounds = L.latLngBounds(districtBoundary.coordinates);
+          mapInst.flyToBounds(districtBounds, {
+            padding: [80, 80],
+            maxZoom: 15,
+            duration: 1.2,
+          });
+        } else {
+          mapInst.flyTo([selectedFeature.lat, selectedFeature.lng], 15, { animate: true, duration: 1.2 });
+        }
       } else if (mapCenter && mapCenter.length === 2) {
         mapInst.flyTo(mapCenter, mapZoom || 15, { animate: true, duration: 1.2 });
       }
@@ -473,6 +493,68 @@ export const MapWorkspace: React.FC = () => {
     }
   }, [selectedFeature, userLocation, language, navigationTarget]);
 
+  // Render User Current Location Pulsing GPS Indicator
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+
+    if (userLocationMarkerRef.current) {
+      userLocationMarkerRef.current.remove();
+      userLocationMarkerRef.current = null;
+    }
+
+    if (userLocation) {
+      const isNavRouteActive = Boolean(
+        navigationTarget && selectedFeature && navigationTarget.id === selectedFeature.id
+      );
+
+      // Avoid duplicating origin pin when an active navigation route is drawn
+      if (!isNavRouteActive) {
+        const userIcon = L.divIcon({
+          className: 'user-current-location-marker',
+          html: `
+            <div style="position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <span class="user-location-pulse" style="position:absolute;width:32px;height:32px;border-radius:50%;background:rgba(33,90,158,0.45);"></span>
+              <span style="position:relative;width:16px;height:16px;border-radius:50%;background:#215A9E;border:3px solid #ffffff;box-shadow:0 2px 10px rgba(33,90,158,0.7);"></span>
+            </div>
+          `,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16],
+        });
+
+        const marker = L.marker(userLocation, {
+          icon: userIcon,
+          zIndexOffset: 1200,
+        }).addTo(map);
+
+        marker.bindTooltip(
+          `<div style="font-family:sans-serif;font-weight:800;font-size:11px;color:#063360;padding:4px 8px;background:rgba(255,255,255,0.96);border-radius:8px;border:1.5px solid #7DA1C4;box-shadow:0 3px 10px rgba(6,51,96,0.18);cursor:pointer;">
+            📍 ${language === 'ar' ? 'موقعك الحالي (انقر للتكبير)' : 'Your Location Pointer (Click to Zoom)'}
+          </div>`,
+          { permanent: false, direction: 'top' }
+        );
+
+        marker.on('click', () => {
+          map.flyTo(userLocation, 17, { animate: true, duration: 1.2 });
+          showToast(
+            language === 'ar'
+              ? 'تم التكبير إلى موقعك الحالي'
+              : 'Zoomed into location pointer'
+          );
+        });
+
+        userLocationMarkerRef.current = marker;
+      }
+    }
+
+    return () => {
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.remove();
+        userLocationMarkerRef.current = null;
+      }
+    };
+  }, [userLocation, language, navigationTarget, selectedFeature]);
+
   // Render Highlighted Circle ONLY when Buffer Tool is explicitly active
   useEffect(() => {
     if (!mapInstanceRef.current) return;
@@ -521,6 +603,108 @@ export const MapWorkspace: React.FC = () => {
       aoiPolygonRef.current = polygon;
     }
   }, [activeTool, aoiResult]);
+
+  // Highlight Geographic Community/District & Facility Parcel Boundaries Based on Location
+  useEffect(() => {
+    if (!mapInstanceRef.current || !boundaryGroupRef.current) return;
+    const boundaryGroup = boundaryGroupRef.current;
+    boundaryGroup.clearLayers();
+
+    if (!selectedFeature) {
+      setActiveBoundary(null);
+      return;
+    }
+
+    const { districtBoundary, parcelBoundary } = resolveLocationBoundary(selectedFeature);
+
+    if (!districtBoundary && !parcelBoundary) {
+      setActiveBoundary(null);
+      return;
+    }
+
+    setActiveBoundary({
+      district: districtBoundary,
+      parcel: parcelBoundary,
+      feature: selectedFeature,
+    });
+
+    // Render a single clean boundary (District Boundary first, or Parcel Boundary as fallback) to avoid nested highlights
+    if (districtBoundary && districtBoundary.coordinates.length > 0) {
+      const districtPolygon = L.polygon(districtBoundary.coordinates, {
+        color: districtBoundary.strokeColor || '#2563EB',
+        fillColor: districtBoundary.fillColor || '#3B82F6',
+        fillOpacity: 0.16,
+        weight: 3.5,
+        dashArray: '8, 6',
+        className: 'geovision-boundary-district-polygon',
+      });
+
+      const districtName = language === 'ar' ? districtBoundary.nameAr : districtBoundary.nameEn;
+
+      districtPolygon.bindTooltip(
+        `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse"></span>
+          <span>${districtName}</span>
+          <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${districtBoundary.areaKm2} km²)</span>
+        </div>`,
+        {
+          permanent: false,
+          sticky: true,
+          direction: 'auto',
+          className: 'geovision-boundary-tooltip',
+        }
+      );
+
+      districtPolygon.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyToBounds(L.latLngBounds(districtBoundary.coordinates), {
+            padding: [70, 70],
+            maxZoom: 15,
+            duration: 1.0,
+          });
+        }
+      });
+
+      boundaryGroup.addLayer(districtPolygon);
+    } else if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
+      // Fallback: render parcel plot boundary only if no district boundary exists
+      const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
+        color: parcelBoundary.strokeColor || '#0284C7',
+        fillColor: parcelBoundary.fillColor || '#38BDF8',
+        fillOpacity: 0.25,
+        weight: 2.5,
+        className: 'geovision-boundary-parcel-polygon',
+      });
+
+      const parcelName = language === 'ar' ? parcelBoundary.nameAr : parcelBoundary.nameEn;
+
+      parcelPolygon.bindTooltip(
+        `<div class="px-2.5 py-1 text-[11px] font-extrabold text-sky-900 dark:text-sky-100 flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+          <span>${parcelName}</span>
+        </div>`,
+        {
+          permanent: false,
+          sticky: true,
+          direction: 'top',
+          className: 'geovision-boundary-tooltip',
+        }
+      );
+
+      parcelPolygon.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyTo([selectedFeature.lat, selectedFeature.lng], 16.5, {
+            animate: true,
+            duration: 1.0,
+          });
+        }
+      });
+
+      boundaryGroup.addLayer(parcelPolygon);
+    }
+  }, [selectedFeature, language]);
 
   const tempShapeRef = useRef<L.Layer | null>(null);
   const tempPointsRef = useRef<L.LatLng[]>([]);
@@ -907,6 +1091,97 @@ export const MapWorkspace: React.FC = () => {
 
         {/* Print Modal */}
         {!pureMapMode && <PrintMapModal />}
+
+        {/* Active Location Boundary Highlight HUD Capsule */}
+        {!pureMapMode && activeBoundary && (
+          <div className="absolute top-3.5 left-1/2 -translate-x-1/2 z-[600] max-w-[94vw] sm:max-w-xl animate-in fade-in slide-in-from-top-3 duration-250">
+            <div className="glass-level-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl border border-blue-400/50 dark:border-blue-500/30 shadow-2xl shadow-blue-950/20 flex items-center justify-between gap-3 backdrop-blur-xl bg-white/95 dark:bg-slate-900/95">
+              
+              {/* Left Info: Radar Pin + Title + Area */}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-blue-500/15 dark:bg-blue-400/20 border border-blue-500/30 flex items-center justify-center shrink-0">
+                  <span className="relative flex h-3 w-3">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-geovision-blue dark:bg-sky-400"></span>
+                  </span>
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
+                      {activeBoundary.district
+                        ? (language === 'ar' ? activeBoundary.district.nameAr : activeBoundary.district.nameEn)
+                        : (language === 'ar' ? activeBoundary.feature.nameAr : activeBoundary.feature.nameEn)}
+                    </span>
+                    {activeBoundary.district && (
+                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 border border-blue-200 dark:border-blue-700 shrink-0">
+                        {activeBoundary.district.areaKm2} km²
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold truncate">
+                    {language === 'ar' ? 'تم تمييز حدود النطاق الجغرافي' : 'Location boundary highlighted'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Action Buttons: Fit Boundary, Focus Pin, Dismiss */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {activeBoundary.district && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (mapInstanceRef.current && activeBoundary.district) {
+                        mapInstanceRef.current.flyToBounds(
+                          L.latLngBounds(activeBoundary.district.coordinates),
+                          { padding: [70, 70], maxZoom: 15, duration: 1.0 }
+                        );
+                      }
+                    }}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all text-xs font-black cursor-pointer border border-blue-200/80 dark:border-slate-700"
+                    title={language === 'ar' ? 'معاينة النطاق كاملاً' : 'Fit full sector boundary'}
+                  >
+                    <Scan className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">{language === 'ar' ? 'نطاق القطاع' : 'Fit Boundary'}</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (mapInstanceRef.current && activeBoundary.feature) {
+                      mapInstanceRef.current.flyTo(
+                        [activeBoundary.feature.lat, activeBoundary.feature.lng],
+                        16.5,
+                        { animate: true, duration: 1.0 }
+                      );
+                    }
+                  }}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all text-xs font-black cursor-pointer border border-blue-200/80 dark:border-slate-700"
+                  title={language === 'ar' ? 'التركيز على موقع المعلم' : 'Focus location pin'}
+                >
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">{language === 'ar' ? 'الموقع' : 'Focus Pin'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveBoundary(null);
+                    if (boundaryGroupRef.current) {
+                      boundaryGroupRef.current.clearLayers();
+                    }
+                  }}
+                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
+                  title={language === 'ar' ? 'إغلاق التمييز' : 'Dismiss boundary'}
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+            </div>
+          </div>
+        )}
 
         {/* Bottom Coordinates & Scale Capsule Status Bar */}
         {!pureMapMode && (

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppState } from '../../context/AppStateContext';
 import { getAssetUrl } from '../../utils/assetUtils';
+import { ensureAbuDhabiLocation } from '../../utils/locationUtils';
 import { FeedbackStarIcon } from '../common/FeedbackStarIcon';
 import {
   Globe,
@@ -25,6 +26,8 @@ export const AppHeader: React.FC = () => {
     setTheme,
     currentView,
     setCurrentView,
+    userLocation,
+    setMapCenterAndZoom,
     user,
     setUser,
     setLoginModalOpen,
@@ -49,6 +52,10 @@ export const AppHeader: React.FC = () => {
   }, []);
 
   const handleNavClick = (view: any) => {
+    if (view === 'map' && userLocation) {
+      const validLoc = ensureAbuDhabiLocation(userLocation[0], userLocation[1]);
+      setMapCenterAndZoom(validLoc, 14);
+    }
     setCurrentView(view);
     setUserDropdownOpen(false);
     setMobileMenuOpen(false);
@@ -280,7 +287,7 @@ export const AppHeader: React.FC = () => {
             </button>
 
             <button
-              onClick={() => { setCurrentView('map'); setMobileMenuOpen(false); }}
+              onClick={() => handleNavClick('map')}
               className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all ${
                 currentView === 'map' ? 'bg-geovision-blue text-white shadow-md' : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}

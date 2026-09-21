@@ -146,14 +146,21 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false, hideT
     },
   ];
 
-  // Rotating placeholder prompts
-  const placeholders = [
-    'Show all schools in Abu Dhabi...',
-    'Show all hospitals in Abu Dhabi...',
-    'Show protected areas in Abu Dhabi...',
-    'Show tourist attractions near me...',
-    'Show bus stops near me...',
-    'Show public parks in Abu Dhabi...',
+  // Rotating placeholder prompts matching screenshot design
+  const placeholders = language === 'ar' ? [
+    'اسأل GeoVision... مثلاً: عرض جميع المستشفيات في أبوظبي...',
+    'اسأل GeoVision... مثلاً: عرض جميع المدارس في أبوظبي...',
+    'اسأل GeoVision... مثلاً: عرض المحميات الطبيعية في أبوظبي...',
+    'اسأل GeoVision... مثلاً: عرض الوجهات السياحية في أبوظبي...',
+    'اسأل GeoVision... مثلاً: عرض محطات الحافلات في أبوظبي...',
+    'اسأل GeoVision... مثلاً: عرض الحدائق العامة في أبوظبي...',
+  ] : [
+    'Ask GeoVision... e.g. Show all hospitals in Abu Dhabi...',
+    'Ask GeoVision... e.g. Show all schools in Abu Dhabi...',
+    'Ask GeoVision... e.g. Show protected areas in Abu Dhabi...',
+    'Ask GeoVision... e.g. Show tourist attractions near me...',
+    'Ask GeoVision... e.g. Show bus stops near me...',
+    'Ask GeoVision... e.g. Show public parks in Abu Dhabi...',
   ];
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
 
@@ -190,20 +197,42 @@ export const AISearchBar: React.FC<AISearchBarProps> = ({ compact = false, hideT
         }`}
       >
         <div className="flex items-center gap-3 px-1 sm:px-2 h-full">
-          {/* AI Star Icon */}
-          <div className={`flex items-center justify-center shrink-0 ${compact ? 'w-8 h-8' : 'w-10 sm:w-12 h-10 sm:h-12'}`}>
+          {/* AI Sparkle Icon matching user design */}
+          <div className={`flex items-center justify-center shrink-0 ${compact ? 'w-7 h-7' : 'w-9 sm:w-10 h-9 sm:h-10'}`}>
             <svg
-              className={`text-[#0066FF] dark:text-[#3B82F6] shrink-0 drop-shadow-xs ${compact ? 'w-7 h-7' : 'w-10 sm:w-12 h-10 sm:h-12'}`}
+              className={`text-[#457DF5] dark:text-[#5B92FF] shrink-0 ${compact ? 'w-6 h-6' : 'w-8 h-8'}`}
               viewBox="0 0 24 24"
-              fill="currentColor"
+              fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              {/* Large 4-pointed star bottom left */}
-              <path d="M10 21c0-4.5-1.5-6-6-6 4.5 0 6-1.5 6-6 0 4.5 1.5 6 6 6-4.5 0-6 1.5-6 6z" />
-              {/* Medium 4-pointed star top right */}
-              <path d="M18 13c0-3-1-4-4-4 3 0 4-1 4-4 0 3 1 4 4 4-3 0-4 1-4 4z" />
-              {/* Small 4-pointed star top center */}
-              <path d="M13.5 5.5c0-1.25-.5-1.75-1.75-1.75 1.25 0 1.75-.5 1.75-1.75 0 1.25.5 1.75 1.75 1.75-1.25 0-1.75.5-1.75 1.75z" />
+              {/* Central Outlined 4-Pointed Star */}
+              <path
+                d="M12 3C12 7.5 15.5 12 20 12C15.5 12 12 16.5 12 21C12 16.5 8.5 12 4 12C8.5 12 12 7.5 12 3Z"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              {/* Top-Left Small Star */}
+              <path
+                d="M4.5 2C4.5 3.4 3.4 4.5 2 4.5C3.4 4.5 4.5 5.6 4.5 7C4.5 5.6 5.6 4.5 7 4.5C5.6 4.5 4.5 3.4 4.5 2Z"
+                fill="currentColor"
+              />
+              {/* Top-Right Small Star */}
+              <path
+                d="M19.5 2C19.5 3.4 18.4 4.5 17 4.5C18.4 4.5 19.5 5.6 19.5 7C19.5 5.6 20.6 4.5 22 4.5C20.6 4.5 19.5 3.4 19.5 2Z"
+                fill="currentColor"
+              />
+              {/* Bottom-Left Small Star */}
+              <path
+                d="M4.5 17C4.5 18.4 3.4 19.5 2 19.5C3.4 19.5 4.5 20.6 4.5 22C4.5 20.6 5.6 19.5 7 19.5C5.6 19.5 4.5 18.4 4.5 17Z"
+                fill="currentColor"
+              />
+              {/* Bottom-Right Small Star */}
+              <path
+                d="M19.5 17C19.5 18.4 18.4 19.5 17 19.5C18.4 19.5 19.5 20.6 19.5 22C19.5 20.6 20.6 19.5 22 19.5C20.6 19.5 19.5 18.4 19.5 17Z"
+                fill="currentColor"
+              />
             </svg>
           </div>
 

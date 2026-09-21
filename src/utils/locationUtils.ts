@@ -8,18 +8,24 @@ export const ABU_DHABI_BOUNDS = {
   maxLng: 56.0,
 };
 
-/**
- * Ensures any coordinate (e.g. device GPS or search location) is strictly constrained
- * inside Abu Dhabi, UAE. If outside Abu Dhabi, it returns the Abu Dhabi center location.
- */
-export function ensureAbuDhabiLocation(lat: number, lng: number): [number, number] {
-  if (
+export function isWithinAbuDhabi(lat: number, lng: number): boolean {
+  return (
     lat >= ABU_DHABI_BOUNDS.minLat &&
     lat <= ABU_DHABI_BOUNDS.maxLat &&
     lng >= ABU_DHABI_BOUNDS.minLng &&
     lng <= ABU_DHABI_BOUNDS.maxLng
-  ) {
+  );
+}
+
+/**
+ * Ensures coordinate is strictly within Abu Dhabi emirate.
+ * If user is outside Abu Dhabi (e.g. testing remotely), returns Abu Dhabi center
+ * so that the official DGE Basemap and SDI datasets are always loaded.
+ */
+export function ensureAbuDhabiLocation(lat: number, lng: number): [number, number] {
+  if (isWithinAbuDhabi(lat, lng)) {
     return [lat, lng];
   }
   return ABU_DHABI_DEFAULT_CENTER;
 }
+

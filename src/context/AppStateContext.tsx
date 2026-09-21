@@ -217,7 +217,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [selectedSubcategoryIds, setSelectedSubcategoryIds] = useState<string[]>([]);
 
   const [mapCenter, setMapCenter] = useState<[number, number]>([24.4539, 54.3773]);
-  const [mapZoom, setMapZoom] = useState<number>(14);
+  const [mapZoom, setMapZoom] = useState<number>(12);
 
   const zoomIn = () => {
     setMapZoom((prev) => Math.min(Math.floor(prev) + 1, 19));

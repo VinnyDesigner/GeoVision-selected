@@ -34,6 +34,8 @@ export const MapToolbar: React.FC = () => {
     selectedFeature,
     setSelectedFeature,
     filteredFeatures,
+    userLocation,
+    setUserLocation,
   } = useAppState();
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -82,23 +84,35 @@ export const MapToolbar: React.FC = () => {
   };
 
   const handleLocateClick = () => {
-    showToast(language === 'ar' ? 'جاري تحديد الموقع في أبوظبي...' : 'Locating Abu Dhabi position...');
+    showToast(language === 'ar' ? 'جاري تحديد موقعك الحالي...' : 'Locating your current position...');
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const validLoc = ensureAbuDhabiLocation(pos.coords.latitude, pos.coords.longitude);
-          setMapCenterAndZoom(validLoc, 15);
-          showToast(language === 'ar' ? 'تم تحديد الموقع في أبوظبي' : 'Abu Dhabi location located successfully');
+          setUserLocation(validLoc);
+          setMapCenterAndZoom(validLoc, 16);
+          window.dispatchEvent(new CustomEvent('geovision:flyTo', { detail: { center: validLoc, zoom: 16 } }));
+          showToast(language === 'ar' ? 'تم التكبير إلى موقعك الحالي بنجاح' : 'Zoomed to your current location successfully');
         },
         () => {
-          setMapCenterAndZoom([24.4539, 54.3773], 15);
-          showToast(language === 'ar' ? 'تم التوجيه لمركز أبوظبي' : 'Centered on Abu Dhabi location');
+          const fallback: [number, number] = userLocation
+            ? ensureAbuDhabiLocation(userLocation[0], userLocation[1])
+            : [24.4539, 54.3773];
+          setUserLocation(fallback);
+          setMapCenterAndZoom(fallback, 16);
+          window.dispatchEvent(new CustomEvent('geovision:flyTo', { detail: { center: fallback, zoom: 16 } }));
+          showToast(language === 'ar' ? 'تم التكبير إلى موقعك في أبوظبي' : 'Zoomed to your Abu Dhabi location');
         },
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
     } else {
-      setMapCenterAndZoom([24.4539, 54.3773], 15);
-      showToast(language === 'ar' ? 'تم التوجيه لمركز أبوظبي' : 'Centered on Abu Dhabi location');
+      const fallback: [number, number] = userLocation
+        ? ensureAbuDhabiLocation(userLocation[0], userLocation[1])
+        : [24.4539, 54.3773];
+      setUserLocation(fallback);
+      setMapCenterAndZoom(fallback, 16);
+      window.dispatchEvent(new CustomEvent('geovision:flyTo', { detail: { center: fallback, zoom: 16 } }));
+      showToast(language === 'ar' ? 'خدمة تحديد الموقع غير مدعومة' : 'Geolocation is not supported');
     }
   };
 
