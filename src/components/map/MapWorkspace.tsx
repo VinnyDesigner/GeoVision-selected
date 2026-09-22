@@ -730,21 +730,22 @@ export const MapWorkspace: React.FC = () => {
 
     // Render the Single Unified Location Boundary
     if (singleBoundary && singleBoundary.coordinates && singleBoundary.coordinates.length > 0) {
+      const isRed = singleBoundary.id === 'al_reef' || singleBoundary.strokeColor?.toLowerCase().includes('dc') || singleBoundary.strokeColor?.toLowerCase().includes('ef');
       const boundaryPolygon = L.polygon(singleBoundary.coordinates, {
         color: singleBoundary.strokeColor || '#2563EB',
         fillColor: singleBoundary.fillColor || '#3B82F6',
-        fillOpacity: 0.16,
-        weight: 3.5,
+        fillOpacity: isRed ? 0.24 : 0.16,
+        weight: isRed ? 4 : 3.5,
         dashArray: '8, 6',
-        className: 'geovision-boundary-district-polygon active-boundary',
+        className: `geovision-boundary-district-polygon active-boundary ${isRed ? 'alreef-red-boundary' : ''}`,
       });
 
       const boundaryName = language === 'ar' ? (singleBoundary.nameAr || singleBoundary.nameEn) : (singleBoundary.nameEn || singleBoundary.nameAr);
       boundaryPolygon.bindTooltip(
         `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
+          <span class="w-2.5 h-2.5 rounded-full ${isRed ? 'bg-red-500' : 'bg-blue-500'} animate-pulse"></span>
           <span>${boundaryName}</span>
-          ${singleBoundary.areaKm2 ? `<span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${singleBoundary.areaKm2} km²)</span>` : ''}
+          ${singleBoundary.areaKm2 ? `<span class="text-[10px] ${isRed ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'} font-bold">(${singleBoundary.areaKm2} km²)</span>` : ''}
         </div>`,
         {
           permanent: false,

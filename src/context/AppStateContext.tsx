@@ -2313,22 +2313,13 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
           // -------------------------------------------------------------------------
           // SPECIFICATION FLOW: Plant Nurseries with Buffer in Al Reef Community
-          // (e.g. "nurseries with in 2km in alreef", "nurseries within 2km in al reef", etc.)
+          // (e.g. "nurseries with in 2km in alreef", "exact alreef area should be with red color", etc.)
           // -------------------------------------------------------------------------
           else if (
-            (
-              lower.includes('alreef') ||
-              lower.includes('al reef') ||
-              (lower.includes('reef') && !lower.includes('coral')) ||
-              query.includes('الريف')
-            ) &&
-            (
-              lower.includes('nurser') ||
-              lower.includes('plant') ||
-              query.includes('مشتل') ||
-              query.includes('مشاتل') ||
-              query.includes('حضان')
-            )
+            lower.includes('alreef') ||
+            lower.includes('al reef') ||
+            (lower.includes('reef') && !lower.includes('coral')) ||
+            query.includes('الريف')
           ) {
             const refLat = 24.4780;
             const refLng = 54.6720;
