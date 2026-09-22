@@ -637,11 +637,23 @@ export const MapWorkspace: React.FC = () => {
       bufferCircleRef.current = null;
     }
 
-    if (bufferRadiusKm && bufferRadiusKm > 0) {
+    const lastUserMsg = [...aiMessages].reverse().find(m => m.sender === 'user');
+    const userQuery = `${lastUserMsg?.textEn || ''} ${lastUserMsg?.textAr || ''}`.toLowerCase();
+    const queryRequestsBuffer =
+      userQuery.includes('buffer') ||
+      userQuery.includes('نطاق عازل') ||
+      (userQuery.includes('with in') && userQuery.includes('buffer')) ||
+      (userQuery.includes('within') && userQuery.includes('buffer')) ||
+      (userQuery.includes('alreef') && (userQuery.includes('2km') || userQuery.includes('2 كم')));
+
+    const shouldShowBufferCircle = activeTool === 'buffer' || (bufferRadiusKm > 0 && queryRequestsBuffer);
+
+    if (shouldShowBufferCircle && bufferRadiusKm && bufferRadiusKm > 0) {
       const radiusMeters = bufferRadiusKm * 1000;
       const centerLatLng: [number, number] = bufferCenter
         || (activeTool === 'buffer' && selectedFeature ? [selectedFeature.lat, selectedFeature.lng] : null)
         || (selectedFeature ? [selectedFeature.lat, selectedFeature.lng] : null)
+        || (displayFeatures.length > 0 ? [displayFeatures[0].lat, displayFeatures[0].lng] : null)
         || userLocation
         || mapCenter
         || [24.4539, 54.3773];

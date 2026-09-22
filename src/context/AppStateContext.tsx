@@ -2801,7 +2801,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             responseAr = 'تم تحديد 24 مدرسة تقع ضمن 2 كم من محطات الحافلات في مدينة خليفة.\n\nسهولة الوصول للحافلات القريبة:\n• مدرسة الشويفات الدولية: 350 م من محطة الحافلات\n• مدرسة الراحة الدولية: 600 م من محطة الحافلات\n• أكاديمية جيمس الأمريكية: 820 م من محطة الحافلات\n\nمصدر البيانات:\nطبقات التعليم والنقل - أبوظبي SDI';
             newCenter = [24.418, 54.582];
             newZoom = 14;
-            setBufferRadiusKm(2);
+            setBufferRadiusKm(0);
             setSelectedCategoryIds(['education', 'transport']);
 
             crossLayerData = {
