@@ -165,7 +165,7 @@ export const AppHeader: React.FC = () => {
             className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer"
             title="Toggle Light/Dark Theme"
           >
-            {theme === 'light' ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-700 dark:text-white" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 dark:text-white" />}
+            {theme === 'light' ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#215A9E] dark:text-blue-400" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 dark:text-amber-400" />}
           </button>
 
           {/* Help Icon Button */}

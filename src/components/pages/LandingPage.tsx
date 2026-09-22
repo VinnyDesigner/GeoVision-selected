@@ -27,6 +27,7 @@ export const LandingPage: React.FC = () => {
 
   const [examplesExpanded, setExamplesExpanded] = useState(false);
 
+
   const EXAMPLE_QUESTIONS = [
     {
       id: 'hospitals',
@@ -139,7 +140,7 @@ export const LandingPage: React.FC = () => {
       
       {/* Crisp Homepage Background Image Layer */}
       <img
-        src={getAssetUrl(theme === 'dark' ? 'homepage-bg-dark-new.png' : 'homepage bg light-new.png')}
+        src={getAssetUrl(theme === 'dark' ? 'homepage-bg-dark (4).png' : 'homepage-bg-light (4).png')}
         alt="GeoVision Abu Dhabi Spatial Canvas"
         className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-500 pointer-events-none z-0 opacity-100 ${
           language === 'ar' ? '-scale-x-100' : ''
@@ -149,26 +150,40 @@ export const LandingPage: React.FC = () => {
       {/* Hero & Search Launchpad */}
       <div className="relative z-10 w-full max-w-5xl text-left rtl:text-right space-y-2.5 sm:space-y-3.5 my-auto flex flex-col items-start rtl:items-start">
         
-        {/* GeoVision Hero Brand Logo with Dynamic Animated Globe SVG */}
-        <div className="flex items-start justify-start w-full -mb-3 sm:-mb-5 md:-mb-6">
-          <div className="relative inline-flex items-center -ml-1 rtl:-ml-0 rtl:-mr-1">
-            {/* GeoVision Brand Text (Static globe removed) */}
-            <img
-              src={getAssetUrl(theme === 'dark' ? 'assets/logos/geovision-logo-brand-dark.png' : 'assets/logos/geovision-logo-brand-light.png')}
-              alt="GeoVision"
-              className="h-20 sm:h-28 md:h-36 lg:h-44 xl:h-48 w-auto max-w-full object-contain object-left rtl:object-right transition-all duration-300 drop-shadow-md select-none pointer-events-none"
+        {/* GeoVision Hero Brand Logo with Dynamic Animated Globe & Tagline */}
+        <div className="flex flex-col items-start w-full py-1">
+          {/* Main GeoVision Title with Exact Reference Gradient Color Palette */}
+          <div className="flex items-center text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black font-sans tracking-tight select-none leading-none">
+            {/* "Ge" text */}
+            <span className="geovision-title-ge relative z-10">
+              Ge
+            </span>
+
+            {/* Custom UAE Globe Logo - Clean without white shadow */}
+            <div className="relative inline-flex items-center justify-center -ml-0.5 sm:-ml-1 md:-ml-1.5 -mr-1.5 sm:-mr-2.5 md:-mr-3 shrink-0 w-[1.05em] h-[1.05em] self-center">
+              <img
+                src={getAssetUrl('globe-logo.png')}
+                alt="GeoVision UAE Globe Logo"
+                className="w-full h-full object-contain pointer-events-none select-none drop-shadow-md"
+              />
+            </div>
+
+            {/* "Vision" text */}
+            <span className="geovision-title-vision">
+              Vision
+            </span>
+          </div>
+
+          {/* Tagline Strip in vibrant blue color with white glow blur effect */}
+          <div className="flex items-center gap-2 sm:gap-3 w-full max-w-xl sm:max-w-2xl mt-2 sm:mt-3">
+            <div
+              className="flex-1 h-[2px] rounded-full opacity-90 bg-gradient-to-r from-transparent via-[#012661] to-[#215A9E] dark:via-[#38BDF8] dark:to-[#60A5FA]"
             />
-            {/* Live Rotating Animated Globe SVG */}
-            <img
-              src={getAssetUrl('globe-anim.svg')}
-              alt="GeoVision Animated Globe"
-              className="absolute pointer-events-none select-none drop-shadow-lg transition-all duration-300"
-              style={{
-                left: '26.07%',
-                top: '15.80%',
-                width: '21.82%',
-                height: '60.47%',
-              }}
+            <span className="shrink-0 text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-[0.22em] sm:tracking-[0.28em] text-[#012661] dark:text-[#38BDF8] drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]">
+              {language === 'ar' ? 'الذكاء المكاني لغدٍ أكثر ذكاءً' : 'SPATIAL INTELLIGENCE FOR A SMARTER TOMORROW'}
+            </span>
+            <div
+              className="flex-1 h-[2px] rounded-full opacity-90 bg-gradient-to-r from-[#215A9E] via-[#00B3C2] to-transparent dark:from-[#60A5FA] dark:via-[#38BDF8]"
             />
           </div>
         </div>
@@ -177,11 +192,11 @@ export const LandingPage: React.FC = () => {
         <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-[#063360] dark:text-white tracking-tight drop-shadow-sm">
           {language === 'ar' ? (
             <>
-              استكشف البيانات المكانية في <span className="text-[#215A9E] font-black underline underline-offset-4 decoration-[#7DA1C4]">أبوظبي</span>
+              استكشف البيانات المكانية في <span className="text-[#215A9E] dark:text-[#38BDF8] font-black underline underline-offset-4 decoration-[#7DA1C4]">أبوظبي</span>
             </>
           ) : (
             <>
-              Explore Public Data Across <span className="text-[#215A9E] font-black underline underline-offset-4 decoration-[#7DA1C4]">Abu Dhabi</span>
+              Explore Public Data Across <span className="text-[#215A9E] dark:text-[#38BDF8] font-black underline underline-offset-4 decoration-[#7DA1C4]">Abu Dhabi</span>
             </>
           )}
         </h2>
@@ -220,7 +235,7 @@ export const LandingPage: React.FC = () => {
                 </>
               ) : (
                 <>
-                  <span>{language === 'ar' ? 'المزيد من الأسئلة' : 'More questions'}</span>
+                  <span>{language === 'ar' ? 'المزيد' : 'More'}</span>
                   <ChevronDown className="w-3.5 h-3.5" />
                 </>
               )}
@@ -238,22 +253,29 @@ export const LandingPage: React.FC = () => {
                   onClick={() => handleExampleClick(item.queryEn, item.queryAr)}
                   className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-3.5 sm:py-1.5 rounded-full text-xs font-semibold bg-white/75 dark:bg-slate-900/80 text-[#063360] dark:text-slate-100 border border-sky-200/70 dark:border-slate-700/80 hover:border-[#215A9E] hover:bg-white dark:hover:bg-slate-800 shadow-2xs hover:shadow-md transition-all duration-200 transform hover:-translate-y-0.5 cursor-pointer backdrop-blur-md animate-in fade-in zoom-in-95 duration-150"
                 >
-                  <IconComp className="w-3.5 h-3.5 text-[#215A9E] shrink-0" />
+                  <IconComp className="w-3.5 h-3.5 text-[#215A9E] dark:text-sky-400 shrink-0" />
                   <span>{language === 'ar' ? item.textAr : item.textEn}</span>
                 </button>
               );
             })}
 
-            {!examplesExpanded && (
-              <button
-                type="button"
-                onClick={() => setExamplesExpanded(true)}
-                className="inline-flex items-center gap-1 px-3 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-bold text-[#215A9E] dark:text-sky-300 bg-sky-50/80 dark:bg-sky-950/60 border border-dashed border-sky-300 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-900/80 shadow-2xs hover:shadow-sm transition-all duration-200 cursor-pointer"
-              >
-                <span>{language === 'ar' ? `المزيد (${EXAMPLE_QUESTIONS.length - 3}+)...` : `More (${EXAMPLE_QUESTIONS.length - 3}+)...`}</span>
-                <ChevronDown className="w-3.5 h-3.5" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setExamplesExpanded(prev => !prev)}
+              className="inline-flex items-center gap-1 px-3 py-1 sm:px-3 sm:py-1.5 rounded-full text-xs font-bold text-[#215A9E] dark:text-sky-300 bg-sky-50/80 dark:bg-sky-950/60 border border-dashed border-sky-300 dark:border-sky-700 hover:bg-sky-100 dark:hover:bg-sky-900/80 shadow-2xs hover:shadow-sm transition-all duration-200 cursor-pointer"
+            >
+              {examplesExpanded ? (
+                <>
+                  <span>{language === 'ar' ? 'عرض أقل' : 'Show less'}</span>
+                  <ChevronUp className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  <span>{language === 'ar' ? `المزيد (${EXAMPLE_QUESTIONS.length - 3}+)...` : `More (${EXAMPLE_QUESTIONS.length - 3}+)...`}</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
           </div>
         </div>
 

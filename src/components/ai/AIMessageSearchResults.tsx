@@ -173,6 +173,9 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
   const showToast = appState.showToast;
   const language = languageProp || appState.language || 'en';
   const setSelectedFeature = setSelectedFeatureProp || appState.setSelectedFeature;
+  const setHoveredFeature = appState.setHoveredFeature;
+  const hoveredFeature = appState.hoveredFeature;
+  const selectedFeature = appState.selectedFeature;
 
   const addFavorite = appState.addFavorite;
   const removeFavorite = appState.removeFavorite;
@@ -205,7 +208,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
   const [selectedType, setSelectedType] = useState<'all' | 'private' | 'public'>('all');
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const [searchFilter, setSearchFilter] = useState('');
-  const [visibleCount, setVisibleCount] = useState(5);
+  const [visibleCount, setVisibleCount] = useState(6);
 
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [showPrintReport, setShowPrintReport] = useState(false);
@@ -345,8 +348,18 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
   const isTypeActive = selectedType !== 'all';
   const hasActiveFilters = isTypeActive || searchFilter.trim() !== '';
-  const displayedFeatures = filteredFeatures.slice(0, visibleCount);
   const isHighVolume = features.length >= 100 || filteredFeatures.length > 20;
+
+  // If cards count is >= 100 (or in general high volume list), adjust to show at least 6 cards
+  const minCardsInList = (features.length >= 100 || filteredFeatures.length >= 100) ? 6 : 6;
+  const effectiveVisibleCount = Math.max(visibleCount, minCardsInList);
+  const displayedFeatures = filteredFeatures.slice(0, effectiveVisibleCount);
+
+  useEffect(() => {
+    if ((features.length >= 100 || filteredFeatures.length >= 100) && visibleCount < 6) {
+      setVisibleCount(6);
+    }
+  }, [features.length, filteredFeatures.length]);
 
   const handleClearFilters = () => {
     setSearchFilter('');
@@ -1338,52 +1351,58 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
           {language === 'ar' ? 'لا توجد نتائج مطابقة للتصفية المختارة.' : 'No spatial matches found for selected category/type filter.'}
         </div>
       ) : (
-        <div ref={featureListRef} className="space-y-2.5 max-h-[420px] overflow-y-auto pr-1 scrollbar-none">
+        <div ref={featureListRef} className="space-y-1.5 max-h-[520px] overflow-y-auto pr-1 scrollbar-none">
           {displayedFeatures.map((feat) => {
             const isPriv = isFeaturePrivate(feat);
             const isFav = isFavorite(feat.nameEn);
             const dist = feat.distanceKm || 1.5;
             const styleInfo = getCategoryIconAndStyle(feat.category, feat.subcategory);
+            const isHovered = hoveredFeature && (hoveredFeature.id === feat.id || hoveredFeature.nameEn === feat.nameEn);
+            const isSelected = selectedFeature && (selectedFeature.id === feat.id || selectedFeature.nameEn === feat.nameEn);
 
             return (
               <div
                 key={feat.id}
+                onMouseEnter={() => setHoveredFeature && setHoveredFeature(feat)}
+                onMouseLeave={() => setHoveredFeature && setHoveredFeature(null)}
                 onClick={() => {
                   setSelectedFeature(feat);
                   setMapCenterAndZoom([feat.lat, feat.lng], 15);
                   if (currentView !== 'map') setCurrentView('map');
                 }}
-                className="relative rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 hover:border-geovision-blue dark:hover:border-blue-500 cursor-pointer transition-all duration-200 p-3 sm:p-3.5 space-y-2.5 shadow-2xs hover:shadow-md hover:shadow-blue-500/10 group overflow-hidden"
+                className={`relative rounded-xl bg-white dark:bg-slate-900 border ${
+                  isHovered || isSelected ? 'border-geovision-blue dark:border-blue-400 ring-2 ring-blue-500/30' : 'border-slate-200/90 dark:border-slate-800'
+                } hover:border-geovision-blue dark:hover:border-blue-500 cursor-pointer transition-all duration-200 p-2 sm:p-2.5 space-y-1.5 shadow-2xs hover:shadow-md hover:shadow-blue-500/10 group overflow-hidden`}
               >
                 {/* Top Category Accent Line */}
-                <div className={`absolute top-0 left-0 right-0 h-1 bg-linear-to-r ${styleInfo.accentColor} opacity-75 group-hover:opacity-100 transition-opacity`} />
+                <div className={`absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r ${styleInfo.accentColor} opacity-75 group-hover:opacity-100 transition-opacity`} />
 
-                {/* Header Row: Category Icon, Title, Subcategory & Badges */}
-                <div className="flex items-start justify-between gap-2.5 pt-0.5">
-                  <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                {/* Compact Header Row */}
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
                     {/* Category Icon Avatar */}
-                    <div className={`w-9 h-9 rounded-xl ${styleInfo.bgGradient} border flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200`}>
+                    <div className={`w-7 h-7 rounded-lg ${styleInfo.bgGradient} border flex items-center justify-center shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200`}>
                       {styleInfo.icon}
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <h5 className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-100 group-hover:text-geovision-blue dark:group-hover:text-blue-400 transition-colors leading-tight truncate">
+                      <h5 className="text-xs font-black text-slate-900 dark:text-slate-100 group-hover:text-geovision-blue dark:group-hover:text-blue-400 transition-colors truncate leading-snug">
                         {language === 'ar' ? feat.nameAr : feat.nameEn}
                       </h5>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 font-semibold truncate mt-0.5">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold truncate leading-tight">
                         {feat.subcategory || feat.category} • {feat.addressEn || feat.addressAr}
                       </p>
                     </div>
                   </div>
 
                   {/* Badges (Rating & Sector) */}
-                  <div className="flex items-center gap-1.5 shrink-0">
-                    <span className="flex items-center gap-0.5 text-[10px] font-black text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/80 px-1.5 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700">
-                      <Star className="w-3 h-3 fill-amber-400 text-amber-400 shrink-0" />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className="flex items-center gap-0.5 text-[9.5px] font-black text-slate-700 dark:text-slate-200 bg-slate-50 dark:bg-slate-800/80 px-1.5 py-0.5 rounded-md border border-slate-200/80 dark:border-slate-700">
+                      <Star className="w-2.5 h-2.5 fill-amber-400 text-amber-400 shrink-0" />
                       <span>4.8</span>
                     </span>
                     <span
-                      className={`px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wide border ${
+                      className={`px-1.5 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wide border ${
                         isPriv
                           ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
                           : 'bg-blue-50 text-geovision-blue dark:bg-slate-800 dark:text-blue-300 border-blue-200/80 dark:border-slate-700'
@@ -1394,31 +1413,19 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                   </div>
                 </div>
 
-                {/* Single-Line Info Metadata Bar */}
-                <div className="flex items-center gap-2 text-[11px] font-semibold text-slate-500 dark:text-slate-400 py-1 px-2.5 rounded-lg bg-slate-50/80 dark:bg-slate-800/50 border border-slate-200/50 dark:border-slate-800/80 overflow-x-auto scrollbar-none">
-                  <span className="flex items-center gap-1 text-geovision-blue dark:text-blue-300 font-black shrink-0">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{dist} km {language === 'ar' ? 'من موقعك' : 'away'}</span>
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <span className="flex items-center gap-1 text-slate-600 dark:text-slate-300 font-bold shrink-0">
-                    <Clock className="w-3.5 h-3.5 text-geovision-blue" />
-                    <span>{language === 'ar' ? (feat.openStatusAr || feat.openStatusEn || 'مفتوح') : (feat.openStatusEn || 'Open 24/7')}</span>
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <span className="flex items-center gap-1 text-geovision-blue dark:text-blue-300 font-extrabold text-[10px] shrink-0">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-geovision-blue" />
-                    <span>SDI Verified</span>
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-700">•</span>
-                  <span className="flex items-center gap-1 text-blue-600 dark:text-sky-300 font-extrabold text-[10px] shrink-0">
-                    <Layers className="w-3 h-3 text-blue-500" />
-                    <span>{language === 'ar' ? 'نطاق جغرافي' : 'Boundary'}</span>
-                  </span>
-                </div>
+                {/* Compact Bottom Bar (Metadata + Quick Action Buttons) */}
+                <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px]">
+                  <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold min-w-0 truncate">
+                    <span className="flex items-center gap-0.5 text-geovision-blue dark:text-blue-300 font-black shrink-0">
+                      <MapPin className="w-3 h-3" />
+                      <span>{dist} km</span>
+                    </span>
+                    <span className="text-slate-300 dark:text-slate-700">•</span>
+                    <span className="truncate text-slate-600 dark:text-slate-300 font-bold">
+                      {language === 'ar' ? (feat.openStatusAr || feat.openStatusEn || 'مفتوح') : (feat.openStatusEn || 'Open 24/7')}
+                    </span>
+                  </div>
 
-                {/* Actions Footer */}
-                <div className="flex items-center justify-end gap-1.5 pt-1.5 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-1 shrink-0">
                     <button
                       type="button"
@@ -1429,10 +1436,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         if (currentView !== 'map') setCurrentView('map');
                         showToast(language === 'ar' ? `تمييز حدود ${feat.nameAr}` : `Highlighting boundary for ${feat.nameEn}`);
                       }}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 border border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer text-[10px] font-extrabold"
+                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-slate-800 border border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer text-[9.5px] font-extrabold"
                       title={language === 'ar' ? 'تمييز حدود النطاق والقسيمة' : 'Highlight district and parcel boundaries'}
                     >
-                      <Layers className="w-3 h-3" />
+                      <Layers className="w-2.5 h-2.5" />
                       <span>{language === 'ar' ? 'حدود' : 'Boundary'}</span>
                     </button>
 
@@ -1445,10 +1452,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         if (currentView !== 'map') setCurrentView('map');
                         showToast(language === 'ar' ? `التركيز على ${feat.nameAr}` : `Zoomed to ${feat.nameEn}`);
                       }}
-                      className="flex items-center gap-1 px-2 py-1 rounded-lg bg-blue-50 dark:bg-slate-800 border border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer text-[10px] font-extrabold"
+                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-slate-800 border border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer text-[9.5px] font-extrabold"
                       title={language === 'ar' ? 'التركيز على الخريطة' : 'Focus on map'}
                     >
-                      <ZoomIn className="w-3 h-3" />
+                      <ZoomIn className="w-2.5 h-2.5" />
                       <span>{language === 'ar' ? 'خريطة' : 'Map'}</span>
                     </button>
 
@@ -1467,14 +1474,14 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                           if (appState.setNavigationTarget) appState.setNavigationTarget(feat);
                         }
                       }}
-                      className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-[10px] font-extrabold transition-all cursor-pointer ${
+                      className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border text-[9.5px] font-extrabold transition-all cursor-pointer ${
                         expandedDirectionsId === feat.id
                           ? 'bg-geovision-blue text-white border-blue-600'
                           : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white'
                       }`}
                       title={language === 'ar' ? 'الاتجاهات' : 'Directions'}
                     >
-                      <Navigation className="w-3 h-3" />
+                      <Navigation className="w-2.5 h-2.5" />
                       <span>{language === 'ar' ? 'مسار' : 'Route'}</span>
                     </button>
 
@@ -1501,14 +1508,14 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                           });
                         }
                       }}
-                      className={`p-1.5 rounded-lg border transition-all cursor-pointer ${
+                      className={`p-1 rounded-md border transition-all cursor-pointer ${
                         isFav
                           ? 'bg-geovision-blue text-white border-blue-600 shadow-sm'
                           : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-sky-300 hover:bg-blue-100'
                       }`}
                       title={isFav ? 'Favorite' : 'Add to favorite'}
                     >
-                      <Bookmark className={`w-3.5 h-3.5 ${isFav ? 'fill-white text-white' : 'text-geovision-blue dark:text-sky-300'}`} />
+                      <Bookmark className={`w-3 h-3 ${isFav ? 'fill-white text-white' : 'text-geovision-blue dark:text-sky-300'}`} />
                     </button>
 
                     <button
@@ -1520,7 +1527,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         if (onViewDetails) {
                           onViewDetails(feat);
                         } else {
-                          setExpandedDetailsId(feat.id);
                           setExpandedDirectionsId(null);
                         }
                       }}
@@ -1926,16 +1932,16 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
       )}
 
       {/* Pagination Controls */}
-      {filteredFeatures.length > visibleCount && (
+      {filteredFeatures.length > effectiveVisibleCount && (
         <div className="pt-2 flex items-center justify-between gap-2">
           <button
             type="button"
-            onClick={() => setVisibleCount(prev => prev + 5)}
+            onClick={() => setVisibleCount(prev => Math.max(prev, 6) + 6)}
             className="flex-1 py-2 px-3 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-900 dark:text-white font-black text-xs border border-slate-200 dark:border-slate-700 transition-all cursor-pointer text-center shadow-2xs"
           >
             {language === 'ar'
-              ? `عرض المزيد (+5 من أصل ${filteredFeatures.length})`
-              : `Show Next 5 (of ${filteredFeatures.length})`}
+              ? `عرض المزيد (+6 من أصل ${filteredFeatures.length})`
+              : `Show Next 6 (of ${filteredFeatures.length})`}
           </button>
 
           <button

@@ -758,4 +758,43 @@ html {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.55) !important;
 }
 
+/* GeoVision Hero Brand Gradient Typography Rules */
+.geovision-title-ge {
+  background: linear-gradient(90deg, #012661 0%, #012661 60%, #005A9C 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  color: transparent !important;
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.95)) drop-shadow(0 2px 6px rgba(255, 255, 255, 0.85)) !important;
+}
+
+.geovision-title-vision {
+  background: linear-gradient(90deg, #012661 0%, #006AA8 40%, #00B3C2 60%, #00B3C2 82%, #5CDE6A 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  color: transparent !important;
+  filter: drop-shadow(0 0 14px rgba(255, 255, 255, 0.95)) drop-shadow(0 2px 6px rgba(255, 255, 255, 0.85)) !important;
+}
+
+/* Dark mode GeoVision Title High-Contrast Gradient Rules */
+.dark .geovision-title-ge {
+  background: linear-gradient(90deg, #60A5FA 0%, #38BDF8 70%, #00B3C2 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  color: transparent !important;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.6)) drop-shadow(0 2px 10px rgba(0, 0, 0, 0.8)) !important;
+}
+
+.dark .geovision-title-vision {
+  background: linear-gradient(90deg, #38BDF8 0%, #00B3C2 55%, #5CDE6A 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+  color: transparent !important;
+  filter: drop-shadow(0 0 16px rgba(56, 189, 248, 0.6)) drop-shadow(0 2px 10px rgba(0, 0, 0, 0.8)) !important;
+}
+
+
 

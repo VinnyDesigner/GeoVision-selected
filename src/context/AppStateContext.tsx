@@ -54,6 +54,8 @@ interface AppStateContextType {
   clearUserDrawnShapes: () => void;
   selectedFeature: GeoFeature | null;
   setSelectedFeature: (feature: GeoFeature | null) => void;
+  hoveredFeature: GeoFeature | null;
+  setHoveredFeature: (feature: GeoFeature | null) => void;
   detailsModalOpen: boolean;
   detailsModalFeature: GeoFeature | null;
   openDetailsModal: (feature: GeoFeature) => void;
@@ -198,6 +200,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
   };
 
   const [selectedFeature, setSelectedFeature] = useState<GeoFeature | null>(null);
+  const [hoveredFeature, setHoveredFeature] = useState<GeoFeature | null>(null);
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsModalFeature, setDetailsModalFeature] = useState<GeoFeature | null>(null);
 
@@ -4259,6 +4262,8 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
         clearUserDrawnShapes,
         selectedFeature,
         setSelectedFeature,
+        hoveredFeature,
+        setHoveredFeature,
         detailsModalOpen,
         detailsModalFeature,
         openDetailsModal,

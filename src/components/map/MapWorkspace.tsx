@@ -25,6 +25,8 @@ export const MapWorkspace: React.FC = () => {
     activeTool,
     selectedFeature,
     setSelectedFeature,
+    hoveredFeature,
+    setHoveredFeature,
     mapCenter,
     mapZoom,
     filteredFeatures,
@@ -355,16 +357,40 @@ export const MapWorkspace: React.FC = () => {
       }
     }
 
+    if (hoveredFeature) {
+      const exists = displayFeatures.some(
+        (f) =>
+          f.id === hoveredFeature.id ||
+          f.nameEn === hoveredFeature.nameEn ||
+          (f.lat === hoveredFeature.lat && f.lng === hoveredFeature.lng)
+      );
+      if (!exists) {
+        displayFeatures.push(hoveredFeature);
+      }
+    }
+
     displayFeatures.forEach((feat) => {
       const isSelected =
         selectedFeature &&
         (selectedFeature.id === feat.id || selectedFeature.nameEn === feat.nameEn);
-      const customIcon = createGeoVisionMarkerIcon(feat.category, feat.subcategory, false, !!isSelected);
-      const marker = L.marker([feat.lat, feat.lng], { icon: customIcon, zIndexOffset: isSelected ? 1000 : 0 });
+      const isHovered =
+        hoveredFeature &&
+        (hoveredFeature.id === feat.id || hoveredFeature.nameEn === feat.nameEn);
+
+      const customIcon = createGeoVisionMarkerIcon(feat.category, feat.subcategory, false, !!(isSelected || isHovered));
+      const marker = L.marker([feat.lat, feat.lng], { icon: customIcon, zIndexOffset: (isSelected || isHovered) ? 1000 : 0 });
 
       marker.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
         setSelectedFeature(feat);
+      });
+
+      marker.on('mouseover', () => {
+        setHoveredFeature(feat);
+      });
+
+      marker.on('mouseout', () => {
+        setHoveredFeature(null);
       });
 
       markersGroupRef.current?.addLayer(marker);
@@ -373,12 +399,12 @@ export const MapWorkspace: React.FC = () => {
 
     markersMapRef.current = newMarkersMap;
 
-    if (!selectedFeature) {
+    if (!selectedFeature && !hoveredFeature) {
       mapInstanceRef.current?.closePopup();
     }
 
     // If user filtered by category and features exist but none are in current view, frame them smoothly (only when no selected feature is active)
-    if (!selectedFeature && mapInstanceRef.current && (selectedCategoryIds.length > 0 || selectedSubcategoryIds.length > 0) && displayFeatures.length > 0) {
+    if (!selectedFeature && !hoveredFeature && mapInstanceRef.current && (selectedCategoryIds.length > 0 || selectedSubcategoryIds.length > 0) && displayFeatures.length > 0) {
       const bounds = mapInstanceRef.current.getBounds();
       const anyInView = displayFeatures.some(f => bounds.contains([f.lat, f.lng]));
       if (!anyInView) {
@@ -386,7 +412,54 @@ export const MapWorkspace: React.FC = () => {
         mapInstanceRef.current.fitBounds(featureBounds, { padding: [60, 60], maxZoom: 14 });
       }
     }
-  }, [filteredFeatures, language, selectedFeature, selectedCategoryIds, selectedSubcategoryIds]);
+  }, [filteredFeatures, language, selectedFeature, hoveredFeature, selectedCategoryIds, selectedSubcategoryIds]);
+
+  // Open Map Popup on Card Hover or Feature Selection
+  const hoverPopupRef = useRef<L.Popup | null>(null);
+
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+    const activeFeat = hoveredFeature || selectedFeature;
+
+    if (!activeFeat) {
+      if (hoverPopupRef.current) {
+        hoverPopupRef.current.remove();
+        hoverPopupRef.current = null;
+      }
+      return;
+    }
+
+    const popupContent = `
+      <div style="padding: 6px 10px; font-family: system-ui, sans-serif; min-width: 150px; max-width: 220px;">
+        <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+          <span style="width: 8px; height: 8px; border-radius: 9999px; background-color: #215A9E; display: inline-block;"></span>
+          <span style="font-weight: 900; font-size: 12px; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+            ${language === 'ar' ? (activeFeat.nameAr || activeFeat.nameEn) : (activeFeat.nameEn || activeFeat.nameAr)}
+          </span>
+        </div>
+        <div style="font-size: 10px; color: #64748b; font-weight: 700; margin-bottom: 2px;">
+          ${activeFeat.subcategory || activeFeat.category || 'Location'}
+        </div>
+        <div style="font-size: 10px; font-weight: 800; color: #215A9E; display: flex; align-items: center; gap: 4px;">
+          📍 ${(activeFeat.distanceKm || 1.5)} km away • ${(activeFeat.openStatusEn || 'Open 24/7')}
+        </div>
+      </div>
+    `;
+
+    if (!hoverPopupRef.current) {
+      hoverPopupRef.current = L.popup({
+        closeButton: false,
+        offset: [0, -28],
+        autoPan: false,
+        className: 'geovision-map-card-popup',
+      });
+    }
+
+    hoverPopupRef.current
+      .setLatLng([activeFeat.lat, activeFeat.lng])
+      .setContent(popupContent)
+      .openOn(mapInstanceRef.current);
+  }, [hoveredFeature, selectedFeature, language]);
 
   // Single Unified Map Camera Control Effect with Frame Coalescing
   const flyToTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -409,17 +482,8 @@ export const MapWorkspace: React.FC = () => {
         const routeBounds = L.latLngBounds([origin, destination]);
         mapInst.flyToBounds(routeBounds, { padding: [90, 90], maxZoom: 15, duration: 1.2 });
       } else if (selectedFeature) {
-        const { districtBoundary } = resolveLocationBoundary(selectedFeature);
-        if (districtBoundary && districtBoundary.coordinates.length > 0) {
-          const districtBounds = L.latLngBounds(districtBoundary.coordinates);
-          mapInst.flyToBounds(districtBounds, {
-            padding: [80, 80],
-            maxZoom: 15,
-            duration: 1.2,
-          });
-        } else {
-          mapInst.flyTo([selectedFeature.lat, selectedFeature.lng], 15, { animate: true, duration: 1.2 });
-        }
+        // Smoothly pan camera slightly to feature location without zooming out
+        mapInst.panTo([selectedFeature.lat, selectedFeature.lng], { animate: true, duration: 0.6 });
       } else if (mapCenter && mapCenter.length === 2) {
         mapInst.flyTo(mapCenter, mapZoom || 15, { animate: true, duration: 1.2 });
       }
