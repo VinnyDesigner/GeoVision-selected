@@ -262,6 +262,24 @@ export const ABU_DHABI_DISTRICT_BOUNDARIES: Record<string, LocationBoundary> = {
       [24.482, 54.360],
     ],
   },
+  al_khalidiya: {
+    id: 'al_khalidiya',
+    nameEn: 'Al Khalidiya District Boundary',
+    nameAr: 'نطاق منطقة الخالدية',
+    typeEn: 'Commercial & Cultural District',
+    typeAr: 'منطقة تجارية وثقافية',
+    center: [24.4710, 54.3480],
+    areaKm2: 4.8,
+    strokeColor: '#0284C7',
+    fillColor: '#38BDF8',
+    coordinates: [
+      [24.482, 54.338],
+      [24.484, 54.360],
+      [24.460, 54.362],
+      [24.458, 54.335],
+      [24.482, 54.338],
+    ],
+  },
 };
 
 /**
@@ -317,7 +335,9 @@ export function resolveLocationBoundary(
   let matchedKey: string | null = null;
 
   // 1. Check address or name keyword matching
-  if (queryStr.includes('manhal') || queryStr.includes('منهل') || queryStr.includes('karama') || queryStr.includes('كرامة') || queryStr.includes('skmc') || (queryStr.includes('khalifa') && (queryStr.includes('medical') || queryStr.includes('hospital')))) {
+  if (queryStr.includes('khalidiya') || queryStr.includes('خالدية')) {
+    matchedKey = 'al_khalidiya';
+  } else if (queryStr.includes('manhal') || queryStr.includes('منهل') || queryStr.includes('karama') || queryStr.includes('كرامة') || queryStr.includes('skmc') || (queryStr.includes('khalifa') && (queryStr.includes('medical') || queryStr.includes('hospital')))) {
     matchedKey = 'al_manhal';
   } else if (queryStr.includes('khalifa city') || queryStr.includes('مدينة خليفة')) {
     matchedKey = 'khalifa_city';

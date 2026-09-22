@@ -15,7 +15,7 @@ import { SmartFilterPanel } from '../filters/SmartFilterPanel';
 import { createGeoVisionMarkerIcon } from '../../utils/markerUtils';
 import { buildSpatialSnapshot } from '../../utils/spatialSnapshotUtils';
 import { ensureAbuDhabiLocation, ABU_DHABI_DEFAULT_CENTER } from '../../utils/locationUtils';
-import { resolveLocationBoundary, generateUnifiedResultBoundary, type LocationBoundary } from '../../utils/boundaryUtils';
+import { resolveLocationBoundary, type LocationBoundary } from '../../utils/boundaryUtils';
 import { X, Layers, ChevronUp, MapPin, Scan } from 'lucide-react';
 
 export const MapWorkspace: React.FC = () => {
@@ -680,129 +680,39 @@ export const MapWorkspace: React.FC = () => {
     const boundaryGroup = boundaryGroupRef.current;
     boundaryGroup.clearLayers();
 
-    // 1. Prioritize explicitly selected or hovered feature
-    const activeFeat = selectedFeature || hoveredFeature;
+    // Prioritize selected feature, hovered feature, or the primary result's area
+    const activeFeat = selectedFeature || hoveredFeature || (displayFeatures.length > 0 ? displayFeatures[0] : null);
 
-    if (activeFeat) {
-      const { districtBoundary, parcelBoundary } = resolveLocationBoundary(activeFeat);
-
-      if (districtBoundary || parcelBoundary) {
-        setActiveBoundary({
-          district: districtBoundary,
-          parcel: parcelBoundary,
-          feature: activeFeat,
-        });
-
-        if (districtBoundary && districtBoundary.coordinates.length > 0) {
-          const districtPolygon = L.polygon(districtBoundary.coordinates, {
-            color: districtBoundary.strokeColor || '#2563EB',
-            fillColor: districtBoundary.fillColor || '#3B82F6',
-            fillOpacity: 0.16,
-            weight: 3.5,
-            dashArray: '8, 6',
-            className: 'geovision-boundary-district-polygon',
-          });
-
-          const districtName = language === 'ar' ? districtBoundary.nameAr : districtBoundary.nameEn;
-          districtPolygon.bindTooltip(
-            `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse"></span>
-              <span>${districtName}</span>
-              <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${districtBoundary.areaKm2} km²)</span>
-            </div>`,
-            {
-              permanent: false,
-              sticky: true,
-              direction: 'auto',
-              className: 'geovision-boundary-tooltip',
-            }
-          );
-
-          districtPolygon.on('click', (e) => {
-            L.DomEvent.stopPropagation(e);
-            if (mapInstanceRef.current) {
-              mapInstanceRef.current.flyToBounds(L.latLngBounds(districtBoundary.coordinates), {
-                padding: [70, 70],
-                maxZoom: 15,
-                duration: 1.0,
-              });
-            }
-          });
-
-          boundaryGroup.addLayer(districtPolygon);
-        }
-
-        if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
-          const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
-            color: parcelBoundary.strokeColor || '#0284C7',
-            fillColor: parcelBoundary.fillColor || '#38BDF8',
-            fillOpacity: 0.25,
-            weight: 2.5,
-            className: 'geovision-boundary-parcel-polygon',
-          });
-
-          const parcelName = language === 'ar' ? parcelBoundary.nameAr : parcelBoundary.nameEn;
-          parcelPolygon.bindTooltip(
-            `<div class="px-2.5 py-1 text-[11px] font-extrabold text-sky-900 dark:text-sky-100 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-              <span>${parcelName}</span>
-            </div>`,
-            {
-              permanent: false,
-              sticky: true,
-              direction: 'top',
-              className: 'geovision-boundary-tooltip',
-            }
-          );
-
-          parcelPolygon.on('click', (e) => {
-            L.DomEvent.stopPropagation(e);
-            if (mapInstanceRef.current) {
-              mapInstanceRef.current.flyTo([activeFeat.lat, activeFeat.lng], 16.5, {
-                animate: true,
-                duration: 1.0,
-              });
-            }
-          });
-
-          boundaryGroup.addLayer(parcelPolygon);
-        }
-      }
+    if (!activeFeat) {
+      setActiveBoundary(null);
       return;
     }
 
-    // 2. When neither selected nor hovered, render ONE unified boundary for the whole result set (not separate separate)
-    if (displayFeatures.length > 0) {
-      const searchCenter: [number, number] = userLocation || (mapCenter && mapCenter.length === 2 ? mapCenter : [24.4539, 54.3773]);
-      const unifiedBoundary = generateUnifiedResultBoundary(displayFeatures, {
-        bufferRadiusKm: bufferRadiusKm > 0 ? bufferRadiusKm : undefined,
-        center: searchCenter,
-        titleEn: bufferRadiusKm > 0 ? `Search Area Boundary (${bufferRadiusKm} km Radius)` : `Search Results Boundary (${displayFeatures.length} Locations)`,
-        titleAr: bufferRadiusKm > 0 ? `نطاق البحث الجغرافي (${bufferRadiusKm} كم)` : `نطاق نتائج البحث الجغرافي (${displayFeatures.length} موقع)`,
+    const { districtBoundary, parcelBoundary } = resolveLocationBoundary(activeFeat);
+
+    if (districtBoundary || parcelBoundary) {
+      setActiveBoundary({
+        district: districtBoundary,
+        parcel: parcelBoundary,
+        feature: activeFeat,
       });
 
-      if (unifiedBoundary && unifiedBoundary.coordinates.length > 0) {
-        setActiveBoundary({
-          district: unifiedBoundary,
-          parcel: null,
-          feature: displayFeatures[0],
-        });
-
-        const unifiedPolygon = L.polygon(unifiedBoundary.coordinates, {
-          color: unifiedBoundary.strokeColor || '#2563EB',
-          fillColor: unifiedBoundary.fillColor || '#3B82F6',
-          fillOpacity: 0.14,
+      if (districtBoundary && districtBoundary.coordinates.length > 0) {
+        const districtPolygon = L.polygon(districtBoundary.coordinates, {
+          color: districtBoundary.strokeColor || '#2563EB',
+          fillColor: districtBoundary.fillColor || '#3B82F6',
+          fillOpacity: 0.16,
           weight: 3.5,
           dashArray: '8, 6',
           className: 'geovision-boundary-district-polygon',
         });
 
-        const boundaryName = language === 'ar' ? unifiedBoundary.nameAr : unifiedBoundary.nameEn;
-        unifiedPolygon.bindTooltip(
+        const districtName = language === 'ar' ? districtBoundary.nameAr : districtBoundary.nameEn;
+        districtPolygon.bindTooltip(
           `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse"></span>
-            <span>${boundaryName}</span>
-            <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${unifiedBoundary.areaKm2} km²)</span>
+            <span>${districtName}</span>
+            <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${districtBoundary.areaKm2} km²)</span>
           </div>`,
           {
             permanent: false,
@@ -812,10 +722,10 @@ export const MapWorkspace: React.FC = () => {
           }
         );
 
-        unifiedPolygon.on('click', (e) => {
+        districtPolygon.on('click', (e) => {
           L.DomEvent.stopPropagation(e);
           if (mapInstanceRef.current) {
-            mapInstanceRef.current.flyToBounds(L.latLngBounds(unifiedBoundary.coordinates), {
+            mapInstanceRef.current.flyToBounds(L.latLngBounds(districtBoundary.coordinates), {
               padding: [70, 70],
               maxZoom: 15,
               duration: 1.0,
@@ -823,15 +733,48 @@ export const MapWorkspace: React.FC = () => {
           }
         });
 
-        boundaryGroup.addLayer(unifiedPolygon);
-      } else {
-        setActiveBoundary(null);
+        boundaryGroup.addLayer(districtPolygon);
       }
-      return;
-    }
 
-    setActiveBoundary(null);
-  }, [selectedFeature, hoveredFeature, displayFeatures, bufferRadiusKm, userLocation, mapCenter, language]);
+      if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
+        const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
+          color: parcelBoundary.strokeColor || '#0284C7',
+          fillColor: parcelBoundary.fillColor || '#38BDF8',
+          fillOpacity: 0.25,
+          weight: 2.5,
+          className: 'geovision-boundary-parcel-polygon',
+        });
+
+        const parcelName = language === 'ar' ? parcelBoundary.nameAr : parcelBoundary.nameEn;
+        parcelPolygon.bindTooltip(
+          `<div class="px-2.5 py-1 text-[11px] font-extrabold text-sky-900 dark:text-sky-100 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+            <span>${parcelName}</span>
+          </div>`,
+          {
+            permanent: false,
+            sticky: true,
+            direction: 'top',
+            className: 'geovision-boundary-tooltip',
+          }
+        );
+
+        parcelPolygon.on('click', (e) => {
+          L.DomEvent.stopPropagation(e);
+          if (mapInstanceRef.current) {
+            mapInstanceRef.current.flyTo([activeFeat.lat, activeFeat.lng], 16.5, {
+              animate: true,
+              duration: 1.0,
+            });
+          }
+        });
+
+        boundaryGroup.addLayer(parcelPolygon);
+      }
+    } else {
+      setActiveBoundary(null);
+    }
+  }, [selectedFeature, hoveredFeature, displayFeatures, language]);
 
   const tempShapeRef = useRef<L.Layer | null>(null);
   const tempPointsRef = useRef<L.LatLng[]>([]);
