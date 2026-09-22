@@ -341,16 +341,16 @@ export function resolveLocationBoundary(
     matchedKey = 'musaffah';
   } else if (queryStr.includes('sports city') || queryStr.includes('رياضية')) {
     matchedKey = 'zayed_sports_city';
-  } else if (queryStr.includes('downtown') || queryStr.includes('dana') || queryStr.includes('وسط')) {
+  } else if (queryStr.includes('downtown') || queryStr.includes('dana') || queryStr.includes('وسط') || queryStr.includes('wahda') || queryStr.includes('murour')) {
     matchedKey = 'city_center';
   }
 
-  // 2. Spatial proximity fallback if coordinates provided
+  // 2. Spatial proximity fallback: cap max distance threshold to ~5 km (0.055 degrees)
   if (!matchedKey && lat !== undefined && lng !== undefined) {
     let nearestDist = Infinity;
     for (const [key, b] of Object.entries(ABU_DHABI_DISTRICT_BOUNDARIES)) {
       const d = Math.hypot(b.center[0] - lat, b.center[1] - lng);
-      if (d < nearestDist) {
+      if (d < nearestDist && d < 0.055) {
         nearestDist = d;
         matchedKey = key;
       }
@@ -359,7 +359,7 @@ export function resolveLocationBoundary(
 
   const districtBoundary = matchedKey ? ABU_DHABI_DISTRICT_BOUNDARIES[matchedKey] : null;
 
-  // 3. Generate parcel boundary if coordinates exist
+  // 3. Generate parcel plot boundary at exact coordinates
   let parcelBoundary: LocationBoundary | null = null;
   if (lat !== undefined && lng !== undefined && typeof target !== 'string') {
     parcelBoundary = generateParcelBoundary(
@@ -367,7 +367,7 @@ export function resolveLocationBoundary(
       lng,
       target.nameEn || 'Selected Location',
       target.nameAr || 'الموقع المحدد',
-      0.35
+      0.30
     );
   }
 

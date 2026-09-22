@@ -459,13 +459,6 @@ export const MapWorkspace: React.FC = () => {
       .setLatLng([activeFeat.lat, activeFeat.lng])
       .setContent(popupContent)
       .openOn(mapInstanceRef.current);
-
-    if (hoveredFeature && mapInstanceRef.current) {
-      const bounds = mapInstanceRef.current.getBounds();
-      if (!bounds.contains([hoveredFeature.lat, hoveredFeature.lng])) {
-        mapInstanceRef.current.panTo([hoveredFeature.lat, hoveredFeature.lng], { animate: true, duration: 0.4 });
-      }
-    }
   }, [hoveredFeature, selectedFeature, language]);
 
   // Single Unified Map Camera Control Effect with Frame Coalescing
@@ -675,13 +668,14 @@ export const MapWorkspace: React.FC = () => {
     }
   }, [activeTool, aoiResult]);
 
-  // Highlight Geographic Community/District & Facility Parcel Boundaries Based on Location (for Hover or Selection)
+  // Highlight Geographic Community/District & Facility Parcel Boundaries Based on Location
   useEffect(() => {
     if (!mapInstanceRef.current || !boundaryGroupRef.current) return;
     const boundaryGroup = boundaryGroupRef.current;
     boundaryGroup.clearLayers();
 
-    const targetFeat = hoveredFeature || selectedFeature;
+    // Prioritize selected feature for persistent boundary overlay & banner info
+    const targetFeat = selectedFeature || hoveredFeature;
 
     if (!targetFeat) {
       setActiveBoundary(null);
@@ -691,15 +685,23 @@ export const MapWorkspace: React.FC = () => {
     const { districtBoundary, parcelBoundary } = resolveLocationBoundary(targetFeat);
 
     if (!districtBoundary && !parcelBoundary) {
-      setActiveBoundary(null);
+      if (!selectedFeature) setActiveBoundary(null);
       return;
     }
 
-    setActiveBoundary({
-      district: districtBoundary,
-      parcel: parcelBoundary,
-      feature: targetFeat,
-    });
+    if (selectedFeature) {
+      setActiveBoundary({
+        district: districtBoundary,
+        parcel: parcelBoundary,
+        feature: selectedFeature,
+      });
+    } else if (hoveredFeature) {
+      setActiveBoundary({
+        district: districtBoundary,
+        parcel: parcelBoundary,
+        feature: hoveredFeature,
+      });
+    }
 
     // Render a single clean boundary (District Boundary first, or Parcel Boundary as fallback) to avoid nested highlights
     if (districtBoundary && districtBoundary.coordinates.length > 0) {
