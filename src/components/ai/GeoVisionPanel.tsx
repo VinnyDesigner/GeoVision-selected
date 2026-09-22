@@ -532,9 +532,9 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
       <div className="p-3.5 sm:p-4 border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex items-center justify-between gap-2 shrink-0 z-20">
         <div className="flex items-center gap-2.5 min-w-0">
           <img
-            src={getAssetUrl('assets/logos/geovision-ai-avatar.png')}
-            alt="Smart Maps AI Assistant"
-            className="w-9 h-9 object-contain shrink-0"
+            src={getAssetUrl('globe-logo.png')}
+            alt="GeoVision Globe Logo"
+            className="w-8 h-8 object-contain shrink-0 drop-shadow-xs"
           />
           <div className="min-w-0">
             <h2 className="text-sm font-black text-slate-900 dark:text-white truncate">
@@ -1056,8 +1056,8 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
               {/* Sender Badge */}
               <div className="flex items-center gap-1.5 mb-1 text-[11px] font-bold text-slate-400">
                 <img
-                  src={getAssetUrl('assets/logos/geovision-ai-avatar.png')}
-                  alt="AI"
+                  src={getAssetUrl('globe-logo.png')}
+                  alt="GeoVision AI"
                   className="w-4 h-4 object-contain shrink-0"
                 />
               </div>

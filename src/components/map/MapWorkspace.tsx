@@ -1214,9 +1214,9 @@ export const MapWorkspace: React.FC = () => {
           title="Open GeoVision AI Assistant"
         >
           <img
-            src={getAssetUrl('assets/logos/geovision-ai-avatar.png')}
+            src={getAssetUrl('globe-logo.png')}
             alt="GeoVision AI"
-            className="w-4 h-4 object-contain shrink-0 filter drop-shadow-xs"
+            className="w-5 h-5 object-contain shrink-0 filter drop-shadow-xs"
           />
           <span>{language === 'ar' ? 'مساعد GeoVision AI' : 'GeoVision AI'}</span>
         </button>
