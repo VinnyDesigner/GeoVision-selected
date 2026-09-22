@@ -30,12 +30,12 @@ export const LandingPage: React.FC = () => {
 
   const EXAMPLE_QUESTIONS = [
     {
-      id: 'hospitals',
-      icon: MapPin,
-      textEn: 'Hospitals near me',
-      textAr: 'المستشفيات القريبة مني',
-      queryEn: 'Find hospitals near me in Abu Dhabi',
-      queryAr: 'عرض المستشفيات القريبة مني في أبوظبي',
+      id: 'parks',
+      icon: Trees,
+      textEn: 'Parks near me',
+      textAr: 'الحدائق القريبة مني',
+      queryEn: 'Show public parks near me in Abu Dhabi',
+      queryAr: 'عرض الحدائق العامة القريبة مني في أبوظبي',
     },
     {
       id: 'schools',
@@ -62,12 +62,12 @@ export const LandingPage: React.FC = () => {
       queryAr: 'عرض مراكز تم لخدمة المتعاملين في أبوظبي',
     },
     {
-      id: 'parks',
-      icon: Trees,
-      textEn: 'Public parks & beaches',
-      textAr: 'الحدائق العامة والشواطئ',
-      queryEn: 'Show public parks and beaches in Abu Dhabi',
-      queryAr: 'عرض الحدائق العامة والشواطئ في أبوظبي',
+      id: 'hospitals',
+      icon: MapPin,
+      textEn: 'Hospitals near me',
+      textAr: 'المستشفيات القريبة مني',
+      queryEn: 'Find hospitals near me in Abu Dhabi',
+      queryAr: 'عرض المستشفيات القريبة مني في أبوظبي',
     },
     {
       id: 'transit',
@@ -326,11 +326,11 @@ export const LandingPage: React.FC = () => {
         </div>
         */}
 
-        {/* 3 Main Quick-Launch Cards Row */}
+        {/* 3 Main Quick-Launch Cards Row (Static presentation cards) */}
         <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 pt-1 sm:pt-1.5">
           
           {/* Card 1: Ask GeoVision */}
-          <div className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] transition-all">
+          <div className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px]">
             <div className="relative z-10 flex items-center gap-3.5">
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#1E6ADB] via-[#215A9E] to-[#0A3B73] text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
                 <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -351,14 +351,14 @@ export const LandingPage: React.FC = () => {
           {/* Card 2: Explore Map */}
           <div
             onClick={handleExploreMapClick}
-            className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] transition-all cursor-pointer hover:shadow-lg hover:scale-[1.01] active:scale-95 group"
+            className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] cursor-pointer"
           >
             <div className="relative z-10 flex items-center gap-3.5">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#1E6ADB] via-[#215A9E] to-[#0A3B73] text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#1E6ADB] via-[#215A9E] to-[#0A3B73] text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
                 <Map className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="space-y-0.5">
-                <h3 className="text-sm sm:text-base font-extrabold text-[#063360] dark:text-white group-hover:text-[#1E6ADB] dark:group-hover:text-sky-300 transition-colors">
+                <h3 className="text-sm sm:text-base font-extrabold text-[#063360] dark:text-white">
                   {language === 'ar' ? 'استكشاف الخريطة' : 'Explore Map'}
                 </h3>
                 <p className="text-[11px] sm:text-xs font-semibold text-[#545860] dark:text-slate-300 leading-snug max-w-[210px]">
@@ -373,14 +373,14 @@ export const LandingPage: React.FC = () => {
           {/* Card 3: Discover Data */}
           <div
             onClick={() => setCurrentView('categories')}
-            className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] transition-all cursor-pointer hover:shadow-lg hover:scale-[1.01] active:scale-95 group"
+            className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] cursor-pointer"
           >
             <div className="relative z-10 flex items-center gap-3.5">
-              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#1E6ADB] via-[#215A9E] to-[#0A3B73] text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0 group-hover:scale-105 transition-transform">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#1E6ADB] via-[#215A9E] to-[#0A3B73] text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
                 <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div className="space-y-0.5">
-                <h3 className="text-sm sm:text-base font-extrabold text-[#063360] dark:text-white group-hover:text-[#1E6ADB] dark:group-hover:text-sky-300 transition-colors">
+                <h3 className="text-sm sm:text-base font-extrabold text-[#063360] dark:text-white">
                   {language === 'ar' ? 'اكتشاف البيانات' : 'Discover Data'}
                 </h3>
                 <p className="text-[11px] sm:text-xs font-semibold text-[#545860] dark:text-slate-300 leading-snug max-w-[210px]">
