@@ -41,18 +41,6 @@ export interface SearchResultDetailsModalProps {
 
 export type DetailTab = 'overview' | 'nearby' | 'details' | 'related';
 
-// Category color mapping
-const CATEGORY_COLORS: Record<string, string> = {
-  healthcare: '#EF4444',
-  education: '#3B82F6',
-  transport: '#F59E0B',
-  environment: '#10B981',
-  tourism: '#8B5CF6',
-  utilities: '#6366F1',
-  government: '#0EA5E9',
-  parks: '#059669',
-};
-
 // Haversine distance calculation in km
 const calculateDistance = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 6371; // Earth's radius in km
@@ -87,7 +75,7 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
 
   if (!isModalOpen || !currentFeature) return null;
 
-  const color = CATEGORY_COLORS[currentFeature.category] || '#215A9E';
+  const color = '#215A9E';
   const name = language === 'ar' ? currentFeature.nameAr : currentFeature.nameEn;
   const address = language === 'ar' ? currentFeature.addressAr : currentFeature.addressEn;
   const isFav = appState.isFavorite(currentFeature.nameEn);
