@@ -1415,21 +1415,6 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                   </div>
 
                   <div className="flex items-center gap-1 shrink-0">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setSelectedFeature(feat);
-                        setMapCenterAndZoom([feat.lat, feat.lng], 15);
-                        if (currentView !== 'map') setCurrentView('map');
-                        showToast(language === 'ar' ? `تمييز حدود ${feat.nameAr}` : `Highlighting boundary for ${feat.nameEn}`);
-                      }}
-                      className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-blue-50 dark:bg-slate-800 border border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white transition-all cursor-pointer text-[9.5px] font-extrabold"
-                      title={language === 'ar' ? 'تمييز حدود النطاق والقسيمة' : 'Highlight district and parcel boundaries'}
-                    >
-                      <Layers className="w-2.5 h-2.5" />
-                      <span>{language === 'ar' ? 'حدود' : 'Boundary'}</span>
-                    </button>
 
                     <button
                       type="button"

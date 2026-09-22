@@ -285,7 +285,6 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
     setGuestPromptOpen,
     showToast,
     t,
-    selectedFeature,
     setSelectedFeature,
     mapCenter,
     setMapCenterAndZoom,
@@ -308,13 +307,6 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
   const [nearbyRadiusKm, setNearbyRadiusKm] = useState<number>(3);
 
   // Automatically open feature details page in chat when user clicks a pointer on the map
-  useEffect(() => {
-    if (selectedFeature) {
-      setActiveDetailFeature(selectedFeature);
-      setActiveDetailTab('overview');
-    }
-  }, [selectedFeature]);
-
   useEffect(() => {
     const handleOpenDetails = (e: Event) => {
       const customEvt = e as CustomEvent<GeoFeature>;
