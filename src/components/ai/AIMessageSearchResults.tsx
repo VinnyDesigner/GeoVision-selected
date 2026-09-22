@@ -278,12 +278,13 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     showToast(language === 'ar' ? 'تم تصدير البيانات إلى ملف CSV بنجاح' : 'Exported spatial records to CSV successfully');
   };
 
-  // Dynamically pool features from baseFeatures and GEO_FEATURES matching selected categories
+  // Dynamically pool features: if baseFeatures provided from AI search, use them directly
   const effectiveFeatures = React.useMemo(() => {
-    const combinedMap = new Map<string, GeoFeature>();
+    if (baseFeatures && baseFeatures.length > 0) {
+      return baseFeatures;
+    }
 
-    // Add base features from AI query response
-    baseFeatures.forEach((f) => combinedMap.set(f.id, f));
+    const combinedMap = new Map<string, GeoFeature>();
 
     // If specific categories are selected, pull matching features from global GEO_FEATURES dataset
     if (selectedCategories.length > 0 && selectedCategories.length < ALL_LAYER_IDS.length) {
