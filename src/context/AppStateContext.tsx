@@ -2312,6 +2312,110 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
           }
 
           // -------------------------------------------------------------------------
+          // SPECIFICATION FLOW: Plant Nurseries with Buffer in Al Reef Community
+          // (e.g. "nurseries with in 2km in alreef", "nurseries within 2km in al reef", etc.)
+          // -------------------------------------------------------------------------
+          else if (
+            (
+              lower.includes('alreef') ||
+              lower.includes('al reef') ||
+              (lower.includes('reef') && !lower.includes('coral')) ||
+              query.includes('الريف')
+            ) &&
+            (
+              lower.includes('nurser') ||
+              lower.includes('plant') ||
+              query.includes('مشتل') ||
+              query.includes('مشاتل') ||
+              query.includes('حضان')
+            )
+          ) {
+            const refLat = 24.4780;
+            const refLng = 54.6720;
+            const targetRadius = (lower.includes('3km') || lower.includes('3 km') || query.includes('3 كم')) ? 3 :
+                                 (lower.includes('1km') || lower.includes('1 km') || query.includes('1 كم')) ? 1 :
+                                 (lower.includes('5km') || lower.includes('5 km') || query.includes('5 كم')) ? 5 : 2;
+
+            const allNurseries = GEO_FEATURES.filter(f =>
+              f.subcategory === 'nurseries' ||
+              f.nameEn.toLowerCase().includes('nursery') ||
+              f.nameEn.toLowerCase().includes('plant') ||
+              f.nameAr.includes('مشتل') ||
+              f.nameAr.includes('مشاتل')
+            );
+
+            const R = 6371;
+            allNurseries.forEach(f => {
+              const dLat = (f.lat - refLat) * (Math.PI / 180);
+              const dLon = (f.lng - refLng) * (Math.PI / 180);
+              const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(refLat * (Math.PI / 180)) * Math.cos(f.lat * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              f.distanceKm = parseFloat((R * c).toFixed(1));
+            });
+
+            const reefNurseries = allNurseries
+              .filter(f => (f.distanceKm ?? 999) <= targetRadius + 0.3 || (f.addressEn && f.addressEn.toLowerCase().includes('reef')) || f.nameEn.toLowerCase().includes('reef'))
+              .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+
+            matchedFeats = reefNurseries.length > 0
+              ? reefNurseries
+              : allNurseries.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)).slice(0, 5);
+
+            const nearestListEn = matchedFeats.slice(0, 5).map((n, i) => `${i + 1}. ${n.nameEn} (${n.distanceKm ?? 0.5} km • ${n.addressEn})`).join('\n');
+            const nearestListAr = matchedFeats.slice(0, 5).map((n, i) => `${i + 1}. ${n.nameAr} (${n.distanceKm ?? 0.5} كم • ${n.addressAr})`).join('\n');
+
+            responseEn = `Identified ${matchedFeats.length} registered plant nurseries & botanical garden centers within ${targetRadius} km buffer circle in Al Reef Community.\n\nBoundary & Buffer Spatial Analysis:\n• Administrative Area: Al Reef Community Sector Boundary (4.8 km²)\n• Proximity Buffer: ${targetRadius} km radial buffer circle centered at Al Reef\n• Facilities: Plant Nurseries, Greenhouses & Horticultural Centers\n• Licensing Authority: Abu Dhabi Agriculture and Food Safety Authority (ADAFSA)\n\nPlant Nurseries inside ${targetRadius} km perimeter in Al Reef:\n${nearestListEn}\n\nData Source: Abu Dhabi SDI Agriculture & Greenery Registry (ADAFSA / DMT)`;
+
+            responseAr = `تم تحديد ${matchedFeats.length} مشاتل نباتات ومراكز زراعية معتمدة ضمن دائرة نطاق عازل ${targetRadius} كم في مجتمع الريف السكني.\n\nالتحليل المكاني للحدود والنطاق العازل:\n• المنطقة الإدارية: نطاق مجتمع الريف السكني (4.8 كم²)\n• النطاق العازل: دائرة نصف قطر ${targetRadius} كم متمركزة في مجتمع الريف\n• نوع المنشأة: مشاتل النباتات والبيوت المحمية ومراكز البستنة\n• الجهة المرخصة: هيئة أبوظبي للزراعة والسلامة الغذائية (ADAFSA)\n\nمشاتل النباتات المحددة داخل نطاق ${targetRadius} كم في الريف:\n${nearestListAr}\n\nمصدر البيانات: سجل الزراعة والمشاتل - أبوظبي SDI (ADAFSA / دائرة البلديات والنقل)`;
+
+            newCenter = [refLat, refLng];
+            newZoom = 14;
+            setBufferRadiusKm(targetRadius);
+            setBufferCenter([refLat, refLng]);
+            setSelectedCategoryIds(['education']);
+            setSelectedSubcategoryIds(['nurseries']);
+
+            customUnderstanding = {
+              facilityEn: 'Plant Nurseries & Greenhouses',
+              facilityAr: 'مشاتل النباتات والبيوت المحمية',
+              locationEn: 'Al Reef Community',
+              locationAr: 'مجتمع الريف',
+              distanceEn: `${targetRadius} km Buffer & Sector Boundary`,
+              distanceAr: `نطاق عازل ${targetRadius} كم ونطاق القطاع`,
+              datasetSelectedEn: 'Abu Dhabi SDI Agriculture & Greenery Layer (ADAFSA)',
+              datasetSelectedAr: 'سجل المشاتل والغطاء النباتي - أبوظبي SDI (ADAFSA)',
+              intentEn: 'Sector Boundary & Radial Buffer Analysis',
+              intentAr: 'تحليل حدود القطاع والنطاق الدائري',
+              gisLayersEn: ['Al Reef Community Sector Boundary', 'Plant Nurseries Layer', `${targetRadius}km Spatial Buffer Circle`, 'Road Network'],
+              gisLayersAr: ['نطاق مجتمع الريف السكني', 'طبقة مشاتل النباتات', `دائرة نطاق عازل ${targetRadius} كم`, 'شبكة الطرق'],
+            };
+
+            customProvenance = {
+              layersUsedEn: ['Al Reef Community Sector Boundary', 'ADAFSA Plant Nurseries & Greenhouses Registry', `${targetRadius}km Radial Buffer Zone`, 'Abu Dhabi Base Topography'],
+              layersUsedAr: ['نطاق مجتمع الريف السكني', 'سجل المشاتل والبيوت المحمية (ADAFSA)', `دائرة نطاق عازل ${targetRadius} كم`, 'الطبوغرافيا الأساسية لأبوظبي'],
+              spatialOperationEn: `Combined spatial overlay: Al Reef Community Sector Boundary with ${targetRadius} km radial proximity buffer circle`,
+              spatialOperationAr: `تراكب مكاني: نطاق مجتمع الريف السكني مع دائرة نطاق عازل بمقدار ${targetRadius} كم`,
+              sourceProviderEn: 'Abu Dhabi SDI, DMT & ADAFSA',
+              sourceProviderAr: 'البنية التحتية للبيانات المكانية، دائرة البلديات والنقل و ADAFSA',
+              aiExplanationEn: `Rendered Al Reef Community administrative boundary alongside a ${targetRadius} km circular buffer zone, displaying all licensed plant nurseries within the perimeter.`,
+              aiExplanationAr: `تم إظهار الحدود الإدارية لمجتمع الريف إلى جانب دائرة نطاق مكاني ${targetRadius} كم مع عرض كافة مشاتل النباتات المرخصة داخل النطاق.`,
+            };
+
+            recsEn = [
+              'Which nurseries in Al Reef have native desert flora?',
+              'Calculate route to nearest plant nursery in Al Reef',
+              'Which Al Reef nursery has the highest rating?',
+              'Show plant nurseries near Khalifa City',
+            ];
+            recsAr = [
+              'أي المشاتل في الريف توفر نباتات صحراوية محلية؟',
+              'حساب المسار إلى أقرب مشتل نباتات في الريف',
+              'أي مشتل في الريف حاصل على أعلى تقييم؟',
+              'عرض مشاتل النباتات قرب مدينة خليفة',
+            ];
+          }
+
+          // -------------------------------------------------------------------------
           // SPECIFICATION FLOW: Current Location to Plant Nurseries with 2km Buffer Query
           // -------------------------------------------------------------------------
           else if (

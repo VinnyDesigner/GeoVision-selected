@@ -714,11 +714,6 @@ export const MapWorkspace: React.FC = () => {
     const boundaryGroup = boundaryGroupRef.current;
     boundaryGroup.clearLayers();
 
-    // When a radial buffer circle is actively rendered, skip drawing a duplicate bounding box
-    if (bufferRadiusKm && bufferRadiusKm > 0) {
-      return;
-    }
-
     if (displayFeatures.length === 0 && !selectedFeature && !hoveredFeature) {
       return;
     }
@@ -772,7 +767,7 @@ export const MapWorkspace: React.FC = () => {
 
       boundaryGroup.addLayer(boundaryPolygon);
     }
-  }, [selectedFeature, hoveredFeature, displayFeatures, aiMessages, language]);
+  }, [selectedFeature, hoveredFeature, displayFeatures, aiMessages, language, bufferRadiusKm, bufferCenter]);
   const tempShapeRef = useRef<L.Layer | null>(null);
   const tempPointsRef = useRef<L.LatLng[]>([]);
   const isDrawingRef = useRef<boolean>(false);

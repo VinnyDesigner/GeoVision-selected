@@ -356,6 +356,26 @@ export const ABU_DHABI_DISTRICT_BOUNDARIES: Record<string, LocationBoundary> = {
       [24.418, 54.590],
     ],
   },
+  al_reef: {
+    id: 'al_reef',
+    nameEn: 'Al Reef Community Sector Boundary',
+    nameAr: 'نطاق مجتمع الريف السكني',
+    typeEn: 'Residential Community District',
+    typeAr: 'منطقة سكنية مجتمعية',
+    center: [24.4780, 54.6720],
+    areaKm2: 4.8,
+    strokeColor: '#2563EB',
+    fillColor: '#3B82F6',
+    coordinates: [
+      [24.4890, 54.6620],
+      [24.4920, 54.6780],
+      [24.4820, 54.6880],
+      [24.4680, 54.6820],
+      [24.4650, 54.6660],
+      [24.4750, 54.6580],
+      [24.4890, 54.6620],
+    ],
+  },
 };
 
 /**
@@ -445,6 +465,8 @@ export function resolveLocationBoundary(
     matchedKey = 'zayed_sports_city';
   } else if (queryStr.includes('downtown') || queryStr.includes('dana') || queryStr.includes('وسط') || queryStr.includes('wahda') || queryStr.includes('murour')) {
     matchedKey = 'city_center';
+  } else if ((queryStr.includes('alreef') || queryStr.includes('reef') || queryStr.includes('الريف')) && !queryStr.includes('coral')) {
+    matchedKey = 'al_reef';
   }
 
   // 2. Spatial proximity fallback: cap max distance threshold to ~5 km (0.055 degrees)
@@ -653,6 +675,9 @@ export function resolveBoundaryForFeatures(
   }
   if (q.includes('zayed city') || q.includes('مدينة زايد')) {
     return ABU_DHABI_DISTRICT_BOUNDARIES.zayed_city;
+  }
+  if ((q.includes('alreef') || q.includes('reef') || q.includes('الريف')) && !q.includes('coral')) {
+    return ABU_DHABI_DISTRICT_BOUNDARIES.al_reef;
   }
 
   // 2. Spatial matching: Find if an official district boundary naturally encloses >= 70% of the results
