@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { AISearchBar } from '../ai/AISearchBar';
 import { useAppState } from '../../context/AppStateContext';
 import { getAssetUrl } from '../../utils/assetUtils';
-import { ensureAbuDhabiLocation } from '../../utils/locationUtils';
 import {
   MapPin,
   GraduationCap,
@@ -23,7 +22,7 @@ import {
 } from 'lucide-react';
 
 export const LandingPage: React.FC = () => {
-  const { language, theme, setCurrentView, sendAIMessage, userLocation, setMapCenterAndZoom } = useAppState();
+  const { language, theme, setCurrentView, sendAIMessage } = useAppState();
 
   const [examplesExpanded, setExamplesExpanded] = useState(false);
 
@@ -124,14 +123,6 @@ export const LandingPage: React.FC = () => {
   const handleExampleClick = (queryEn: string, queryAr: string) => {
     const q = language === 'ar' ? queryAr : queryEn;
     sendAIMessage(q);
-    setCurrentView('map');
-  };
-
-  const handleExploreMapClick = () => {
-    if (userLocation) {
-      const validLoc = ensureAbuDhabiLocation(userLocation[0], userLocation[1]);
-      setMapCenterAndZoom(validLoc, 14);
-    }
     setCurrentView('map');
   };
 
@@ -330,7 +321,7 @@ export const LandingPage: React.FC = () => {
         <div className="w-full grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 pt-1 sm:pt-1.5">
           
           {/* Card 1: Ask GeoVision */}
-          <div className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px]">
+          <div className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] cursor-default select-none">
             <div className="relative z-10 flex items-center gap-3.5">
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#1E6ADB] via-[#215A9E] to-[#0A3B73] text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
                 <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -349,10 +340,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Card 2: Explore Map */}
-          <div
-            onClick={handleExploreMapClick}
-            className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] cursor-pointer"
-          >
+          <div className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] cursor-default select-none">
             <div className="relative z-10 flex items-center gap-3.5">
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#1E6ADB] via-[#215A9E] to-[#0A3B73] text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
                 <Map className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
@@ -371,10 +359,7 @@ export const LandingPage: React.FC = () => {
           </div>
 
           {/* Card 3: Discover Data */}
-          <div
-            onClick={() => setCurrentView('categories')}
-            className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] cursor-pointer"
-          >
+          <div className="relative glass-panel rounded-2xl sm:rounded-3xl p-3.5 sm:p-4 flex items-center min-h-[84px] sm:min-h-[92px] cursor-default select-none">
             <div className="relative z-10 flex items-center gap-3.5">
               <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#1E6ADB] via-[#215A9E] to-[#0A3B73] text-white flex items-center justify-center shadow-md shadow-blue-500/25 shrink-0">
                 <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
