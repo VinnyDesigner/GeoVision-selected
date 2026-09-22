@@ -380,7 +380,7 @@ export function resolveLocationBoundary(
  * Otherwise, generates a continuous smooth enclosing boundary encompassing all result points.
  */
 export function generateUnifiedResultBoundary(
-  features: { lat: number; lng: number; nameEn?: string; nameAr?: string }[],
+  features: { lat: number; lng: number; nameEn?: string; nameAr?: string; addressEn?: string }[],
   options?: {
     bufferRadiusKm?: number;
     center?: [number, number];
@@ -395,44 +395,13 @@ export function generateUnifiedResultBoundary(
   );
   if (validFeats.length === 0) return null;
 
-  // 1. Proximity / Radial Search Buffer Boundary
-  if (options?.bufferRadiusKm && options.bufferRadiusKm > 0) {
-    const centerLat = options.center ? options.center[0] : 24.4539;
-    const centerLng = options.center ? options.center[1] : 54.3773;
-    const radiusKm = options.bufferRadiusKm;
-
-    const numPoints = 64;
-    const coordinates: [number, number][] = [];
-    for (let i = 0; i <= numPoints; i++) {
-      const angle = (i * 2 * Math.PI) / numPoints;
-      const dLat = (radiusKm / 111) * Math.cos(angle);
-      const dLng = (radiusKm / (111 * Math.cos(centerLat * (Math.PI / 180)))) * Math.sin(angle);
-      coordinates.push([centerLat + dLat, centerLng + dLng]);
-    }
-
-    const area = Number((Math.PI * radiusKm * radiusKm).toFixed(1));
-
-    return {
-      id: `unified-buffer-${radiusKm}km`,
-      nameEn: options.titleEn || `Search Area Boundary (${radiusKm.toFixed(1)} km Radius)`,
-      nameAr: options.titleAr || `نطاق البحث الجغرافي (${radiusKm.toFixed(1)} كم)`,
-      typeEn: 'Proximity Search Boundary Zone',
-      typeAr: 'نطاق بحث مكاني دائري',
-      center: [centerLat, centerLng],
-      coordinates,
-      areaKm2: area,
-      strokeColor: '#2563EB',
-      fillColor: '#3B82F6',
-    };
-  }
-
-  // 2. Single Feature Fallback
+  // 1. Single Feature Fallback
   if (validFeats.length === 1) {
     const { districtBoundary, parcelBoundary } = resolveLocationBoundary(validFeats[0]);
     return districtBoundary || parcelBoundary;
   }
 
-  // 3. Multi-Feature Unified Enclosing Boundary
+  // 2. Calculate bounding box encompassing ALL result features without exception
   let minLat = Infinity, maxLat = -Infinity;
   let minLng = Infinity, maxLng = -Infinity;
   validFeats.forEach((f) => {
@@ -445,16 +414,58 @@ export function generateUnifiedResultBoundary(
   const centerLat = (minLat + maxLat) / 2;
   const centerLng = (minLng + maxLng) / 2;
 
-  // Add 15% padding margin (minimum 0.008 deg ~ 900m) around the outermost points
-  const latPad = Math.max((maxLat - minLat) * 0.15, 0.008);
-  const lngPad = Math.max((maxLng - minLng) * 0.15, 0.008);
+  // 3. Proximity / Radial Search Buffer Boundary:
+  // Ensure the buffer boundary radius is large enough to encompass ALL result locations (never cutting off features)
+  if (options?.bufferRadiusKm && options.bufferRadiusKm > 0) {
+    const cLat = options.center ? options.center[0] : centerLat;
+    const cLng = options.center ? options.center[1] : centerLng;
+
+    // Calculate maximum distance from search center to any result feature
+    let maxDistKm = 0;
+    validFeats.forEach((f) => {
+      const dLat = (f.lat - cLat) * 111;
+      const dLng = (f.lng - cLng) * 111 * Math.cos(cLat * (Math.PI / 180));
+      const dist = Math.hypot(dLat, dLng);
+      if (dist > maxDistKm) maxDistKm = dist;
+    });
+
+    // Effective radius ensures 100% of result features are strictly inside the boundary
+    const effectiveRadiusKm = Math.max(options.bufferRadiusKm, Number((maxDistKm * 1.15 + 0.4).toFixed(1)));
+
+    const numPoints = 64;
+    const coordinates: [number, number][] = [];
+    for (let i = 0; i <= numPoints; i++) {
+      const angle = (i * 2 * Math.PI) / numPoints;
+      const dLat = (effectiveRadiusKm / 111) * Math.cos(angle);
+      const dLng = (effectiveRadiusKm / (111 * Math.cos(cLat * (Math.PI / 180)))) * Math.sin(angle);
+      coordinates.push([cLat + dLat, cLng + dLng]);
+    }
+
+    const area = Number((Math.PI * effectiveRadiusKm * effectiveRadiusKm).toFixed(1));
+
+    return {
+      id: `unified-buffer-${validFeats.length}results`,
+      nameEn: options.titleEn || `Location Search Boundary (${validFeats.length} Results • ${effectiveRadiusKm} km Area)`,
+      nameAr: options.titleAr || `نطاق البحث الجغرافي (${validFeats.length} موقع • نطاق ${effectiveRadiusKm} كم)`,
+      typeEn: 'Unified Spatial Search Boundary',
+      typeAr: 'نطاق جغرافي شامل للنتائج',
+      center: [cLat, cLng],
+      coordinates,
+      areaKm2: area,
+      strokeColor: '#2563EB',
+      fillColor: '#3B82F6',
+    };
+  }
+
+  // 4. Multi-Feature Unified Enclosing Perimeter (smooth 8-sided polygon enclosing 100% of result features)
+  const latPad = Math.max((maxLat - minLat) * 0.18, 0.010);
+  const lngPad = Math.max((maxLng - minLng) * 0.18, 0.010);
 
   const pMinLat = minLat - latPad;
   const pMaxLat = maxLat + latPad;
   const pMinLng = minLng - lngPad;
   const pMaxLng = maxLng + lngPad;
 
-  // Generate an 8-sided smooth polygon perimeter enclosing all features
   const coordinates: [number, number][] = [
     [pMaxLat, centerLng],
     [pMaxLat - latPad * 0.4, pMaxLng - lngPad * 0.4],
