@@ -136,6 +136,28 @@ export const ABU_DHABI_DISTRICT_BOUNDARIES: Record<string, LocationBoundary> = {
       [24.489, 54.318],
     ],
   },
+  abu_dhabi_island: {
+    id: 'abu_dhabi_island',
+    nameEn: 'Abu Dhabi Island Central District',
+    nameAr: 'نطاق قطاع جزيرة أبوظبي المركزي',
+    typeEn: 'Metropolitan Core District',
+    typeAr: 'المنطقة المركزية لجزيرة أبوظبي',
+    center: [24.4650, 54.3680],
+    areaKm2: 38.5,
+    strokeColor: '#2563EB',
+    fillColor: '#3B82F6',
+    coordinates: [
+      [24.515, 54.370],
+      [24.502, 54.408],
+      [24.470, 54.430],
+      [24.430, 54.442],
+      [24.415, 54.415],
+      [24.430, 54.335],
+      [24.460, 54.312],
+      [24.502, 54.330],
+      [24.515, 54.370],
+    ],
+  },
   city_center: {
     id: 'city_center',
     nameEn: 'Abu Dhabi Downtown / Al Dana Boundary',
@@ -575,3 +597,82 @@ export function generateUnifiedResultBoundary(
     fillColor: '#3B82F6',
   };
 }
+
+/**
+ * Ray-casting point-in-polygon algorithm
+ */
+export function isPointInsidePolygon(pt: [number, number], polygon: [number, number][]): boolean {
+  if (!polygon || polygon.length < 3) return false;
+  const [lat, lng] = pt;
+  let inside = false;
+  for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+    const [xi, yi] = polygon[i];
+    const [xj, yj] = polygon[j];
+    const intersect =
+      yi > lng !== yj > lng && lat < ((xj - xi) * (lng - yi)) / (yj - yi) + xi;
+    if (intersect) inside = !inside;
+  }
+  return inside;
+}
+
+/**
+ * Universal boundary resolution applicable for ANY type of question the user asks.
+ * Always guarantees that a single, continuous, elegant boundary is highlighted around the results.
+ */
+export function resolveBoundaryForFeatures(
+  features: { lat: number; lng: number; nameEn?: string; nameAr?: string; addressEn?: string }[],
+  queryContext?: string
+): LocationBoundary | null {
+  const validFeats = (features || []).filter(
+    (f) => typeof f.lat === 'number' && typeof f.lng === 'number' && !isNaN(f.lat) && !isNaN(f.lng)
+  );
+
+  if (validFeats.length === 0) return null;
+
+  const q = (queryContext || '').toLowerCase();
+
+  // 1. Explicit query district intent (checking both English & Arabic)
+  if (
+    (q.includes('khalifa city') || q.includes('مدينة خليفة')) &&
+    !q.includes('medical') &&
+    !q.includes('hospital')
+  ) {
+    return ABU_DHABI_DISTRICT_BOUNDARIES.khalifa_city;
+  }
+  if (q.includes('yas island') || q.includes('جزيرة ياس')) {
+    return ABU_DHABI_DISTRICT_BOUNDARIES.yas_island;
+  }
+  if (q.includes('reem island') || q.includes('جزيرة الريم')) {
+    return ABU_DHABI_DISTRICT_BOUNDARIES.al_reem_island;
+  }
+  if (q.includes('saadiyat') || q.includes('سعديات')) {
+    return ABU_DHABI_DISTRICT_BOUNDARIES.saadiyat_island;
+  }
+  if (q.includes('mussafah') || q.includes('musaffah') || q.includes('مصفح')) {
+    return ABU_DHABI_DISTRICT_BOUNDARIES.musaffah;
+  }
+  if (q.includes('zayed city') || q.includes('مدينة زايد')) {
+    return ABU_DHABI_DISTRICT_BOUNDARIES.zayed_city;
+  }
+
+  // 2. Spatial matching: Find if an official district boundary naturally encloses >= 70% of the results
+  const districtEntries = Object.entries(ABU_DHABI_DISTRICT_BOUNDARIES);
+  for (const [, district] of districtEntries) {
+    if (!district.coordinates || district.coordinates.length < 3) continue;
+    const insideCount = validFeats.filter((f) =>
+      isPointInsidePolygon([f.lat, f.lng], district.coordinates)
+    ).length;
+
+    if (
+      insideCount === validFeats.length ||
+      (validFeats.length >= 3 && insideCount / validFeats.length >= 0.7)
+    ) {
+      return district;
+    }
+  }
+
+  // 3. Universal Fallback: Continuous enclosing boundary around 100% of result features
+  // Guarantees that for ANY question the user asks, a boundary is NEVER missing!
+  return generateUnifiedResultBoundary(validFeats);
+}
+

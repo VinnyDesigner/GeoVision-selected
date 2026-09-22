@@ -15,7 +15,7 @@ import { SmartFilterPanel } from '../filters/SmartFilterPanel';
 import { createGeoVisionMarkerIcon } from '../../utils/markerUtils';
 import { buildSpatialSnapshot } from '../../utils/spatialSnapshotUtils';
 import { ensureAbuDhabiLocation, ABU_DHABI_DEFAULT_CENTER } from '../../utils/locationUtils';
-import { resolveLocationBoundary, ABU_DHABI_DISTRICT_BOUNDARIES, type LocationBoundary } from '../../utils/boundaryUtils';
+import { resolveBoundaryForFeatures, type LocationBoundary } from '../../utils/boundaryUtils';
 import { X, Layers, ChevronUp } from 'lucide-react';
 
 export const MapWorkspace: React.FC = () => {
@@ -680,59 +680,27 @@ export const MapWorkspace: React.FC = () => {
     const lastAiMsg = [...aiMessages].reverse().find(m => m.matchedFeatures && m.matchedFeatures.length > 0);
     const queryContext = `${lastUserMsg?.textEn || ''} ${lastAiMsg?.textEn || ''} ${(lastAiMsg as any)?.customUnderstanding?.locationEn || ''}`.toLowerCase();
 
-    let singleDistrict: LocationBoundary | null = null;
+    // Universal single location boundary applicable to ANY question the user asks
+    const targetFeatures = displayFeatures.length > 0 ? displayFeatures : (activeFeat ? [activeFeat] : []);
+    const singleBoundary: LocationBoundary | null = resolveBoundaryForFeatures(targetFeatures, queryContext);
 
-    if (queryContext.includes('khalifa') || queryContext.includes('خليفة')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.khalifa_city;
-    } else if (queryContext.includes('yas') || queryContext.includes('ياس')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.yas_island;
-    } else if (queryContext.includes('reem') || queryContext.includes('الريم')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.al_reem_island;
-    } else if (queryContext.includes('saadiyat') || queryContext.includes('سعديات')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.saadiyat_island;
-    } else if (queryContext.includes('khalidiya') || queryContext.includes('خالدية')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.al_khalidiya;
-    } else if (queryContext.includes('bateen') || queryContext.includes('بطين')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.al_bateen;
-    } else if (queryContext.includes('manhal') || queryContext.includes('منهل') || queryContext.includes('karama')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.al_manhal;
-    } else if (queryContext.includes('corniche') || queryContext.includes('كورنيش')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.corniche;
-    } else if (queryContext.includes('mussafah') || queryContext.includes('musaffah') || queryContext.includes('مصفح')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.musaffah;
-    } else if (queryContext.includes('mushrif') || queryContext.includes('مشرف')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.mushrif;
-    } else if (queryContext.includes('zayed city') || queryContext.includes('مدينة زايد')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.zayed_city;
-    } else if (queryContext.includes('downtown') || queryContext.includes('dana')) {
-      singleDistrict = ABU_DHABI_DISTRICT_BOUNDARIES.city_center;
-    }
-
-    // If query didn't name a district explicitly, resolve district from active feature or primary result
-    if (!singleDistrict) {
-      const primaryFeat = activeFeat || (displayFeatures.length > 0 ? displayFeatures[0] : null);
-      if (primaryFeat) {
-        singleDistrict = resolveLocationBoundary(primaryFeat).districtBoundary;
-      }
-    }
-
-    // Render ONLY THIS SINGLE LOCATION BOUNDARY
-    if (singleDistrict && singleDistrict.coordinates && singleDistrict.coordinates.length > 0) {
-      const districtPolygon = L.polygon(singleDistrict.coordinates, {
-        color: singleDistrict.strokeColor || '#2563EB',
-        fillColor: singleDistrict.fillColor || '#3B82F6',
-        fillOpacity: 0.18,
+    // Render the Single Unified Location Boundary
+    if (singleBoundary && singleBoundary.coordinates && singleBoundary.coordinates.length > 0) {
+      const boundaryPolygon = L.polygon(singleBoundary.coordinates, {
+        color: singleBoundary.strokeColor || '#2563EB',
+        fillColor: singleBoundary.fillColor || '#3B82F6',
+        fillOpacity: 0.16,
         weight: 3.5,
         dashArray: '8, 6',
         className: 'geovision-boundary-district-polygon active-boundary',
       });
 
-      const districtName = language === 'ar' ? singleDistrict.nameAr : singleDistrict.nameEn;
-      districtPolygon.bindTooltip(
+      const boundaryName = language === 'ar' ? (singleBoundary.nameAr || singleBoundary.nameEn) : (singleBoundary.nameEn || singleBoundary.nameAr);
+      boundaryPolygon.bindTooltip(
         `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-blue-500 animate-pulse"></span>
-          <span>${districtName}</span>
-          <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${singleDistrict.areaKm2} km²)</span>
+          <span>${boundaryName}</span>
+          ${singleBoundary.areaKm2 ? `<span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${singleBoundary.areaKm2} km²)</span>` : ''}
         </div>`,
         {
           permanent: false,
@@ -742,10 +710,10 @@ export const MapWorkspace: React.FC = () => {
         }
       );
 
-      districtPolygon.on('click', (e) => {
+      boundaryPolygon.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
-        if (mapInstanceRef.current && singleDistrict) {
-          mapInstanceRef.current.flyToBounds(L.latLngBounds(singleDistrict.coordinates), {
+        if (mapInstanceRef.current && singleBoundary) {
+          mapInstanceRef.current.flyToBounds(L.latLngBounds(singleBoundary.coordinates), {
             padding: [70, 70],
             maxZoom: 15,
             duration: 1.0,
@@ -753,48 +721,7 @@ export const MapWorkspace: React.FC = () => {
         }
       });
 
-      boundaryGroup.addLayer(districtPolygon);
-    }
-
-    // Render parcel boundary when a specific feature is active (hovered or selected)
-    if (activeFeat) {
-      const { parcelBoundary } = resolveLocationBoundary(activeFeat);
-
-      if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
-        const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
-          color: parcelBoundary.strokeColor || '#0284C7',
-          fillColor: parcelBoundary.fillColor || '#38BDF8',
-          fillOpacity: 0.28,
-          weight: 2.5,
-          className: 'geovision-boundary-parcel-polygon',
-        });
-
-        const parcelName = language === 'ar' ? parcelBoundary.nameAr : parcelBoundary.nameEn;
-        parcelPolygon.bindTooltip(
-          `<div class="px-2.5 py-1 text-[11px] font-extrabold text-sky-900 dark:text-sky-100 flex items-center gap-1.5">
-            <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-            <span>${parcelName}</span>
-          </div>`,
-          {
-            permanent: false,
-            sticky: true,
-            direction: 'top',
-            className: 'geovision-boundary-tooltip',
-          }
-        );
-
-        parcelPolygon.on('click', (e) => {
-          L.DomEvent.stopPropagation(e);
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.flyTo([activeFeat.lat, activeFeat.lng], 16.5, {
-              animate: true,
-              duration: 1.0,
-            });
-          }
-        });
-
-        boundaryGroup.addLayer(parcelPolygon);
-      }
+      boundaryGroup.addLayer(boundaryPolygon);
     }
   }, [selectedFeature, hoveredFeature, displayFeatures, aiMessages, language]);
   const tempShapeRef = useRef<L.Layer | null>(null);
