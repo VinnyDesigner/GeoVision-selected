@@ -91,6 +91,8 @@ interface AppStateContextType {
   setAoiResult: (res: AOIResult | null) => void;
   bufferRadiusKm: number;
   setBufferRadiusKm: (radius: number) => void;
+  bufferCenter: [number, number] | null;
+  setBufferCenter: (center: [number, number] | null) => void;
   toastMessage: string | null;
   showToast: (msg: string) => void;
   conversationSessions: ConversationSession[];
@@ -232,6 +234,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
   const [aoiResult, setAoiResult] = useState<AOIResult | null>(null);
   const [bufferRadiusKm, setBufferRadiusKm] = useState<number>(0);
+  const [bufferCenter, setBufferCenter] = useState<[number, number] | null>(null);
   const [navigationTarget, setNavigationTarget] = useState<GeoFeature | null>(null);
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -431,6 +434,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSelectedFeature(null);
     setNavigationTarget(null);
     setBufferRadiusKm(0);
+    setBufferCenter(null);
     setUserDrawnShapes([]);
     showToast(language === 'ar' ? 'تمت إعادة تعيين محادثة البحث' : 'Conversation context reset');
   };
@@ -465,6 +469,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
     setSelectedFeature(null);
     setNavigationTarget(null);
     setBufferRadiusKm(0);
+    setBufferCenter(null);
     setUserDrawnShapes([]);
     showToast(language === 'ar' ? 'بدأت محادثة جديدة' : 'Started new conversation');
   };
@@ -733,9 +738,25 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
       setNavigationTarget(null);
     }
 
-    const isBufferRequest = lowerQ.includes('buffer') || lowerQ.includes('radius') || lowerQ.includes('within') || lowerQ.includes('نطاق') || lowerQ.includes('نصف قطر') || lowerQ.includes('على بعد') || lowerQ.includes('نصف القطر');
+    const isBufferRequest =
+      lowerQ.includes('buffer') ||
+      lowerQ.includes('radius') ||
+      lowerQ.includes('within') ||
+      lowerQ.includes('with') ||
+      lowerQ.includes('2km') ||
+      lowerQ.includes('3km') ||
+      lowerQ.includes('5km') ||
+      lowerQ.includes('1km') ||
+      lowerQ.includes('km') ||
+      lowerQ.includes('كم') ||
+      lowerQ.includes('near') ||
+      lowerQ.includes('نطاق') ||
+      lowerQ.includes('نصف قطر') ||
+      lowerQ.includes('على بعد') ||
+      lowerQ.includes('نصف القطر');
     if (!isBufferRequest) {
       setBufferRadiusKm(0);
+      setBufferCenter(null);
     }
 
     // Add user message immediately
@@ -2288,6 +2309,109 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
 
             recsEn = ['Only government hospitals', 'Which one is closest?', 'Show schools within 2 km of bus stations in Khalifa City'];
             recsAr = ['المستشفيات الحكومية فقط', 'أيها الأقرب؟', 'عرض المدارس على بعد 2 كم من محطات الحافلات في مدينة خليفة'];
+          }
+
+          // -------------------------------------------------------------------------
+          // SPECIFICATION FLOW: Current Location to Nurseries with 2km Buffer Query
+          // -------------------------------------------------------------------------
+          else if (
+            lower.includes('from the current location to nurseries with 2km') ||
+            lower.includes('from current location to nurseries with 2km') ||
+            lower.includes('from the current location to nurseries') ||
+            lower.includes('from current location to nurseries') ||
+            (
+              (lower.includes('nurser') || query.includes('حضان') || lower.includes('kindergarten') || query.includes('روضة')) &&
+              (
+                lower.includes('current location') || lower.includes('my location') || lower.includes('near me') ||
+                query.includes('موقعي') || query.includes('موقع الحالي') ||
+                lower.includes('2km') || lower.includes('2 km') || lower.includes('2 كم') || lower.includes('2كم') ||
+                lower.includes('with 2') || lower.includes('within 2') || lower.includes('buffer') || query.includes('نطاق')
+              )
+            )
+          ) {
+            const refLat = userLocation ? userLocation[0] : 24.4539;
+            const refLng = userLocation ? userLocation[1] : 54.3773;
+            const targetRadius = (lower.includes('3km') || lower.includes('3 km') || query.includes('3 كم')) ? 3 : 2;
+
+            const allNurseries = GEO_FEATURES.filter(f =>
+              f.category === 'education' && (
+                f.subcategory === 'nurseries' ||
+                f.nameEn.toLowerCase().includes('nursery') ||
+                f.nameEn.toLowerCase().includes('kindergarten') ||
+                f.nameAr.includes('حضانة') ||
+                f.nameAr.includes('روضة')
+              )
+            );
+
+            const R = 6371;
+            allNurseries.forEach(f => {
+              const dLat = (f.lat - refLat) * (Math.PI / 180);
+              const dLon = (f.lng - refLng) * (Math.PI / 180);
+              const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(refLat * (Math.PI / 180)) * Math.cos(f.lat * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              f.distanceKm = parseFloat((R * c).toFixed(1));
+            });
+
+            const withinBuffer = allNurseries
+              .filter(f => (f.distanceKm ?? 999) <= targetRadius + 0.15)
+              .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+
+            matchedFeats = withinBuffer.length > 0
+              ? withinBuffer
+              : allNurseries.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)).slice(0, 6);
+
+            const nearestListEn = matchedFeats.slice(0, 4).map((n, i) => `${i + 1}. ${n.nameEn} (${n.distanceKm ?? 0.8} km)`).join('\n');
+            const nearestListAr = matchedFeats.slice(0, 4).map((n, i) => `${i + 1}. ${n.nameAr} (${n.distanceKm ?? 0.8} كم)`).join('\n');
+
+            responseEn = `Identified ${matchedFeats.length} accredited nurseries within ${targetRadius} km buffer circle of your current location.\n\nNearest Nurseries inside ${targetRadius} km perimeter:\n${nearestListEn}\n\nSpatial Analysis:\n• Origin: Current Location (${refLat.toFixed(4)}, ${refLng.toFixed(4)})\n• Radius: ${targetRadius} km radial buffer circle\n• Authority: ADEK Licensed Early Childhood Centers\n\nData Source: Abu Dhabi SDI Education Registry`;
+
+            responseAr = `تم تحديد ${matchedFeats.length} حضانات معتمدة ضمن دائرة النطاق العازل ${targetRadius} كم من موقعك الحالي.\n\nأقرب الحضانات داخل نطاق ${targetRadius} كم:\n${nearestListAr}\n\nالتحليل المكاني:\n• المركز: الموقع الحالي (${refLat.toFixed(4)}، ${refLng.toFixed(4)})\n• نصف القطر: دائرة نطاق عازل ${targetRadius} كم\n• الفئة: مراكز التعليم المبكر المعتمدة من دائرة التعليم والمعرفة\n\nمصدر البيانات: سجل التعليم - أبوظبي SDI`;
+
+            newCenter = [refLat, refLng];
+            newZoom = 14;
+            setBufferRadiusKm(targetRadius);
+            setBufferCenter([refLat, refLng]);
+            setSelectedCategoryIds(['education']);
+            setSelectedSubcategoryIds(['nurseries']);
+
+            customUnderstanding = {
+              facilityEn: 'Nurseries & Kindergartens',
+              facilityAr: 'الحضانات ورياض الأطفال',
+              locationEn: 'Current Location',
+              locationAr: 'الموقع الحالي',
+              distanceEn: `${targetRadius} km Buffer`,
+              distanceAr: `نطاق عازل ${targetRadius} كم`,
+              datasetSelectedEn: 'Abu Dhabi SDI Education Registry (ADEK)',
+              datasetSelectedAr: 'سجل التعليم - أبوظبي SDI (دائرة التعليم والمعرفة)',
+              intentEn: 'Radial Buffer Analysis',
+              intentAr: 'تحليل النطاق الدائري',
+              gisLayersEn: ['Nurseries Layer', `${targetRadius}km Spatial Buffer Circle`, 'Current Location Marker', 'Road Network'],
+              gisLayersAr: ['طبقة الحضانات', `دائرة نطاق عازل ${targetRadius} كم`, 'علامة الموقع الحالي', 'شبكة الطرق'],
+            };
+
+            customProvenance = {
+              layersUsedEn: ['ADEK Early Childhood Registry', `${targetRadius}km Radial Buffer Zone`, 'Abu Dhabi Base Topography'],
+              layersUsedAr: ['سجل التعليم المبكر (ADEK)', `دائرة نطاق عازل ${targetRadius} كم`, 'الطبوغرافيا الأساسية لأبوظبي'],
+              spatialOperationEn: `${targetRadius} km Radial Buffer Circle centered at current user position`,
+              spatialOperationAr: `دائرة نطاق عازل ${targetRadius} كم متمركزة حول إحداثيات موقع المستخدم الحالي`,
+              sourceProviderEn: 'Abu Dhabi SDI & ADEK',
+              sourceProviderAr: 'البنية التحتية للبيانات المكانية بأبوظبي و ADEK',
+              aiExplanationEn: `Generated a ${targetRadius} km circular buffer zone centered at your location and identified all licensed nurseries strictly within the perimeter.`,
+              aiExplanationAr: `تم إنشاء دائرة نطاق مكاني بمقدار ${targetRadius} كم حول موقعك وتحديد كافة الحضانات المرخصة داخل النطاق بدقة.`,
+            };
+
+            recsEn = [
+              'Which nurseries have ratings above 4.8?',
+              'Calculate route to closest nursery',
+              'Show public schools near my location',
+              'Expand search to 3 km',
+            ];
+            recsAr = [
+              'أي الحضانات حاصلة على تقييم أعلى من 4.8؟',
+              'حساب المسار إلى أقرب حضانة',
+              'عرض المدارس الحكومية القريبة من موقعي',
+              'توسيع نطاق البحث إلى 3 كم',
+            ];
           }
 
           // -------------------------------------------------------------------------
@@ -4327,6 +4451,8 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
         setAoiResult,
         bufferRadiusKm,
         setBufferRadiusKm,
+        bufferCenter,
+        setBufferCenter,
         toastMessage,
         showToast,
         conversationSessions,

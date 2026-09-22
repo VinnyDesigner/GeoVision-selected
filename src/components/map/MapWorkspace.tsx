@@ -33,6 +33,7 @@ export const MapWorkspace: React.FC = () => {
     selectedCategoryIds,
     selectedSubcategoryIds,
     bufferRadiusKm,
+    bufferCenter,
     aoiResult,
     showToast,
     filterDrawerOpen,
@@ -627,7 +628,7 @@ export const MapWorkspace: React.FC = () => {
     };
   }, [userLocation, language, navigationTarget, selectedFeature]);
 
-  // Render Highlighted Circle ONLY when Buffer Tool is explicitly active
+  // Render Highlighted Buffer Circle whenever bufferRadiusKm > 0 or Buffer Tool is active
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
@@ -636,23 +637,54 @@ export const MapWorkspace: React.FC = () => {
       bufferCircleRef.current = null;
     }
 
-    if (activeTool === 'buffer' && selectedFeature) {
-      const radiusMeters = (bufferRadiusKm && bufferRadiusKm > 0 ? bufferRadiusKm : 1.5) * 1000;
-      const centerLatLng: [number, number] = [selectedFeature.lat, selectedFeature.lng];
+    if (bufferRadiusKm && bufferRadiusKm > 0) {
+      const radiusMeters = bufferRadiusKm * 1000;
+      const centerLatLng: [number, number] = bufferCenter
+        || (activeTool === 'buffer' && selectedFeature ? [selectedFeature.lat, selectedFeature.lng] : null)
+        || (selectedFeature ? [selectedFeature.lat, selectedFeature.lng] : null)
+        || userLocation
+        || mapCenter
+        || [24.4539, 54.3773];
 
       const circle = L.circle(centerLatLng, {
         radius: radiusMeters,
-        color: '#215A9E',
-        fillColor: '#215A9E',
-        fillOpacity: 0.14,
-        weight: 2.5,
-        dashArray: '6, 6',
+        color: '#2563EB',
+        fillColor: '#3B82F6',
+        fillOpacity: 0.16,
+        weight: 3,
+        dashArray: '8, 6',
         interactive: false,
+        className: 'geovision-buffer-circle',
       }).addTo(mapInstanceRef.current);
 
+      circle.bindTooltip(
+        `<div class="flex items-center gap-1.5 font-bold text-xs text-blue-700 dark:text-blue-300">
+          <span class="w-2.5 h-2.5 rounded-full bg-blue-600 animate-pulse"></span>
+          <span>${bufferRadiusKm} km ${language === 'ar' ? 'نطاق عازل دائري' : 'Buffer Circle'}</span>
+        </div>`,
+        {
+          permanent: true,
+          direction: 'top',
+          offset: [0, -10],
+          className: 'geovision-boundary-tooltip',
+        }
+      );
+
       bufferCircleRef.current = circle;
+
+      // Fit map bounds to encompass the complete buffer circle
+      try {
+        const bounds = circle.getBounds();
+        mapInstanceRef.current.flyToBounds(bounds, {
+          padding: [50, 50],
+          maxZoom: 15,
+          duration: 1.2,
+        });
+      } catch {
+        // ignore bounds fit error
+      }
     }
-  }, [selectedFeature, bufferRadiusKm, activeTool]);
+  }, [bufferRadiusKm, bufferCenter, selectedFeature, activeTool, userLocation, mapCenter, language]);
 
   // Render AOI Polygon geometry
   useEffect(() => {
@@ -681,6 +713,11 @@ export const MapWorkspace: React.FC = () => {
     if (!mapInstanceRef.current || !boundaryGroupRef.current) return;
     const boundaryGroup = boundaryGroupRef.current;
     boundaryGroup.clearLayers();
+
+    // When a radial buffer circle is actively rendered, skip drawing a duplicate bounding box
+    if (bufferRadiusKm && bufferRadiusKm > 0) {
+      return;
+    }
 
     if (displayFeatures.length === 0 && !selectedFeature && !hoveredFeature) {
       return;
