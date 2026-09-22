@@ -728,7 +728,12 @@ html {
 
 .geovision-boundary-district-polygon:hover {
   stroke-width: 4.5px !important;
-  fill-opacity: 0.24 !important;
+  fill-opacity: 0.28 !important;
+}
+
+.geovision-boundary-district-polygon.active-boundary {
+  filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.75));
+  stroke-width: 4px !important;
 }
 
 .geovision-boundary-parcel-polygon {

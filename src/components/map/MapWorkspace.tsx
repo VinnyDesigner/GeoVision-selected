@@ -680,67 +680,89 @@ export const MapWorkspace: React.FC = () => {
     const boundaryGroup = boundaryGroupRef.current;
     boundaryGroup.clearLayers();
 
-    // Prioritize selected feature, hovered feature, or the primary result's area
-    const activeFeat = selectedFeature || hoveredFeature || (displayFeatures.length > 0 ? displayFeatures[0] : null);
-
-    if (!activeFeat) {
+    if (displayFeatures.length === 0 && !selectedFeature && !hoveredFeature) {
       setActiveBoundary(null);
       return;
     }
 
-    const { districtBoundary, parcelBoundary } = resolveLocationBoundary(activeFeat);
+    const activeFeat = hoveredFeature || selectedFeature;
 
-    if (districtBoundary || parcelBoundary) {
-      setActiveBoundary({
-        district: districtBoundary,
-        parcel: parcelBoundary,
-        feature: activeFeat,
+    // Collect all unique location district boundaries present in the result set
+    const districtMap = new Map<string, LocationBoundary>();
+
+    displayFeatures.forEach((f) => {
+      const { districtBoundary } = resolveLocationBoundary(f);
+      if (districtBoundary && !districtMap.has(districtBoundary.id)) {
+        districtMap.set(districtBoundary.id, districtBoundary);
+      }
+    });
+
+    if (activeFeat) {
+      const { districtBoundary } = resolveLocationBoundary(activeFeat);
+      if (districtBoundary && !districtMap.has(districtBoundary.id)) {
+        districtMap.set(districtBoundary.id, districtBoundary);
+      }
+    }
+
+    const activeDistrictId = activeFeat
+      ? resolveLocationBoundary(activeFeat).districtBoundary?.id
+      : (districtMap.size === 1 ? Array.from(districtMap.values())[0].id : null);
+
+    // Render all location district boundaries
+    districtMap.forEach((district) => {
+      if (!district.coordinates || district.coordinates.length === 0) return;
+
+      const isFocused = district.id === activeDistrictId;
+
+      const districtPolygon = L.polygon(district.coordinates, {
+        color: isFocused ? (district.strokeColor || '#2563EB') : (district.strokeColor || '#0284C7'),
+        fillColor: isFocused ? (district.fillColor || '#3B82F6') : (district.fillColor || '#38BDF8'),
+        fillOpacity: isFocused ? 0.24 : 0.12,
+        weight: isFocused ? 3.5 : 2.5,
+        dashArray: isFocused ? '8, 6' : '6, 6',
+        className: isFocused ? 'geovision-boundary-district-polygon active-boundary' : 'geovision-boundary-district-polygon',
       });
 
-      if (districtBoundary && districtBoundary.coordinates.length > 0) {
-        const districtPolygon = L.polygon(districtBoundary.coordinates, {
-          color: districtBoundary.strokeColor || '#2563EB',
-          fillColor: districtBoundary.fillColor || '#3B82F6',
-          fillOpacity: 0.16,
-          weight: 3.5,
-          dashArray: '8, 6',
-          className: 'geovision-boundary-district-polygon',
-        });
+      const districtName = language === 'ar' ? district.nameAr : district.nameEn;
+      districtPolygon.bindTooltip(
+        `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 rounded-full ${isFocused ? 'bg-blue-500 animate-pulse' : 'bg-sky-400'}"></span>
+          <span>${districtName}</span>
+          <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${district.areaKm2} km²)</span>
+        </div>`,
+        {
+          permanent: false,
+          sticky: true,
+          direction: 'auto',
+          className: 'geovision-boundary-tooltip',
+        }
+      );
 
-        const districtName = language === 'ar' ? districtBoundary.nameAr : districtBoundary.nameEn;
-        districtPolygon.bindTooltip(
-          `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-            <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse"></span>
-            <span>${districtName}</span>
-            <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${districtBoundary.areaKm2} km²)</span>
-          </div>`,
-          {
-            permanent: false,
-            sticky: true,
-            direction: 'auto',
-            className: 'geovision-boundary-tooltip',
-          }
-        );
+      districtPolygon.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.flyToBounds(L.latLngBounds(district.coordinates), {
+            padding: [70, 70],
+            maxZoom: 15,
+            duration: 1.0,
+          });
+        }
+      });
 
-        districtPolygon.on('click', (e) => {
-          L.DomEvent.stopPropagation(e);
-          if (mapInstanceRef.current) {
-            mapInstanceRef.current.flyToBounds(L.latLngBounds(districtBoundary.coordinates), {
-              padding: [70, 70],
-              maxZoom: 15,
-              duration: 1.0,
-            });
-          }
-        });
+      boundaryGroup.addLayer(districtPolygon);
+    });
 
-        boundaryGroup.addLayer(districtPolygon);
-      }
+    // Render parcel boundary when a specific feature is active (hovered or selected)
+    let activeParcelBoundary: LocationBoundary | null = null;
+    if (activeFeat) {
+      const { parcelBoundary } = resolveLocationBoundary(activeFeat);
+      activeParcelBoundary = parcelBoundary;
 
       if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
         const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
           color: parcelBoundary.strokeColor || '#0284C7',
           fillColor: parcelBoundary.fillColor || '#38BDF8',
-          fillOpacity: 0.25,
+          fillOpacity: 0.28,
           weight: 2.5,
           className: 'geovision-boundary-parcel-polygon',
         });
@@ -771,6 +793,19 @@ export const MapWorkspace: React.FC = () => {
 
         boundaryGroup.addLayer(parcelPolygon);
       }
+    }
+
+    // Set HUD capsule active boundary state
+    const primaryDistrict = activeDistrictId
+      ? districtMap.get(activeDistrictId)
+      : (districtMap.size > 0 ? Array.from(districtMap.values())[0] : null);
+
+    if (primaryDistrict || activeParcelBoundary) {
+      setActiveBoundary({
+        district: primaryDistrict || null,
+        parcel: activeParcelBoundary,
+        feature: activeFeat || displayFeatures[0],
+      });
     } else {
       setActiveBoundary(null);
     }

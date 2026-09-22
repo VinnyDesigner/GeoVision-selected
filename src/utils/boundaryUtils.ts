@@ -280,6 +280,60 @@ export const ABU_DHABI_DISTRICT_BOUNDARIES: Record<string, LocationBoundary> = {
       [24.482, 54.338],
     ],
   },
+  mushrif: {
+    id: 'mushrif',
+    nameEn: 'Mushrif / Umm Al Emarat Park District',
+    nameAr: 'نطاق منطقة المشرف وحديقة أم الإمارات',
+    typeEn: 'Parks & Residential District',
+    typeAr: 'منطقة حدائق وسكنية',
+    center: [24.4497, 54.3812],
+    areaKm2: 6.2,
+    strokeColor: '#059669',
+    fillColor: '#10B981',
+    coordinates: [
+      [24.465, 54.370],
+      [24.465, 54.398],
+      [24.436, 54.398],
+      [24.436, 54.370],
+      [24.465, 54.370],
+    ],
+  },
+  jubail_island: {
+    id: 'jubail_island',
+    nameEn: 'Jubail Island Mangrove Nature Reserve',
+    nameAr: 'نطاق محمية جزيرة جبيل الطبيعية',
+    typeEn: 'Eco-Tourism & Mangrove Reserve',
+    typeAr: 'محمية بيئية وأشجار القرم',
+    center: [24.5452, 54.4891],
+    areaKm2: 12.0,
+    strokeColor: '#059669',
+    fillColor: '#34D399',
+    coordinates: [
+      [24.568, 54.470],
+      [24.565, 54.515],
+      [24.528, 54.510],
+      [24.530, 54.470],
+      [24.568, 54.470],
+    ],
+  },
+  zayed_city: {
+    id: 'zayed_city',
+    nameEn: 'Zayed City Sector Boundary',
+    nameAr: 'نطاق قطاع مدينة زايد',
+    typeEn: 'Administrative & Health District',
+    typeAr: 'منطقة إدارية وصحية',
+    center: [24.4012, 54.6051],
+    areaKm2: 15.0,
+    strokeColor: '#2563EB',
+    fillColor: '#60A5FA',
+    coordinates: [
+      [24.418, 54.590],
+      [24.418, 54.625],
+      [24.385, 54.625],
+      [24.385, 54.590],
+      [24.418, 54.590],
+    ],
+  },
 };
 
 /**
@@ -357,8 +411,14 @@ export function resolveLocationBoundary(
     matchedKey = 'al_raha_beach';
   } else if (queryStr.includes('masdar') || queryStr.includes('مصدر')) {
     matchedKey = 'masdar_city';
-  } else if (queryStr.includes('musaffah') || queryStr.includes('مصفح')) {
+  } else if (queryStr.includes('musaffah') || queryStr.includes('mussafah') || queryStr.includes('مصفح')) {
     matchedKey = 'musaffah';
+  } else if (queryStr.includes('mushrif') || queryStr.includes('emarat') || queryStr.includes('مشرف')) {
+    matchedKey = 'mushrif';
+  } else if (queryStr.includes('jubail') || queryStr.includes('جبيل')) {
+    matchedKey = 'jubail_island';
+  } else if (queryStr.includes('zayed city') || queryStr.includes('مدينة زايد')) {
+    matchedKey = 'zayed_city';
   } else if (queryStr.includes('sports city') || queryStr.includes('رياضية')) {
     matchedKey = 'zayed_sports_city';
   } else if (queryStr.includes('downtown') || queryStr.includes('dana') || queryStr.includes('وسط') || queryStr.includes('wahda') || queryStr.includes('murour')) {
