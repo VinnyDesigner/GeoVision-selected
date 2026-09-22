@@ -459,6 +459,13 @@ export const MapWorkspace: React.FC = () => {
       .setLatLng([activeFeat.lat, activeFeat.lng])
       .setContent(popupContent)
       .openOn(mapInstanceRef.current);
+
+    if (hoveredFeature && mapInstanceRef.current) {
+      const bounds = mapInstanceRef.current.getBounds();
+      if (!bounds.contains([hoveredFeature.lat, hoveredFeature.lng])) {
+        mapInstanceRef.current.panTo([hoveredFeature.lat, hoveredFeature.lng], { animate: true, duration: 0.4 });
+      }
+    }
   }, [hoveredFeature, selectedFeature, language]);
 
   // Single Unified Map Camera Control Effect with Frame Coalescing
@@ -668,18 +675,20 @@ export const MapWorkspace: React.FC = () => {
     }
   }, [activeTool, aoiResult]);
 
-  // Highlight Geographic Community/District & Facility Parcel Boundaries Based on Location
+  // Highlight Geographic Community/District & Facility Parcel Boundaries Based on Location (for Hover or Selection)
   useEffect(() => {
     if (!mapInstanceRef.current || !boundaryGroupRef.current) return;
     const boundaryGroup = boundaryGroupRef.current;
     boundaryGroup.clearLayers();
 
-    if (!selectedFeature) {
+    const targetFeat = hoveredFeature || selectedFeature;
+
+    if (!targetFeat) {
       setActiveBoundary(null);
       return;
     }
 
-    const { districtBoundary, parcelBoundary } = resolveLocationBoundary(selectedFeature);
+    const { districtBoundary, parcelBoundary } = resolveLocationBoundary(targetFeat);
 
     if (!districtBoundary && !parcelBoundary) {
       setActiveBoundary(null);
@@ -689,7 +698,7 @@ export const MapWorkspace: React.FC = () => {
     setActiveBoundary({
       district: districtBoundary,
       parcel: parcelBoundary,
-      feature: selectedFeature,
+      feature: targetFeat,
     });
 
     // Render a single clean boundary (District Boundary first, or Parcel Boundary as fallback) to avoid nested highlights
@@ -759,7 +768,7 @@ export const MapWorkspace: React.FC = () => {
       parcelPolygon.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
         if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo([selectedFeature.lat, selectedFeature.lng], 16.5, {
+          mapInstanceRef.current.flyTo([targetFeat.lat, targetFeat.lng], 16.5, {
             animate: true,
             duration: 1.0,
           });
@@ -768,7 +777,7 @@ export const MapWorkspace: React.FC = () => {
 
       boundaryGroup.addLayer(parcelPolygon);
     }
-  }, [selectedFeature, language]);
+  }, [selectedFeature, hoveredFeature, language]);
 
   const tempShapeRef = useRef<L.Layer | null>(null);
   const tempPointsRef = useRef<L.LatLng[]>([]);
