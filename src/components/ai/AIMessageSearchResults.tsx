@@ -31,43 +31,24 @@ import {
   Sparkles,
   Phone,
   ShieldCheck,
+  Shield,
   LayoutGrid,
   ArrowLeft,
+  Bus,
+  Zap,
+  Pill,
+  Leaf,
 } from 'lucide-react';
 import { triggerPrintDocument } from '../../utils/printUtils';
 import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
 
-// Category Visual Styling Helper - Ensures UAE Hospital Icon compliance (Building2 with status dot, NEVER plain + cross)
+// Category Visual Styling Helper - Ensures accurate icons for all categories & example flows
 const getCategoryIconAndStyle = (category?: string, subcategory?: string, name?: string) => {
   const catLower = (category || '').toLowerCase();
   const subLower = (subcategory || '').toLowerCase();
   const nameLower = (name || '').toLowerCase();
 
-  // UAE-compliant healthcare icon (Building2 + active dot, never plain + cross)
-  if (
-    catLower.includes('health') ||
-    catLower.includes('hospital') ||
-    subLower.includes('clinic') ||
-    subLower.includes('medical') ||
-    subLower.includes('hospital')
-  ) {
-    return {
-      icon: (
-        <div className="relative flex items-center justify-center">
-          <Building2 className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />
-          <span className="absolute -top-1 -right-1 flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#215A9E]"></span>
-          </span>
-        </div>
-      ),
-      bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
-      badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
-      accentColor: 'from-[#063360] via-[#215A9E] to-sky-400',
-    };
-  }
-
-  // Plant Nurseries, Greenhouses & Botanical Centers (dedicated Sprout plant icon)
+  // 1. Plant Nurseries, Greenhouses & Botanical Centers (dedicated Sprout plant icon)
   if (
     subLower.includes('nurser') ||
     subLower.includes('plant') ||
@@ -78,13 +59,133 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string, name?:
     nameLower.includes('مشاتل')
   ) {
     return {
-      icon: <Sprout className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+      icon: <Sprout className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
       bgGradient: 'bg-emerald-50/90 dark:bg-slate-800/90 border-emerald-200/80 dark:border-slate-700',
       badgeBg: 'bg-emerald-100/80 text-emerald-900 dark:bg-slate-800 dark:text-emerald-300 border-emerald-200 dark:border-slate-700',
-      accentColor: 'from-emerald-600 via-[#215A9E] to-teal-400',
+      accentColor: 'from-emerald-600 via-teal-500 to-green-400',
     };
   }
 
+  // 2. EV Charging Stations (Zap Icon)
+  if (
+    subLower.includes('charging') ||
+    subLower.includes('ev_') ||
+    nameLower.includes('ev ') ||
+    nameLower.includes('charging') ||
+    nameLower.includes('شحن')
+  ) {
+    return {
+      icon: <Zap className="w-4 h-4 text-amber-500 dark:text-amber-400" />,
+      bgGradient: 'bg-amber-50/90 dark:bg-slate-800/90 border-amber-200/80 dark:border-slate-700',
+      badgeBg: 'bg-amber-100/80 text-amber-900 dark:bg-slate-800 dark:text-amber-300 border-amber-200 dark:border-slate-700',
+      accentColor: 'from-amber-500 via-orange-400 to-yellow-400',
+    };
+  }
+
+  // 3. 24/7 Pharmacies (Pill Icon)
+  if (
+    subLower.includes('pharm') ||
+    nameLower.includes('pharmacy') ||
+    nameLower.includes('صيدلية')
+  ) {
+    return {
+      icon: <Pill className="w-4 h-4 text-teal-600 dark:text-teal-400" />,
+      bgGradient: 'bg-teal-50/90 dark:bg-slate-800/90 border-teal-200/80 dark:border-slate-700',
+      badgeBg: 'bg-teal-100/80 text-teal-900 dark:bg-slate-800 dark:text-teal-300 border-teal-200 dark:border-slate-700',
+      accentColor: 'from-teal-600 via-emerald-500 to-cyan-400',
+    };
+  }
+
+  // 4. TAMM Customer Happiness Centers (TAMM Government Shield Badge)
+  if (
+    subLower.includes('tamm') ||
+    nameLower.includes('tamm') ||
+    nameLower.includes('تم')
+  ) {
+    return {
+      icon: <ShieldCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />,
+      bgGradient: 'bg-indigo-50/90 dark:bg-slate-800/90 border-indigo-200/80 dark:border-slate-700',
+      badgeBg: 'bg-indigo-100/80 text-indigo-900 dark:bg-slate-800 dark:text-indigo-300 border-indigo-200 dark:border-slate-700',
+      accentColor: 'from-indigo-600 via-blue-600 to-sky-400',
+    };
+  }
+
+  // 5. Police & Civil Defense (Shield Icon)
+  if (
+    catLower.includes('public_safety') ||
+    catLower.includes('safety') ||
+    subLower.includes('police') ||
+    subLower.includes('civil') ||
+    nameLower.includes('police') ||
+    nameLower.includes('civil defense') ||
+    nameLower.includes('شرطة') ||
+    nameLower.includes('دفاع')
+  ) {
+    return {
+      icon: <Shield className="w-4 h-4 text-red-600 dark:text-red-400" />,
+      bgGradient: 'bg-red-50/90 dark:bg-slate-800/90 border-red-200/80 dark:border-slate-700',
+      badgeBg: 'bg-red-100/80 text-red-900 dark:bg-slate-800 dark:text-red-300 border-red-200 dark:border-slate-700',
+      accentColor: 'from-red-600 via-rose-500 to-orange-400',
+    };
+  }
+
+  // 6. Cultural & Heritage Sites / Museums (Landmark Columns)
+  if (
+    catLower.includes('tour') ||
+    subLower.includes('museum') ||
+    subLower.includes('heritage') ||
+    nameLower.includes('museum') ||
+    nameLower.includes('louvre') ||
+    nameLower.includes('hosn') ||
+    nameLower.includes('mosque') ||
+    nameLower.includes('qasr') ||
+    nameLower.includes('متحف') ||
+    nameLower.includes('قصر')
+  ) {
+    return {
+      icon: <Landmark className="w-4 h-4 text-purple-600 dark:text-purple-400" />,
+      bgGradient: 'bg-purple-50/90 dark:bg-slate-800/90 border-purple-200/80 dark:border-slate-700',
+      badgeBg: 'bg-purple-100/80 text-purple-900 dark:bg-slate-800 dark:text-purple-300 border-purple-200 dark:border-slate-700',
+      accentColor: 'from-purple-600 via-indigo-500 to-pink-400',
+    };
+  }
+
+  // 7. Mangrove & Nature Reserves (Leaf Icon)
+  if (
+    catLower.includes('env') ||
+    subLower.includes('reserve') ||
+    subLower.includes('mangrove') ||
+    nameLower.includes('mangrove') ||
+    nameLower.includes('reserve') ||
+    nameLower.includes('wetland') ||
+    nameLower.includes('قرم') ||
+    nameLower.includes('محمية')
+  ) {
+    return {
+      icon: <Leaf className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />,
+      bgGradient: 'bg-emerald-50/90 dark:bg-slate-800/90 border-emerald-200/80 dark:border-slate-700',
+      badgeBg: 'bg-emerald-100/80 text-emerald-900 dark:bg-slate-800 dark:text-emerald-300 border-emerald-200 dark:border-slate-700',
+      accentColor: 'from-emerald-600 via-teal-500 to-green-400',
+    };
+  }
+
+  // 8. Bus Stations & Transit Hubs (Bus Icon)
+  if (
+    catLower.includes('trans') ||
+    subLower.includes('bus') ||
+    nameLower.includes('bus') ||
+    nameLower.includes('transit') ||
+    nameLower.includes('حافلات')
+  ) {
+    return {
+      icon: <Bus className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+      bgGradient: 'bg-teal-50/90 dark:bg-slate-800/90 border-teal-200/80 dark:border-slate-700',
+      badgeBg: 'bg-teal-100/80 text-teal-900 dark:bg-slate-800 dark:text-teal-300 border-teal-200 dark:border-slate-700',
+      accentColor: 'from-teal-600 via-cyan-500 to-blue-400',
+    };
+  }
+
+  // 9. Schools & Education (GraduationCap Icon)
   if (
     catLower.includes('edu') ||
     catLower.includes('school') ||
@@ -100,50 +201,43 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string, name?:
     };
   }
 
+  // 10. Parks & Recreation (Trees Icon)
   if (
     catLower.includes('park') ||
-    catLower.includes('env') ||
     catLower.includes('rec') ||
     subLower.includes('park') ||
     subLower.includes('garden')
   ) {
     return {
-      icon: <Trees className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
-      bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
-      badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
-      accentColor: 'from-[#215A9E] via-sky-600 to-blue-400',
+      icon: <Trees className="w-4 h-4 text-green-600 dark:text-green-400" />,
+      bgGradient: 'bg-green-50/90 dark:bg-slate-800/90 border-green-200/80 dark:border-slate-700',
+      badgeBg: 'bg-green-100/80 text-green-900 dark:bg-slate-800 dark:text-green-300 border-green-200 dark:border-slate-700',
+      accentColor: 'from-green-600 via-emerald-500 to-teal-400',
     };
   }
 
+  // 11. Healthcare / Hospitals
   if (
-    catLower.includes('gov') ||
-    catLower.includes('public_safety') ||
-    catLower.includes('safety') ||
-    subLower.includes('police') ||
-    subLower.includes('civil')
+    catLower.includes('health') ||
+    catLower.includes('med') ||
+    subLower.includes('hosp') ||
+    subLower.includes('clinic') ||
+    catLower.includes('hospital') ||
+    subLower.includes('medical')
   ) {
     return {
-      icon: <Landmark className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+      icon: (
+        <div className="relative inline-flex items-center justify-center">
+          <Building2 className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />
+          <span className="absolute -top-1 -right-1 flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[#215A9E]"></span>
+          </span>
+        </div>
+      ),
       bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
       badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
-      accentColor: 'from-[#063360] via-[#215A9E] to-sky-500',
-    };
-  }
-
-  if (
-    catLower.includes('tour') ||
-    catLower.includes('culture') ||
-    catLower.includes('mall') ||
-    subLower.includes('mall') ||
-    subLower.includes('hotel')
-
-
-  ) {
-    return {
-      icon: <Sparkles className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
-      bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
-      badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
-      accentColor: 'from-[#215A9E] via-sky-500 to-blue-600',
+      accentColor: 'from-[#063360] via-[#215A9E] to-sky-400',
     };
   }
 

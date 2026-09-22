@@ -22,6 +22,15 @@ import {
   Car,
   Footprints,
   Sprout,
+  Bus,
+  Zap,
+  Pill,
+  Leaf,
+  Shield,
+  Landmark,
+  Trees,
+  GraduationCap,
+  Building2,
 } from 'lucide-react';
 
 export interface SearchResultDetailsModalProps {
@@ -121,11 +130,23 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
 
           <div className="relative z-10 flex items-start gap-3.5 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center font-black text-white shrink-0 mt-0.5 shadow-lg">
-              {currentFeature.subcategory === 'nurseries' || currentFeature.nameEn?.toLowerCase().includes('nursery') || currentFeature.nameAr?.includes('مشتل') ? (
-                <Sprout className="w-6 h-6" />
-              ) : (
-                <Building className="w-6 h-6" />
-              )}
+              {(() => {
+                const sub = (currentFeature.subcategory || '').toLowerCase();
+                const cat = (currentFeature.category || '').toLowerCase();
+                const nm = (currentFeature.nameEn || '').toLowerCase();
+                if (sub.includes('nurser') || nm.includes('nursery') || currentFeature.nameAr?.includes('مشتل')) return <Sprout className="w-6 h-6" />;
+                if (sub.includes('charging') || sub.includes('ev_') || nm.includes('ev ')) return <Zap className="w-6 h-6" />;
+                if (sub.includes('pharm') || nm.includes('pharmacy') || currentFeature.nameAr?.includes('صيدلية')) return <Pill className="w-6 h-6" />;
+                if (sub.includes('tamm') || nm.includes('tamm')) return <ShieldCheck className="w-6 h-6" />;
+                if (cat.includes('safety') || sub.includes('police') || sub.includes('civil')) return <Shield className="w-6 h-6" />;
+                if (cat.includes('tour') || sub.includes('museum') || sub.includes('heritage')) return <Landmark className="w-6 h-6" />;
+                if (cat.includes('env') || sub.includes('reserve') || sub.includes('mangrove')) return <Leaf className="w-6 h-6" />;
+                if (cat.includes('trans') || sub.includes('bus')) return <Bus className="w-6 h-6" />;
+                if (cat.includes('edu') || sub.includes('school')) return <GraduationCap className="w-6 h-6" />;
+                if (cat.includes('park') || sub.includes('park')) return <Trees className="w-6 h-6" />;
+                if (cat.includes('health') || sub.includes('hosp')) return <Building2 className="w-6 h-6" />;
+                return <Building className="w-6 h-6" />;
+              })()}
             </div>
 
             <div className="min-w-0">
