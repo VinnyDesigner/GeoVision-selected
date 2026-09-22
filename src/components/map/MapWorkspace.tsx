@@ -740,8 +740,10 @@ export const MapWorkspace: React.FC = () => {
       });
 
       boundaryGroup.addLayer(districtPolygon);
-    } else if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
-      // Fallback: render parcel plot boundary only if no district boundary exists
+    }
+    
+    if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
+      // Render parcel plot boundary perimeter around feature location
       const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
         color: parcelBoundary.strokeColor || '#0284C7',
         fillColor: parcelBoundary.fillColor || '#38BDF8',
