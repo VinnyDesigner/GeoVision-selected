@@ -12,25 +12,41 @@ export const getCategoryColor = (category: string): string => {
   return catColors[category] || '#215A9E';
 };
 
-export const getCategorySvgIcon = (category: string, subcategory?: string): string => {
+export const getCategorySvgIcon = (category: string, subcategory?: string, name?: string): string => {
+  const subLower = (subcategory || '').toLowerCase();
+  const nameLower = (name || '').toLowerCase();
+
+  // Plant Nurseries, Greenhouses & Botanical Centers (Sprout Icon)
+  if (
+    subLower.includes('nurser') ||
+    subLower.includes('plant') ||
+    subLower.includes('botanic') ||
+    nameLower.includes('nursery') ||
+    nameLower.includes('plant') ||
+    nameLower.includes('مشتل') ||
+    nameLower.includes('مشاتل')
+  ) {
+    return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9.536V7a4 4 0 0 1 4-4h1.5a.5.5 0 0 1 .5.5V5a4 4 0 0 1-4 4 4 4 0 0 0-4 4c0 2 1 3 1 5a5 5 0 0 1-1 3"/><path d="M4 9a5 5 0 0 1 8 4 5 5 0 0 1-8-4"/><path d="M5 21h14"/></svg>`;
+  }
+
   switch (category) {
     case 'healthcare':
-      if (subcategory === 'pharmacies') {
+      if (subLower.includes('pharm') || subcategory === 'pharmacies') {
         return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>`;
       }
-      if (subcategory === 'clinics') {
+      if (subLower.includes('clinic') || subcategory === 'clinics') {
         return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 0 0 4.5 2.6v5.8a4.5 4.5 0 0 0 9 0V2.6a.3.3 0 0 0-.3-.3"/><path d="M9 12.9v7.6a.5.5 0 0 0 .5.5h5a.5.5 0 0 0 .5-.5V14"/></svg>`;
       }
       return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12h12M6 7h12M6 17h12"/><path d="M10 22v-4h4v4"/></svg>`;
 
     case 'education':
-      if (subcategory === 'universities') {
+      if (subLower.includes('universit') || subcategory === 'universities') {
         return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`;
       }
-      if (subcategory === 'schools') {
+      if (subLower.includes('school') || subcategory === 'schools') {
         return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>`;
       }
-      return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>`;
+      return `<svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"/><path d="M6 6h10M6 10h10"/></svg>`;
 
     case 'transport':
       if (subcategory === 'parking') {
@@ -71,10 +87,11 @@ export const createGeoVisionMarkerIcon = (
   category: string,
   subcategory?: string,
   compact = false,
-  isSelected = false
+  isSelected = false,
+  name?: string
 ): L.DivIcon => {
   const color = getCategoryColor(category);
-  const iconSvg = getCategorySvgIcon(category, subcategory);
+  const iconSvg = getCategorySvgIcon(category, subcategory, name);
 
   const headSize = isSelected ? (compact ? 34 : 40) : (compact ? 28 : 32);
   const totalWidth = isSelected ? (compact ? 36 : 42) : (compact ? 30 : 34);

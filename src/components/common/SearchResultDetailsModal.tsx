@@ -21,6 +21,7 @@ import {
   Sliders,
   Car,
   Footprints,
+  Sprout,
 } from 'lucide-react';
 
 export interface SearchResultDetailsModalProps {
@@ -120,7 +121,11 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
 
           <div className="relative z-10 flex items-start gap-3.5 min-w-0">
             <div className="w-11 h-11 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center font-black text-white shrink-0 mt-0.5 shadow-lg">
-              <Building className="w-6 h-6" />
+              {currentFeature.subcategory === 'nurseries' || currentFeature.nameEn?.toLowerCase().includes('nursery') || currentFeature.nameAr?.includes('مشتل') ? (
+                <Sprout className="w-6 h-6" />
+              ) : (
+                <Building className="w-6 h-6" />
+              )}
             </div>
 
             <div className="min-w-0">

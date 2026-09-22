@@ -372,7 +372,7 @@ export const MapWorkspace: React.FC = () => {
         hoveredFeature &&
         (hoveredFeature.id === feat.id || hoveredFeature.nameEn === feat.nameEn);
 
-      const customIcon = createGeoVisionMarkerIcon(feat.category, feat.subcategory, false, !!(isSelected || isHovered));
+      const customIcon = createGeoVisionMarkerIcon(feat.category, feat.subcategory, false, !!(isSelected || isHovered), feat.nameEn);
       const marker = L.marker([feat.lat, feat.lng], { icon: customIcon, zIndexOffset: (isSelected || isHovered) ? 1000 : 0 });
 
       marker.on('click', (e) => {

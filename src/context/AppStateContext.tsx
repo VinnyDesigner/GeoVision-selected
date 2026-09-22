@@ -2312,7 +2312,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
           }
 
           // -------------------------------------------------------------------------
-          // SPECIFICATION FLOW: Current Location to Nurseries with 2km Buffer Query
+          // SPECIFICATION FLOW: Current Location to Plant Nurseries with 2km Buffer Query
           // -------------------------------------------------------------------------
           else if (
             lower.includes('from the current location to nurseries with 2km') ||
@@ -2320,7 +2320,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             lower.includes('from the current location to nurseries') ||
             lower.includes('from current location to nurseries') ||
             (
-              (lower.includes('nurser') || query.includes('حضان') || lower.includes('kindergarten') || query.includes('روضة')) &&
+              (lower.includes('nurser') || lower.includes('plant') || query.includes('مشتل') || query.includes('مشاتل') || query.includes('حضان')) &&
               (
                 lower.includes('current location') || lower.includes('my location') || lower.includes('near me') ||
                 query.includes('موقعي') || query.includes('موقع الحالي') ||
@@ -2334,13 +2334,11 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             const targetRadius = (lower.includes('3km') || lower.includes('3 km') || query.includes('3 كم')) ? 3 : 2;
 
             const allNurseries = GEO_FEATURES.filter(f =>
-              f.category === 'education' && (
-                f.subcategory === 'nurseries' ||
-                f.nameEn.toLowerCase().includes('nursery') ||
-                f.nameEn.toLowerCase().includes('kindergarten') ||
-                f.nameAr.includes('حضانة') ||
-                f.nameAr.includes('روضة')
-              )
+              f.subcategory === 'nurseries' ||
+              f.nameEn.toLowerCase().includes('nursery') ||
+              f.nameEn.toLowerCase().includes('plant') ||
+              f.nameAr.includes('مشتل') ||
+              f.nameAr.includes('مشاتل')
             );
 
             const R = 6371;
@@ -2363,9 +2361,9 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             const nearestListEn = matchedFeats.slice(0, 4).map((n, i) => `${i + 1}. ${n.nameEn} (${n.distanceKm ?? 0.8} km)`).join('\n');
             const nearestListAr = matchedFeats.slice(0, 4).map((n, i) => `${i + 1}. ${n.nameAr} (${n.distanceKm ?? 0.8} كم)`).join('\n');
 
-            responseEn = `Identified ${matchedFeats.length} accredited nurseries within ${targetRadius} km buffer circle of your current location.\n\nNearest Nurseries inside ${targetRadius} km perimeter:\n${nearestListEn}\n\nSpatial Analysis:\n• Origin: Current Location (${refLat.toFixed(4)}, ${refLng.toFixed(4)})\n• Radius: ${targetRadius} km radial buffer circle\n• Authority: ADEK Licensed Early Childhood Centers\n\nData Source: Abu Dhabi SDI Education Registry`;
+            responseEn = `Identified ${matchedFeats.length} registered plant nurseries & botanical garden centers within ${targetRadius} km buffer circle of your current location.\n\nNearest Plant Nurseries inside ${targetRadius} km perimeter:\n${nearestListEn}\n\nSpatial Analysis:\n• Origin: Current Location (${refLat.toFixed(4)}, ${refLng.toFixed(4)})\n• Radius: ${targetRadius} km radial buffer circle\n• Facility: Plant Nurseries, Greenhouses & Horticultural Centers\n• Authority: Abu Dhabi Agriculture and Food Safety Authority (ADAFSA)\n\nData Source: Abu Dhabi SDI Agriculture & Greenery Registry`;
 
-            responseAr = `تم تحديد ${matchedFeats.length} حضانات معتمدة ضمن دائرة النطاق العازل ${targetRadius} كم من موقعك الحالي.\n\nأقرب الحضانات داخل نطاق ${targetRadius} كم:\n${nearestListAr}\n\nالتحليل المكاني:\n• المركز: الموقع الحالي (${refLat.toFixed(4)}، ${refLng.toFixed(4)})\n• نصف القطر: دائرة نطاق عازل ${targetRadius} كم\n• الفئة: مراكز التعليم المبكر المعتمدة من دائرة التعليم والمعرفة\n\nمصدر البيانات: سجل التعليم - أبوظبي SDI`;
+            responseAr = `تم تحديد ${matchedFeats.length} مشاتل نباتات ومراكز زراعية معتمدة ضمن دائرة النطاق العازل ${targetRadius} كم من موقعك الحالي.\n\nأقرب مشاتل النباتات داخل نطاق ${targetRadius} كم:\n${nearestListAr}\n\nالتحليل المكاني:\n• المركز: الموقع الحالي (${refLat.toFixed(4)}، ${refLng.toFixed(4)})\n• نصف القطر: دائرة نطاق عازل ${targetRadius} كم\n• النوع: مشاتل النباتات والبيوت المحمية ومراكز البستنة\n• الجهة: هيئة أبوظبي للزراعة والسلامة الغذائية (ADAFSA)\n\nمصدر البيانات: سجل الزراعة والمشاتل - أبوظبي SDI`;
 
             newCenter = [refLat, refLng];
             newZoom = 14;
@@ -2375,41 +2373,41 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             setSelectedSubcategoryIds(['nurseries']);
 
             customUnderstanding = {
-              facilityEn: 'Nurseries & Kindergartens',
-              facilityAr: 'الحضانات ورياض الأطفال',
+              facilityEn: 'Plant Nurseries & Greenhouses',
+              facilityAr: 'مشاتل النباتات والبيوت المحمية',
               locationEn: 'Current Location',
               locationAr: 'الموقع الحالي',
               distanceEn: `${targetRadius} km Buffer`,
               distanceAr: `نطاق عازل ${targetRadius} كم`,
-              datasetSelectedEn: 'Abu Dhabi SDI Education Registry (ADEK)',
-              datasetSelectedAr: 'سجل التعليم - أبوظبي SDI (دائرة التعليم والمعرفة)',
+              datasetSelectedEn: 'Abu Dhabi SDI Agriculture & Greenery Layer (ADAFSA)',
+              datasetSelectedAr: 'سجل المشاتل والغطاء النباتي - أبوظبي SDI (ADAFSA)',
               intentEn: 'Radial Buffer Analysis',
               intentAr: 'تحليل النطاق الدائري',
-              gisLayersEn: ['Nurseries Layer', `${targetRadius}km Spatial Buffer Circle`, 'Current Location Marker', 'Road Network'],
-              gisLayersAr: ['طبقة الحضانات', `دائرة نطاق عازل ${targetRadius} كم`, 'علامة الموقع الحالي', 'شبكة الطرق'],
+              gisLayersEn: ['Plant Nurseries Layer', `${targetRadius}km Spatial Buffer Circle`, 'Current Location Marker', 'Road Network'],
+              gisLayersAr: ['طبقة مشاتل النباتات', `دائرة نطاق عازل ${targetRadius} كم`, 'علامة الموقع الحالي', 'شبكة الطرق'],
             };
 
             customProvenance = {
-              layersUsedEn: ['ADEK Early Childhood Registry', `${targetRadius}km Radial Buffer Zone`, 'Abu Dhabi Base Topography'],
-              layersUsedAr: ['سجل التعليم المبكر (ADEK)', `دائرة نطاق عازل ${targetRadius} كم`, 'الطبوغرافيا الأساسية لأبوظبي'],
+              layersUsedEn: ['ADAFSA Plant Nurseries & Greenhouses Registry', `${targetRadius}km Radial Buffer Zone`, 'Abu Dhabi Base Topography'],
+              layersUsedAr: ['سجل المشاتل والبيوت المحمية (ADAFSA)', `دائرة نطاق عازل ${targetRadius} كم`, 'الطبوغرافيا الأساسية لأبوظبي'],
               spatialOperationEn: `${targetRadius} km Radial Buffer Circle centered at current user position`,
               spatialOperationAr: `دائرة نطاق عازل ${targetRadius} كم متمركزة حول إحداثيات موقع المستخدم الحالي`,
-              sourceProviderEn: 'Abu Dhabi SDI & ADEK',
-              sourceProviderAr: 'البنية التحتية للبيانات المكانية بأبوظبي و ADEK',
-              aiExplanationEn: `Generated a ${targetRadius} km circular buffer zone centered at your location and identified all licensed nurseries strictly within the perimeter.`,
-              aiExplanationAr: `تم إنشاء دائرة نطاق مكاني بمقدار ${targetRadius} كم حول موقعك وتحديد كافة الحضانات المرخصة داخل النطاق بدقة.`,
+              sourceProviderEn: 'Abu Dhabi SDI & ADAFSA',
+              sourceProviderAr: 'البنية التحتية للبيانات المكانية بأبوظبي و ADAFSA',
+              aiExplanationEn: `Generated a ${targetRadius} km circular buffer zone centered at your location and identified all licensed plant nurseries and botanical centers strictly within the perimeter.`,
+              aiExplanationAr: `تم إنشاء دائرة نطاق مكاني بمقدار ${targetRadius} كم حول موقعك وتحديد كافة مشاتل النباتات والمراكز الزراعية المرخصة داخل النطاق بدقة.`,
             };
 
             recsEn = [
-              'Which nurseries have ratings above 4.8?',
-              'Calculate route to closest nursery',
-              'Show public schools near my location',
+              'Which plant nurseries have the highest ratings?',
+              'Which nurseries supply desert-resilient plants?',
+              'Calculate route to nearest plant nursery',
               'Expand search to 3 km',
             ];
             recsAr = [
-              'أي الحضانات حاصلة على تقييم أعلى من 4.8؟',
-              'حساب المسار إلى أقرب حضانة',
-              'عرض المدارس الحكومية القريبة من موقعي',
+              'أي مشاتل النباتات حاصلة على أعلى تقييم؟',
+              'أي المشاتل توفر نباتات ملائمة للبيئة الصحراوية؟',
+              'حساب المسار إلى أقرب مشتل',
               'توسيع نطاق البحث إلى 3 كم',
             ];
           }

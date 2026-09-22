@@ -8,6 +8,7 @@ import {
   Building,
   Building2,
   GraduationCap,
+  Sprout,
   Trees,
   Landmark,
   Star,
@@ -37,9 +38,10 @@ import { triggerPrintDocument } from '../../utils/printUtils';
 import { GEO_FEATURES } from '../../data/mockAbuDhabiData';
 
 // Category Visual Styling Helper - Ensures UAE Hospital Icon compliance (Building2 with status dot, NEVER plain + cross)
-const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
+const getCategoryIconAndStyle = (category?: string, subcategory?: string, name?: string) => {
   const catLower = (category || '').toLowerCase();
   const subLower = (subcategory || '').toLowerCase();
+  const nameLower = (name || '').toLowerCase();
 
   // UAE-compliant healthcare icon (Building2 + active dot, never plain + cross)
   if (
@@ -62,6 +64,24 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
       bgGradient: 'bg-blue-50/90 dark:bg-slate-800/90 border-blue-200/80 dark:border-slate-700',
       badgeBg: 'bg-blue-100/80 text-[#063360] dark:bg-slate-800 dark:text-sky-300 border-blue-200 dark:border-slate-700',
       accentColor: 'from-[#063360] via-[#215A9E] to-sky-400',
+    };
+  }
+
+  // Plant Nurseries, Greenhouses & Botanical Centers (dedicated Sprout plant icon)
+  if (
+    subLower.includes('nurser') ||
+    subLower.includes('plant') ||
+    subLower.includes('botanic') ||
+    nameLower.includes('nursery') ||
+    nameLower.includes('plant') ||
+    nameLower.includes('مشتل') ||
+    nameLower.includes('مشاتل')
+  ) {
+    return {
+      icon: <Sprout className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
+      bgGradient: 'bg-emerald-50/90 dark:bg-slate-800/90 border-emerald-200/80 dark:border-slate-700',
+      badgeBg: 'bg-emerald-100/80 text-emerald-900 dark:bg-slate-800 dark:text-emerald-300 border-emerald-200 dark:border-slate-700',
+      accentColor: 'from-emerald-600 via-[#215A9E] to-teal-400',
     };
   }
 
@@ -591,7 +611,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
     if (detailFeat) {
       const isPriv = isFeaturePrivate(detailFeat);
       const isFav = isFavorite(detailFeat.nameEn);
-      const styleInfo = getCategoryIconAndStyle(detailFeat.category, detailFeat.subcategory);
+      const styleInfo = getCategoryIconAndStyle(detailFeat.category, detailFeat.subcategory, detailFeat.nameEn);
 
       return (
         <div className="mt-3.5 space-y-3 pt-3 border-t border-slate-200/80 dark:border-slate-700/80 animate-in fade-in duration-200">
@@ -1044,7 +1064,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
         const isPriv = isFeaturePrivate(detailFeat);
         const isFav = isFavorite(detailFeat.nameEn);
-        const styleInfo = getCategoryIconAndStyle(detailFeat.category, detailFeat.subcategory);
+        const styleInfo = getCategoryIconAndStyle(detailFeat.category, detailFeat.subcategory, detailFeat.nameEn);
 
         return (
           <div className="space-y-3 animate-in fade-in duration-200">
@@ -1346,7 +1366,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
             const isPriv = isFeaturePrivate(feat);
             const isFav = isFavorite(feat.nameEn);
             const dist = feat.distanceKm || 1.5;
-            const styleInfo = getCategoryIconAndStyle(feat.category, feat.subcategory);
+            const styleInfo = getCategoryIconAndStyle(feat.category, feat.subcategory, feat.nameEn);
             const isHovered = hoveredFeature && (hoveredFeature.id === feat.id || hoveredFeature.nameEn === feat.nameEn);
             const isSelected = selectedFeature && (selectedFeature.id === feat.id || selectedFeature.nameEn === feat.nameEn);
 
