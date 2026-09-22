@@ -12,7 +12,6 @@ import {
   Landmark,
   Star,
   Bookmark,
-  CheckCircle2,
   Clock,
   MapPin,
   Search,

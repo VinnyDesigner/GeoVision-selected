@@ -237,6 +237,13 @@ export const ABU_DHABI_DISTRICT_BOUNDARIES: Record<string, LocationBoundary> = {
     strokeColor: '#E11D48',
     fillColor: '#F43F5E',
     coordinates: [
+      [24.428, 54.442],
+      [24.428, 54.468],
+      [24.408, 54.462],
+      [24.410, 54.438],
+      [24.428, 54.442],
+    ],
+  },
   al_manhal: {
     id: 'al_manhal',
     nameEn: 'Al Manhal / Al Karama District Boundary',
