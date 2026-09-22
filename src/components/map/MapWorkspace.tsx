@@ -326,6 +326,20 @@ export const MapWorkspace: React.FC = () => {
     };
   }, []);
 
+  // Compute active features to display on map (combining filters and AI search results)
+  const displayFeatures = React.useMemo(() => {
+    const list = [...filteredFeatures];
+    const lastMsgWithFeatures = [...aiMessages].reverse().find(m => m.matchedFeatures && m.matchedFeatures.length > 0);
+    if (lastMsgWithFeatures && lastMsgWithFeatures.matchedFeatures) {
+      lastMsgWithFeatures.matchedFeatures.forEach((feat: GeoFeature) => {
+        if (!list.some((f) => f.id === feat.id || f.nameEn === feat.nameEn)) {
+          list.push(feat);
+        }
+      });
+    }
+    return list;
+  }, [filteredFeatures, aiMessages]);
+
   // Update Feature Markers & Layer Clusters
   useEffect(() => {
     if (!mapInstanceRef.current || !markersGroupRef.current) return;
@@ -333,43 +347,33 @@ export const MapWorkspace: React.FC = () => {
     markersGroupRef.current.clearLayers();
     const newMarkersMap = new Map<string, L.Marker>();
 
-    // ALWAYS include matchedFeatures from active AI message stream & selectedFeature
-    const displayFeatures = [...filteredFeatures];
-
-    const lastMsgWithFeatures = [...aiMessages].reverse().find(m => m.matchedFeatures && m.matchedFeatures.length > 0);
-    if (lastMsgWithFeatures && lastMsgWithFeatures.matchedFeatures) {
-      lastMsgWithFeatures.matchedFeatures.forEach((feat: GeoFeature) => {
-        if (!displayFeatures.some((f) => f.id === feat.id || f.nameEn === feat.nameEn)) {
-          displayFeatures.push(feat);
-        }
-      });
-    }
+    const activeDisplayList = [...displayFeatures];
 
     if (selectedFeature) {
-      const exists = displayFeatures.some(
+      const exists = activeDisplayList.some(
         (f) =>
           f.id === selectedFeature.id ||
           f.nameEn === selectedFeature.nameEn ||
           (f.lat === selectedFeature.lat && f.lng === selectedFeature.lng)
       );
       if (!exists) {
-        displayFeatures.push(selectedFeature);
+        activeDisplayList.push(selectedFeature);
       }
     }
 
     if (hoveredFeature) {
-      const exists = displayFeatures.some(
+      const exists = activeDisplayList.some(
         (f) =>
           f.id === hoveredFeature.id ||
           f.nameEn === hoveredFeature.nameEn ||
           (f.lat === hoveredFeature.lat && f.lng === hoveredFeature.lng)
       );
       if (!exists) {
-        displayFeatures.push(hoveredFeature);
+        activeDisplayList.push(hoveredFeature);
       }
     }
 
-    displayFeatures.forEach((feat) => {
+    activeDisplayList.forEach((feat) => {
       const isSelected =
         selectedFeature &&
         (selectedFeature.id === feat.id || selectedFeature.nameEn === feat.nameEn);
@@ -402,17 +406,7 @@ export const MapWorkspace: React.FC = () => {
     if (!selectedFeature && !hoveredFeature) {
       mapInstanceRef.current?.closePopup();
     }
-
-    // If user filtered by category and features exist but none are in current view, frame them smoothly (only when no selected feature is active)
-    if (!selectedFeature && !hoveredFeature && mapInstanceRef.current && (selectedCategoryIds.length > 0 || selectedSubcategoryIds.length > 0) && displayFeatures.length > 0) {
-      const bounds = mapInstanceRef.current.getBounds();
-      const anyInView = displayFeatures.some(f => bounds.contains([f.lat, f.lng]));
-      if (!anyInView) {
-        const featureBounds = L.latLngBounds(displayFeatures.map(f => [f.lat, f.lng]));
-        mapInstanceRef.current.fitBounds(featureBounds, { padding: [60, 60], maxZoom: 14 });
-      }
-    }
-  }, [filteredFeatures, language, selectedFeature, hoveredFeature, selectedCategoryIds, selectedSubcategoryIds]);
+  }, [displayFeatures, language, selectedFeature, hoveredFeature, selectedCategoryIds, selectedSubcategoryIds]);
 
   // Open Map Popup on Card Hover or Feature Selection
   const hoverPopupRef = useRef<L.Popup | null>(null);
@@ -484,8 +478,20 @@ export const MapWorkspace: React.FC = () => {
       } else if (selectedFeature) {
         // Smoothly pan camera slightly to feature location without zooming out
         mapInst.panTo([selectedFeature.lat, selectedFeature.lng], { animate: true, duration: 0.6 });
+      } else if (displayFeatures.length > 0) {
+        // Automatically zoom out and fit bounds to frame ALL result locations at once on the map canvas
+        const validCoords = displayFeatures
+          .filter(f => typeof f.lat === 'number' && typeof f.lng === 'number' && !isNaN(f.lat) && !isNaN(f.lng))
+          .map(f => [f.lat, f.lng] as [number, number]);
+
+        if (validCoords.length > 0) {
+          const featureBounds = L.latLngBounds(validCoords);
+          if (featureBounds.isValid()) {
+            mapInst.fitBounds(featureBounds, { padding: [70, 70], maxZoom: 14 });
+          }
+        }
       } else if (mapCenter && mapCenter.length === 2) {
-        mapInst.flyTo(mapCenter, mapZoom || 15, { animate: true, duration: 1.2 });
+        mapInst.flyTo(mapCenter, mapZoom || 12, { animate: true, duration: 1.2 });
       }
     }, 25);
 
@@ -494,7 +500,7 @@ export const MapWorkspace: React.FC = () => {
         clearTimeout(flyToTimeoutRef.current);
       }
     };
-  }, [selectedFeature, navigationTarget, userLocation, mapCenter, mapZoom]);
+  }, [selectedFeature, navigationTarget, userLocation, mapCenter, mapZoom, displayFeatures]);
 
   // Draw Dashed Navigation Route Polyline
   useEffect(() => {

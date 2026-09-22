@@ -495,8 +495,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
       const lastWithFeatures = [...session.messages].reverse().find(m => m.matchedFeatures && m.matchedFeatures.length > 0);
       if (lastWithFeatures && lastWithFeatures.matchedFeatures && lastWithFeatures.matchedFeatures.length > 0) {
         const feats = lastWithFeatures.matchedFeatures;
-        setSelectedFeature(feats[0]);
-        setMapCenterAndZoom([feats[0].lat, feats[0].lng], 15);
+        setSelectedFeature(null);
         const autoCats = Array.from(new Set(feats.map(f => f.category).filter(Boolean)));
         if (autoCats.length > 0) {
           setSelectedCategoryIds(autoCats);
@@ -4186,7 +4185,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
           }));
 
           if (matchedFeats.length > 0) {
-            setSelectedFeature(matchedFeats[0]);
+            setSelectedFeature(null);
             const autoCats = Array.from(new Set(matchedFeats.map(f => f.category).filter(Boolean)));
             if (autoCats.length > 0) {
               setSelectedCategoryIds(autoCats);
