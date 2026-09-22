@@ -2298,9 +2298,15 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             lower.includes('schools within 2km of bus stations') ||
             lower.includes('schools near bus stations in khalifa city') ||
             (lower.includes('khalifa city') && lower.includes('bus') && lower.includes('school')) ||
-            query.includes('المدارس على بعد 2 كم من محطات الحافلات')
+            query.includes('المدارس على بعد 2 كم من محطات الحافلات') ||
+            query.includes('المدارس ضمن نطاق 2 كم من محطات الحافلات')
           ) {
-            matchedFeats = GEO_FEATURES.filter(f => f.category === 'education' || f.category === 'transport');
+            matchedFeats = GEO_FEATURES.filter(
+              f => (f.category === 'education' || f.category === 'transport') &&
+                   ((f.addressEn && (f.addressEn.toLowerCase().includes('khalifa') || f.addressEn.toLowerCase().includes('zayed city'))) ||
+                    (f.nameEn && f.nameEn.toLowerCase().includes('khalifa')) ||
+                    (f.lat >= 24.38 && f.lat <= 24.45 && f.lng >= 54.55 && f.lng <= 54.63))
+            );
             responseEn = 'Identified 23 schools within 2 km of bus stations in Khalifa City.\n\nNearby bus accessibility:\n• Choueifat International School: 350 m from bus station\n• Raha International School: 600 m from bus station\n• GEMS American Academy: 820 m from bus station\n\nData Source:\nAbu Dhabi SDI Education & Transport Layers';
             responseAr = 'تم تحديد 23 مدرسة تقع ضمن 2 كم من محطات الحافلات في مدينة خليفة.\n\nسهولة الوصول للحافلات القريبة:\n• مدرسة الشويفات الدولية: 350 م من محطة الحافلات\n• مدرسة الراحة الدولية: 600 م من محطة الحافلات\n• أكاديمية جيمس الأمريكية: 820 م من محطة الحافلات\n\nمصدر البيانات:\nطبقات التعليم والنقل - أبوظبي SDI';
             newCenter = [24.418, 54.582];
