@@ -662,11 +662,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       });
                     }
                   }}
-                  className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                    isFav
-                      ? 'bg-geovision-blue text-white border-blue-600 shadow-md'
-                      : 'bg-blue-50 dark:bg-slate-800 border-blue-200 text-geovision-blue dark:text-sky-300 hover:bg-blue-100'
-                  }`}
+                  className={`p-2 rounded-xl border transition-all cursor-pointer ${isFav
+                    ? 'bg-geovision-blue text-white border-blue-600 shadow-md'
+                    : 'bg-blue-50 dark:bg-slate-800 border-blue-200 text-geovision-blue dark:text-sky-300 hover:bg-blue-100'
+                    }`}
                 >
                   <Bookmark className={`w-4 h-4 ${isFav ? 'fill-white text-white' : 'text-geovision-blue dark:text-sky-300'}`} />
                 </button>
@@ -678,11 +677,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveInlineTab('overview')}
-                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeInlineTab === 'overview'
-                    ? 'bg-geovision-blue text-white shadow-md'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                }`}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInlineTab === 'overview'
+                  ? 'bg-geovision-blue text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  }`}
               >
                 <LayoutGrid className="w-3.5 h-3.5" />
                 <span>{language === 'ar' ? 'نظرة عامة' : 'Overview'}</span>
@@ -690,11 +688,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveInlineTab('nearby')}
-                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeInlineTab === 'nearby'
-                    ? 'bg-geovision-blue text-white shadow-md'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                }`}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInlineTab === 'nearby'
+                  ? 'bg-geovision-blue text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  }`}
               >
                 <Compass className="w-3.5 h-3.5" />
                 <span>{language === 'ar' ? 'القريبة' : 'Nearby'}</span>
@@ -702,11 +699,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
               <button
                 type="button"
                 onClick={() => setActiveInlineTab('details')}
-                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                  activeInlineTab === 'details'
-                    ? 'bg-geovision-blue text-white shadow-md'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                }`}
+                className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInlineTab === 'details'
+                  ? 'bg-geovision-blue text-white shadow-md'
+                  : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                  }`}
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>{language === 'ar' ? 'الخصائص' : 'Details'}</span>
@@ -799,9 +795,8 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         key={r}
                         type="button"
                         onClick={() => setNearbyRadiusKm(r)}
-                        className={`px-2.5 py-1 rounded-xl font-black text-[10px] transition-all cursor-pointer ${
-                          nearbyRadiusKm === r ? 'bg-geovision-blue text-white shadow-2xs' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                        }`}
+                        className={`px-2.5 py-1 rounded-xl font-black text-[10px] transition-all cursor-pointer ${nearbyRadiusKm === r ? 'bg-geovision-blue text-white shadow-2xs' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                          }`}
                       >
                         {r} km
                       </button>
@@ -891,7 +886,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
   return (
     <div className="mt-3.5 space-y-2.5 pt-3 border-t border-slate-200/80 dark:border-slate-700/80">
-      
+
       {/* High-Volume Banner */}
       {isHighVolume && (
         <div className="p-2.5 rounded-xl bg-blue-50/90 dark:bg-slate-900 border border-blue-200/80 dark:border-slate-700 flex items-center justify-between gap-2 text-[11px] font-extrabold text-geovision-blue dark:text-blue-300">
@@ -954,7 +949,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
       {/* Control Bar: Filters & Quick Search Input (Single Horizontal Flex Row) */}
       <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-slate-50/90 dark:bg-slate-800/60 border border-slate-200/70 dark:border-slate-700/70">
-        
+
         {/* Left Controls: Type Dropdown + Clear Filters Button */}
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           {/* Type Filter Dropdown */}
@@ -965,11 +960,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
               onClick={() => {
                 setTypeMenuOpen(!typeMenuOpen);
               }}
-              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition-all cursor-pointer shadow-2xs ${
-                typeMenuOpen || isTypeActive
-                  ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-400/20'
-                  : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 hover:border-geovision-blue'
-              }`}
+              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-extrabold whitespace-nowrap transition-all cursor-pointer shadow-2xs ${typeMenuOpen || isTypeActive
+                ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25 ring-2 ring-blue-400/20'
+                : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200 dark:border-slate-700 hover:border-geovision-blue'
+                }`}
             >
               <span>{getTypeButtonLabel()}</span>
               <ChevronDown className={`w-3 h-3 transition-transform ${typeMenuOpen ? 'rotate-180' : ''}`} />
@@ -991,11 +985,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         setSelectedType(opt.id as any);
                         setTypeMenuOpen(false);
                       }}
-                      className={`w-full text-left rtl:text-right px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                        isSel
-                          ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25 font-black'
-                          : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-bold'
-                      }`}
+                      className={`w-full text-left rtl:text-right px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${isSel
+                        ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25 font-black'
+                        : 'text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 font-bold'
+                        }`}
                     >
                       {opt.label}
                     </button>
@@ -1072,7 +1065,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
 
             {/* Feature Detail Page Card */}
             <div className="p-4 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-3.5">
-              
+
               {/* Banner Header */}
               <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex items-start gap-3 min-w-0">
@@ -1123,9 +1116,8 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         });
                       }
                     }}
-                    className={`p-2 rounded-xl border transition-all cursor-pointer ${
-                      isFav ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 text-amber-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 text-slate-400'
-                    }`}
+                    className={`p-2 rounded-xl border transition-all cursor-pointer ${isFav ? 'bg-amber-50 dark:bg-amber-950/60 border-amber-200 text-amber-500' : 'bg-slate-50 dark:bg-slate-800 border-slate-200 text-slate-400'
+                      }`}
                   >
                     <Star className={`w-4 h-4 ${isFav ? 'fill-amber-400 text-amber-400' : ''}`} />
                   </button>
@@ -1137,11 +1129,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveInlineTab('overview')}
-                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    activeInlineTab === 'overview'
-                      ? 'bg-geovision-blue text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                  }`}
+                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInlineTab === 'overview'
+                    ? 'bg-geovision-blue text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                    }`}
                 >
                   <LayoutGrid className="w-3.5 h-3.5" />
                   <span>{language === 'ar' ? 'نظرة عامة' : 'Overview'}</span>
@@ -1149,11 +1140,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveInlineTab('nearby')}
-                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    activeInlineTab === 'nearby'
-                      ? 'bg-geovision-blue text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                  }`}
+                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInlineTab === 'nearby'
+                    ? 'bg-geovision-blue text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                    }`}
                 >
                   <Compass className="w-3.5 h-3.5" />
                   <span>{language === 'ar' ? 'القريبة' : 'Nearby'}</span>
@@ -1161,11 +1151,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                 <button
                   type="button"
                   onClick={() => setActiveInlineTab('details')}
-                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-                    activeInlineTab === 'details'
-                      ? 'bg-geovision-blue text-white shadow-md'
-                      : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
-                  }`}
+                  className={`py-2 px-3 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5 cursor-pointer ${activeInlineTab === 'details'
+                    ? 'bg-geovision-blue text-white shadow-md'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white dark:hover:bg-slate-700'
+                    }`}
                 >
                   <FileText className="w-3.5 h-3.5" />
                   <span>{language === 'ar' ? 'الخصائص' : 'Details'}</span>
@@ -1258,9 +1247,8 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                           key={r}
                           type="button"
                           onClick={() => setNearbyRadiusKm(r)}
-                          className={`px-2.5 py-1 rounded-xl font-black text-[10px] transition-all cursor-pointer ${
-                            nearbyRadiusKm === r ? 'bg-geovision-blue text-white shadow-2xs' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                          }`}
+                          className={`px-2.5 py-1 rounded-xl font-black text-[10px] transition-all cursor-pointer ${nearbyRadiusKm === r ? 'bg-geovision-blue text-white shadow-2xs' : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                            }`}
                         >
                           {r} km
                         </button>
@@ -1370,9 +1358,8 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                   setMapCenterAndZoom([feat.lat, feat.lng], 15);
                   if (currentView !== 'map') setCurrentView('map');
                 }}
-                className={`relative rounded-xl bg-white dark:bg-slate-900 border ${
-                  isHovered || isSelected ? 'border-geovision-blue dark:border-blue-400 ring-2 ring-blue-500/30' : 'border-slate-200/90 dark:border-slate-800'
-                } hover:border-geovision-blue dark:hover:border-blue-500 cursor-pointer transition-all duration-200 p-2 sm:p-2.5 space-y-1.5 shadow-2xs hover:shadow-md hover:shadow-blue-500/10 group overflow-hidden`}
+                className={`relative rounded-xl bg-white dark:bg-slate-900 border ${isHovered || isSelected ? 'border-geovision-blue dark:border-blue-400 ring-2 ring-blue-500/30' : 'border-slate-200/90 dark:border-slate-800'
+                  } hover:border-geovision-blue dark:hover:border-blue-500 cursor-pointer transition-all duration-200 p-2 sm:p-2.5 space-y-1.5 shadow-2xs hover:shadow-md hover:shadow-blue-500/10 group overflow-hidden`}
               >
                 {/* Top Category Accent Line */}
                 <div className={`absolute top-0 left-0 right-0 h-0.5 bg-linear-to-r ${styleInfo.accentColor} opacity-75 group-hover:opacity-100 transition-opacity`} />
@@ -1402,11 +1389,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       <span>4.8</span>
                     </span>
                     <span
-                      className={`px-1.5 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wide border ${
-                        isPriv
-                          ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
-                          : 'bg-blue-50 text-geovision-blue dark:bg-slate-800 dark:text-blue-300 border-blue-200/80 dark:border-slate-700'
-                      }`}
+                      className={`px-1.5 py-0.5 rounded-md text-[8.5px] font-black uppercase tracking-wide border ${isPriv
+                        ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200 border-slate-200 dark:border-slate-700'
+                        : 'bg-blue-50 text-geovision-blue dark:bg-slate-800 dark:text-blue-300 border-blue-200/80 dark:border-slate-700'
+                        }`}
                     >
                       {isPriv ? 'Private' : 'Public'}
                     </span>
@@ -1474,11 +1460,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                           if (appState.setNavigationTarget) appState.setNavigationTarget(feat);
                         }
                       }}
-                      className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border text-[9.5px] font-extrabold transition-all cursor-pointer ${
-                        expandedDirectionsId === feat.id
-                          ? 'bg-geovision-blue text-white border-blue-600'
-                          : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white'
-                      }`}
+                      className={`flex items-center gap-0.5 px-1.5 py-0.5 rounded-md border text-[9.5px] font-extrabold transition-all cursor-pointer ${expandedDirectionsId === feat.id
+                        ? 'bg-geovision-blue text-white border-blue-600'
+                        : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-blue-300 hover:bg-geovision-blue hover:text-white'
+                        }`}
                       title={language === 'ar' ? 'الاتجاهات' : 'Directions'}
                     >
                       <Navigation className="w-2.5 h-2.5" />
@@ -1508,11 +1493,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                           });
                         }
                       }}
-                      className={`p-1 rounded-md border transition-all cursor-pointer ${
-                        isFav
-                          ? 'bg-geovision-blue text-white border-blue-600 shadow-sm'
-                          : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-sky-300 hover:bg-blue-100'
-                      }`}
+                      className={`p-1 rounded-md border transition-all cursor-pointer ${isFav
+                        ? 'bg-geovision-blue text-white border-blue-600 shadow-sm'
+                        : 'bg-blue-50 dark:bg-slate-800 border-blue-200/80 dark:border-slate-700 text-geovision-blue dark:text-sky-300 hover:bg-blue-100'
+                        }`}
                       title={isFav ? 'Favorite' : 'Add to favorite'}
                     >
                       <Bookmark className={`w-3 h-3 ${isFav ? 'fill-white text-white' : 'text-geovision-blue dark:text-sky-300'}`} />
@@ -1565,11 +1549,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       <button
                         type="button"
                         onClick={() => setActiveInlineTab('overview')}
-                        className={`py-1.5 px-2 rounded-lg text-[10.5px] font-black transition-all flex items-center justify-center gap-1.5 min-w-0 ${
-                          activeInlineTab === 'overview'
-                            ? 'bg-geovision-blue text-white shadow-2xs'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
+                        className={`py-1.5 px-2 rounded-lg text-[10.5px] font-black transition-all flex items-center justify-center gap-1.5 min-w-0 ${activeInlineTab === 'overview'
+                          ? 'bg-geovision-blue text-white shadow-2xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
                       >
                         <LayoutGrid className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{language === 'ar' ? 'نظرة عامة' : 'Overview'}</span>
@@ -1577,11 +1560,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       <button
                         type="button"
                         onClick={() => setActiveInlineTab('nearby')}
-                        className={`py-1.5 px-2 rounded-lg text-[10.5px] font-black transition-all flex items-center justify-center gap-1.5 min-w-0 ${
-                          activeInlineTab === 'nearby'
-                            ? 'bg-geovision-blue text-white shadow-2xs'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
+                        className={`py-1.5 px-2 rounded-lg text-[10.5px] font-black transition-all flex items-center justify-center gap-1.5 min-w-0 ${activeInlineTab === 'nearby'
+                          ? 'bg-geovision-blue text-white shadow-2xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
                       >
                         <Compass className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{language === 'ar' ? 'القريبة' : 'Nearby'}</span>
@@ -1589,11 +1571,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       <button
                         type="button"
                         onClick={() => setActiveInlineTab('details')}
-                        className={`py-1.5 px-2 rounded-lg text-[10.5px] font-black transition-all flex items-center justify-center gap-1.5 min-w-0 ${
-                          activeInlineTab === 'details'
-                            ? 'bg-geovision-blue text-white shadow-2xs'
-                            : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                        }`}
+                        className={`py-1.5 px-2 rounded-lg text-[10.5px] font-black transition-all flex items-center justify-center gap-1.5 min-w-0 ${activeInlineTab === 'details'
+                          ? 'bg-geovision-blue text-white shadow-2xs'
+                          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+                          }`}
                       >
                         <FileText className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{language === 'ar' ? 'الخصائص' : 'Details'}</span>
@@ -1658,7 +1639,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                                 {language === 'ar' ? 'القطاع والنوع' : 'Sector & Entity Type'}
                               </span>
                               <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px] block">
-                                {isPriv 
+                                {isPriv
                                   ? (language === 'ar' ? 'قطاع خاص معتمد' : 'Authorized Private Entity')
                                   : (language === 'ar' ? 'قطاع حكومي / عام' : 'Public / Government Sector')}
                               </span>
@@ -1673,7 +1654,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                                 {language === 'ar' ? 'اعتماد SDI الجغرافي' : 'SDI Spatial Certification'}
                               </span>
                               <span className="font-bold text-purple-600 dark:text-purple-400 text-[11px] block">
-                                {feat.isAuthoritative 
+                                {feat.isAuthoritative
                                   ? (language === 'ar' ? 'معلم جغرافي رسمي موثوق (Tier-1)' : 'Verified SDI Authoritative Tier-1')
                                   : (language === 'ar' ? 'طبقة جغرافية قياسية' : 'Standard SDI Spatial Layer')}
                               </span>
@@ -1723,11 +1704,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                                 key={r}
                                 type="button"
                                 onClick={() => setNearbyRadiusKm(r)}
-                                className={`px-2 py-0.5 rounded-lg font-black text-[10px] transition-all ${
-                                  nearbyRadiusKm === r
-                                    ? 'bg-geovision-blue text-white shadow-2xs'
-                                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-                                }`}
+                                className={`px-2 py-0.5 rounded-lg font-black text-[10px] transition-all ${nearbyRadiusKm === r
+                                  ? 'bg-geovision-blue text-white shadow-2xs'
+                                  : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
+                                  }`}
                               >
                                 {r} km
                               </button>
@@ -1960,7 +1940,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
       {showAnalytics && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[9999] flex items-center justify-center pt-20 sm:pt-24 pb-6 px-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl max-w-3xl w-full shadow-2xl flex flex-col max-h-[calc(100vh-120px)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            
+
             {/* FIXED HEADER */}
             <div className="shrink-0 p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 rounded-t-3xl">
               <div className="flex items-center gap-3">
@@ -2139,7 +2119,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
       {showPrintReport && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[9999] flex items-center justify-center pt-20 sm:pt-24 pb-6 px-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl max-w-5xl w-full shadow-2xl flex flex-col max-h-[calc(100vh-120px)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            
+
             {/* FIXED HEADER WITH CONTROLS & LAYOUT SWITCHER */}
             <div className="shrink-0 p-4 sm:p-6 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-t-3xl space-y-4">
               {/* Header Title Row */}
@@ -2177,11 +2157,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                   <button
                     type="button"
                     onClick={() => setPrintTemplate('briefing')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                      printTemplate === 'briefing'
-                        ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${printTemplate === 'briefing'
+                      ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                      }`}
                   >
                     <BarChart2 className="w-3.5 h-3.5" />
                     <span>{language === 'ar' ? 'تقرير ملخص إيجازي' : 'Executive Briefing'}</span>
@@ -2190,11 +2169,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                   <button
                     type="button"
                     onClick={() => setPrintTemplate('ledger')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                      printTemplate === 'ledger'
-                        ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${printTemplate === 'ledger'
+                      ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                      }`}
                   >
                     <FileText className="w-3.5 h-3.5" />
                     <span>{language === 'ar' ? 'سجل البيانات المكانية' : 'Spatial Data Ledger'}</span>
@@ -2203,11 +2181,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                   <button
                     type="button"
                     onClick={() => setPrintTemplate('map')}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${
-                      printTemplate === 'map'
-                        ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer whitespace-nowrap ${printTemplate === 'map'
+                      ? 'bg-geovision-blue text-white shadow-md shadow-blue-500/25'
+                      : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-700/60'
+                      }`}
                   >
                     <Compass className="w-3.5 h-3.5" />
                     <span>{language === 'ar' ? 'خريطة النطاق الجغرافي' : 'GIS Map & Extent Canvas'}</span>
@@ -2220,22 +2197,20 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                     <button
                       type="button"
                       onClick={() => setPrintOrientation('portrait')}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
-                        printOrientation === 'portrait'
-                          ? 'bg-white dark:bg-slate-700 text-geovision-blue dark:text-blue-300 shadow-2xs'
-                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                      }`}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${printOrientation === 'portrait'
+                        ? 'bg-white dark:bg-slate-700 text-geovision-blue dark:text-blue-300 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                        }`}
                     >
                       📄 Portrait
                     </button>
                     <button
                       type="button"
                       onClick={() => setPrintOrientation('landscape')}
-                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${
-                        printOrientation === 'landscape'
-                          ? 'bg-white dark:bg-slate-700 text-geovision-blue dark:text-blue-300 shadow-2xs'
-                          : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                      }`}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all cursor-pointer ${printOrientation === 'landscape'
+                        ? 'bg-white dark:bg-slate-700 text-geovision-blue dark:text-blue-300 shadow-2xs'
+                        : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                        }`}
                     >
                       📑 Landscape
                     </button>
@@ -2257,9 +2232,8 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
             <div className="flex-1 overflow-y-auto p-6 bg-slate-100/90 dark:bg-slate-950/90">
               <div
                 id="sdi-printable-report"
-                className={`mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl rounded-2xl p-6 sm:p-8 space-y-6 text-slate-900 dark:text-slate-100 transition-all duration-300 ${
-                  printOrientation === 'landscape' ? 'max-w-4xl' : 'max-w-2xl'
-                }`}
+                className={`mx-auto bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-2xl rounded-2xl p-6 sm:p-8 space-y-6 text-slate-900 dark:text-slate-100 transition-all duration-300 ${printOrientation === 'landscape' ? 'max-w-4xl' : 'max-w-2xl'
+                  }`}
               >
                 {/* A4 REPORT SHEET TOP EMBLEM BANNER */}
                 <div className="border-b-2 border-slate-900 dark:border-slate-700 pb-5 flex items-start justify-between gap-4">
@@ -2545,7 +2519,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
               >
                 {language === 'ar' ? 'إلغاء' : 'Close Studio'}
               </button>
-              
+
               <div className="flex items-center gap-2">
                 <button
                   type="button"
@@ -2577,7 +2551,7 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
       {activeRouteTarget && (
         <div className="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-[9999] flex items-center justify-center pt-20 sm:pt-24 pb-6 px-4">
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl flex flex-col max-h-[calc(100vh-120px)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            
+
             {/* FIXED HEADER */}
             <div className="shrink-0 p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-white dark:bg-slate-900 rounded-t-3xl">
               <div className="flex items-center gap-3">
