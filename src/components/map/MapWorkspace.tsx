@@ -16,7 +16,7 @@ import { createGeoVisionMarkerIcon } from '../../utils/markerUtils';
 import { buildSpatialSnapshot } from '../../utils/spatialSnapshotUtils';
 import { ensureAbuDhabiLocation, ABU_DHABI_DEFAULT_CENTER } from '../../utils/locationUtils';
 import { resolveLocationBoundary, ABU_DHABI_DISTRICT_BOUNDARIES, type LocationBoundary } from '../../utils/boundaryUtils';
-import { X, Layers, ChevronUp, MapPin, Scan } from 'lucide-react';
+import { X, Layers, ChevronUp } from 'lucide-react';
 
 export const MapWorkspace: React.FC = () => {
   const {
@@ -60,11 +60,6 @@ export const MapWorkspace: React.FC = () => {
   const userLocationMarkerRef = useRef<L.Marker | null>(null);
   const boundaryGroupRef = useRef<L.LayerGroup | null>(null);
 
-  const [activeBoundary, setActiveBoundary] = useState<{
-    district: LocationBoundary | null;
-    parcel: LocationBoundary | null;
-    feature: GeoFeature;
-  } | null>(null);
 
   const [aiPanelOpen, setAiPanelOpen] = useState(true);
   const [panelWidth, setPanelWidth] = useState<number>(480);
@@ -676,7 +671,6 @@ export const MapWorkspace: React.FC = () => {
     boundaryGroup.clearLayers();
 
     if (displayFeatures.length === 0 && !selectedFeature && !hoveredFeature) {
-      setActiveBoundary(null);
       return;
     }
 
@@ -763,10 +757,8 @@ export const MapWorkspace: React.FC = () => {
     }
 
     // Render parcel boundary when a specific feature is active (hovered or selected)
-    let activeParcelBoundary: LocationBoundary | null = null;
     if (activeFeat) {
       const { parcelBoundary } = resolveLocationBoundary(activeFeat);
-      activeParcelBoundary = parcelBoundary;
 
       if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
         const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
@@ -804,19 +796,7 @@ export const MapWorkspace: React.FC = () => {
         boundaryGroup.addLayer(parcelPolygon);
       }
     }
-
-    // Set HUD capsule active boundary state
-    if (singleDistrict || activeParcelBoundary) {
-      setActiveBoundary({
-        district: singleDistrict,
-        parcel: activeParcelBoundary,
-        feature: activeFeat || displayFeatures[0],
-      });
-    } else {
-      setActiveBoundary(null);
-    }
   }, [selectedFeature, hoveredFeature, displayFeatures, aiMessages, language]);
-
   const tempShapeRef = useRef<L.Layer | null>(null);
   const tempPointsRef = useRef<L.LatLng[]>([]);
   const isDrawingRef = useRef<boolean>(false);
@@ -1203,96 +1183,7 @@ export const MapWorkspace: React.FC = () => {
         {/* Print Modal */}
         {!pureMapMode && <PrintMapModal />}
 
-        {/* Active Location Boundary Highlight HUD Capsule */}
-        {!pureMapMode && activeBoundary && (
-          <div className="absolute top-3.5 left-1/2 -translate-x-1/2 z-[600] max-w-[94vw] sm:max-w-xl animate-in fade-in slide-in-from-top-3 duration-250">
-            <div className="glass-level-3 px-3.5 py-2.5 sm:px-4 sm:py-3 rounded-2xl border border-blue-400/50 dark:border-blue-500/30 shadow-2xl shadow-blue-950/20 flex items-center justify-between gap-3 backdrop-blur-xl bg-white/95 dark:bg-slate-900/95">
-              
-              {/* Left Info: Radar Pin + Title + Area */}
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-blue-500/15 dark:bg-blue-400/20 border border-blue-500/30 flex items-center justify-center shrink-0">
-                  <span className="relative flex h-3 w-3">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-geovision-blue dark:bg-sky-400"></span>
-                  </span>
-                </div>
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs sm:text-sm font-black text-slate-900 dark:text-white truncate">
-                      {activeBoundary.district
-                        ? (language === 'ar' ? activeBoundary.district.nameAr : activeBoundary.district.nameEn)
-                        : (language === 'ar' ? activeBoundary.feature.nameAr : activeBoundary.feature.nameEn)}
-                    </span>
-                    {activeBoundary.district && (
-                      <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200 border border-blue-200 dark:border-blue-700 shrink-0">
-                        {activeBoundary.district.areaKm2} km²
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold truncate">
-                    {language === 'ar' ? 'تم تمييز حدود النطاق الجغرافي' : 'Location boundary highlighted'}
-                  </p>
-                </div>
-              </div>
-
-              {/* Action Buttons: Fit Boundary, Focus Pin, Dismiss */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {activeBoundary.district && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (mapInstanceRef.current && activeBoundary.district) {
-                        mapInstanceRef.current.flyToBounds(
-                          L.latLngBounds(activeBoundary.district.coordinates),
-                          { padding: [70, 70], maxZoom: 15, duration: 1.0 }
-                        );
-                      }
-                    }}
-                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all text-xs font-black cursor-pointer border border-blue-200/80 dark:border-slate-700"
-                    title={language === 'ar' ? 'معاينة النطاق كاملاً' : 'Fit full sector boundary'}
-                  >
-                    <Scan className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{language === 'ar' ? 'نطاق القطاع' : 'Fit Boundary'}</span>
-                  </button>
-                )}
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (mapInstanceRef.current && activeBoundary.feature) {
-                      mapInstanceRef.current.flyTo(
-                        [activeBoundary.feature.lat, activeBoundary.feature.lng],
-                        16.5,
-                        { animate: true, duration: 1.0 }
-                      );
-                    }
-                  }}
-                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-blue-50 dark:bg-slate-800 text-geovision-blue dark:text-blue-300 hover:bg-blue-600 hover:text-white dark:hover:bg-blue-600 transition-all text-xs font-black cursor-pointer border border-blue-200/80 dark:border-slate-700"
-                  title={language === 'ar' ? 'التركيز على موقع المعلم' : 'Focus location pin'}
-                >
-                  <MapPin className="w-3.5 h-3.5" />
-                  <span className="hidden sm:inline">{language === 'ar' ? 'الموقع' : 'Focus Pin'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setActiveBoundary(null);
-                    if (boundaryGroupRef.current) {
-                      boundaryGroupRef.current.clearLayers();
-                    }
-                  }}
-                  className="p-1.5 rounded-xl text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer"
-                  title={language === 'ar' ? 'إغلاق التمييز' : 'Dismiss boundary'}
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-            </div>
-          </div>
-        )}
 
         {/* Bottom Coordinates & Scale Capsule Status Bar */}
         {!pureMapMode && (
