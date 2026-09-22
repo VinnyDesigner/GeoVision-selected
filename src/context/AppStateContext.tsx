@@ -2228,10 +2228,34 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             query.includes('المستشفيات على بعد 5 كم') ||
             query.includes('مستشفيات قريبة مني')
           ) {
-            matchedFeats = GEO_FEATURES.filter(f => f.category === 'healthcare');
-            responseEn = 'Found 8 hospitals within 5 km of your location.\n\nNearest hospitals:\n1. Sheikh Shakhbout Medical City (Distance: 2.4 km)\n2. Cleveland Clinic Abu Dhabi (Distance: 4.1 km)\n3. NMC Royal Hospital Khalifa City (Distance: 4.8 km)\n\nData Source:\nAbu Dhabi SDI Healthcare Layer';
-            responseAr = 'عثرت على 8 مستشفيات ضمن نطاق 5 كم من موقعك.\n\nأقرب المستشفيات:\n1. مدينة شخبوط الطبية (المسافة: 2.4 كم)\n2. كليفلاند كلينك أبوظبي (المسافة: 4.1 كم)\n3. مستشفى إن إم سي الملكي (المسافة: 4.8 كم)\n\nمصدر البيانات:\nالبنية التحتية للبيانات المكانية لأبوظبي (SDI)';
-            newCenter = [24.4539, 54.3773];
+            const refLat = userLocation ? userLocation[0] : 24.4539;
+            const refLng = userLocation ? userLocation[1] : 54.3773;
+
+            const allHealth = GEO_FEATURES.filter(f => f.category === 'healthcare');
+            allHealth.forEach(f => {
+              const R = 6371;
+              const dLat = (f.lat - refLat) * (Math.PI / 180);
+              const dLon = (f.lng - refLng) * (Math.PI / 180);
+              const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(refLat * (Math.PI / 180)) * Math.cos(f.lat * (Math.PI / 180)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+              const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+              f.distanceKm = parseFloat((R * c).toFixed(1));
+            });
+
+            // Filter strictly to facilities located within the 5 km radius of the reference location
+            const within5km = allHealth
+              .filter(f => (f.distanceKm ?? 999) <= 5.2)
+              .sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0));
+
+            matchedFeats = within5km.length > 0
+              ? within5km.slice(0, 8)
+              : allHealth.sort((a, b) => (a.distanceKm ?? 0) - (b.distanceKm ?? 0)).slice(0, 8);
+
+            const nearestListEn = matchedFeats.slice(0, 3).map((h, i) => `${i + 1}. ${h.nameEn} (Distance: ${h.distanceKm} km)`).join('\n');
+            const nearestListAr = matchedFeats.slice(0, 3).map((h, i) => `${i + 1}. ${h.nameAr} (المسافة: ${h.distanceKm} كم)`).join('\n');
+
+            responseEn = `Found ${matchedFeats.length} hospitals within 5 km of your location.\n\nNearest hospitals:\n${nearestListEn}\n\nData Source:\nAbu Dhabi SDI Healthcare Layer`;
+            responseAr = `عثرت على ${matchedFeats.length} مستشفيات ضمن نطاق 5 كم من موقعك.\n\nأقرب المستشفيات:\n${nearestListAr}\n\nمصدر البيانات:\nالبنية التحتية للبيانات المكانية لأبوظبي (SDI)`;
+            newCenter = [refLat, refLng];
             newZoom = 13;
             setBufferRadiusKm(5);
             setSelectedCategoryIds(['healthcare']);

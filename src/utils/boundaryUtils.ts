@@ -373,3 +373,114 @@ export function resolveLocationBoundary(
 
   return { districtBoundary, parcelBoundary };
 }
+
+/**
+ * Generates a single continuous unified boundary for the entire search result list.
+ * If bufferKm is specified (e.g. 5 km search), creates a radial buffer boundary around the center.
+ * Otherwise, generates a continuous smooth enclosing boundary encompassing all result points.
+ */
+export function generateUnifiedResultBoundary(
+  features: { lat: number; lng: number; nameEn?: string; nameAr?: string }[],
+  options?: {
+    bufferRadiusKm?: number;
+    center?: [number, number];
+    titleEn?: string;
+    titleAr?: string;
+  }
+): LocationBoundary | null {
+  if (!features || features.length === 0) return null;
+
+  const validFeats = features.filter(
+    (f) => typeof f.lat === 'number' && typeof f.lng === 'number' && !isNaN(f.lat) && !isNaN(f.lng)
+  );
+  if (validFeats.length === 0) return null;
+
+  // 1. Proximity / Radial Search Buffer Boundary
+  if (options?.bufferRadiusKm && options.bufferRadiusKm > 0) {
+    const centerLat = options.center ? options.center[0] : 24.4539;
+    const centerLng = options.center ? options.center[1] : 54.3773;
+    const radiusKm = options.bufferRadiusKm;
+
+    const numPoints = 64;
+    const coordinates: [number, number][] = [];
+    for (let i = 0; i <= numPoints; i++) {
+      const angle = (i * 2 * Math.PI) / numPoints;
+      const dLat = (radiusKm / 111) * Math.cos(angle);
+      const dLng = (radiusKm / (111 * Math.cos(centerLat * (Math.PI / 180)))) * Math.sin(angle);
+      coordinates.push([centerLat + dLat, centerLng + dLng]);
+    }
+
+    const area = Number((Math.PI * radiusKm * radiusKm).toFixed(1));
+
+    return {
+      id: `unified-buffer-${radiusKm}km`,
+      nameEn: options.titleEn || `Search Area Boundary (${radiusKm.toFixed(1)} km Radius)`,
+      nameAr: options.titleAr || `نطاق البحث الجغرافي (${radiusKm.toFixed(1)} كم)`,
+      typeEn: 'Proximity Search Boundary Zone',
+      typeAr: 'نطاق بحث مكاني دائري',
+      center: [centerLat, centerLng],
+      coordinates,
+      areaKm2: area,
+      strokeColor: '#2563EB',
+      fillColor: '#3B82F6',
+    };
+  }
+
+  // 2. Single Feature Fallback
+  if (validFeats.length === 1) {
+    const { districtBoundary, parcelBoundary } = resolveLocationBoundary(validFeats[0]);
+    return districtBoundary || parcelBoundary;
+  }
+
+  // 3. Multi-Feature Unified Enclosing Boundary
+  let minLat = Infinity, maxLat = -Infinity;
+  let minLng = Infinity, maxLng = -Infinity;
+  validFeats.forEach((f) => {
+    if (f.lat < minLat) minLat = f.lat;
+    if (f.lat > maxLat) maxLat = f.lat;
+    if (f.lng < minLng) minLng = f.lng;
+    if (f.lng > maxLng) maxLng = f.lng;
+  });
+
+  const centerLat = (minLat + maxLat) / 2;
+  const centerLng = (minLng + maxLng) / 2;
+
+  // Add 15% padding margin (minimum 0.008 deg ~ 900m) around the outermost points
+  const latPad = Math.max((maxLat - minLat) * 0.15, 0.008);
+  const lngPad = Math.max((maxLng - minLng) * 0.15, 0.008);
+
+  const pMinLat = minLat - latPad;
+  const pMaxLat = maxLat + latPad;
+  const pMinLng = minLng - lngPad;
+  const pMaxLng = maxLng + lngPad;
+
+  // Generate an 8-sided smooth polygon perimeter enclosing all features
+  const coordinates: [number, number][] = [
+    [pMaxLat, centerLng],
+    [pMaxLat - latPad * 0.4, pMaxLng - lngPad * 0.4],
+    [centerLat, pMaxLng],
+    [pMinLat + latPad * 0.4, pMaxLng - lngPad * 0.4],
+    [pMinLat, centerLng],
+    [pMinLat + latPad * 0.4, pMinLng + lngPad * 0.4],
+    [centerLat, pMinLng],
+    [pMaxLat - latPad * 0.4, pMinLng + lngPad * 0.4],
+    [pMaxLat, centerLng],
+  ];
+
+  const widthKm = (pMaxLng - pMinLng) * 111 * Math.cos(centerLat * (Math.PI / 180));
+  const heightKm = (pMaxLat - pMinLat) * 111;
+  const approxArea = Number((widthKm * heightKm * 0.85).toFixed(1));
+
+  return {
+    id: `unified-result-boundary-${validFeats.length}`,
+    nameEn: options?.titleEn || `Location Search Boundary (${validFeats.length} Results)`,
+    nameAr: options?.titleAr || `نطاق نتائج البحث الجغرافي (${validFeats.length} موقع)`,
+    typeEn: 'Unified Spatial Search Boundary',
+    typeAr: 'نطاق جغرافي شامل للنتائج',
+    center: [centerLat, centerLng],
+    coordinates,
+    areaKm2: approxArea,
+    strokeColor: '#2563EB',
+    fillColor: '#3B82F6',
+  };
+}
