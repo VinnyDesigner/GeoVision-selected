@@ -117,6 +117,8 @@ const getCategoryIconAndStyle = (category?: string, subcategory?: string) => {
     catLower.includes('mall') ||
     subLower.includes('mall') ||
     subLower.includes('hotel')
+
+
   ) {
     return {
       icon: <Sparkles className="w-4 h-4 text-[#215A9E] dark:text-sky-300" />,
