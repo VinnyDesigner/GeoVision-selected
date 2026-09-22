@@ -682,8 +682,8 @@ export function isBoundaryRequestedInQuery(queryContext?: string): boolean {
 }
 
 /**
- * Resolves a location boundary ONLY when the user's question requests one.
- * Prevents unsolicited boundary polygons from rendering when the user only asked for POIs.
+ * Resolves a location boundary based on the location and results.
+ * Guarantees that for any location or search results, the appropriate location boundary is displayed.
  */
 export function resolveBoundaryForFeatures(
   features: { lat: number; lng: number; nameEn?: string; nameAr?: string; addressEn?: string }[],
@@ -694,11 +694,6 @@ export function resolveBoundaryForFeatures(
   );
 
   if (validFeats.length === 0) return null;
-
-  // STRICT REQUIREMENT: Boundaries must ONLY be displayed when based on the user's question
-  if (!isBoundaryRequestedInQuery(queryContext)) {
-    return null;
-  }
 
   const q = (queryContext || '').toLowerCase();
 
@@ -745,7 +740,7 @@ export function resolveBoundaryForFeatures(
     }
   }
 
-  // 3. Fallback enclosing perimeter ONLY when the user explicitly asked for a boundary
+  // 3. Continuous enclosing boundary around the location results
   return generateUnifiedResultBoundary(validFeats);
 }
 
