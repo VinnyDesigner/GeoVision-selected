@@ -377,6 +377,8 @@ export const MapWorkspace: React.FC = () => {
       marker.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
         setSelectedFeature(feat);
+        setAiPanelOpen(true);
+        window.dispatchEvent(new CustomEvent('geovision:openFeatureDetails', { detail: feat }));
       });
 
       marker.on('mouseover', () => {
@@ -443,6 +445,16 @@ export const MapWorkspace: React.FC = () => {
       .setLatLng([activeFeat.lat, activeFeat.lng])
       .setContent(popupContent)
       .openOn(mapInstanceRef.current);
+
+    const popupElem = hoverPopupRef.current.getElement();
+    if (popupElem) {
+      popupElem.style.cursor = 'pointer';
+      popupElem.onclick = () => {
+        setSelectedFeature(activeFeat);
+        setAiPanelOpen(true);
+        window.dispatchEvent(new CustomEvent('geovision:openFeatureDetails', { detail: activeFeat }));
+      };
+    }
   }, [hoveredFeature, selectedFeature, language]);
 
   // Single Unified Map Camera Control Effect with Frame Coalescing

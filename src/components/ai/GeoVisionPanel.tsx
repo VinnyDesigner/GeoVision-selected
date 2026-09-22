@@ -285,6 +285,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
     setGuestPromptOpen,
     showToast,
     t,
+    selectedFeature,
     setSelectedFeature,
     mapCenter,
     setMapCenterAndZoom,
@@ -305,6 +306,28 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
   const [activeDetailFeature, setActiveDetailFeature] = useState<GeoFeature | null>(null);
   const [activeDetailTab, setActiveDetailTab] = useState<'overview' | 'nearby' | 'details'>('overview');
   const [nearbyRadiusKm, setNearbyRadiusKm] = useState<number>(3);
+
+  // Automatically open feature details page in chat when user clicks a pointer on the map
+  useEffect(() => {
+    if (selectedFeature) {
+      setActiveDetailFeature(selectedFeature);
+      setActiveDetailTab('overview');
+    }
+  }, [selectedFeature]);
+
+  useEffect(() => {
+    const handleOpenDetails = (e: Event) => {
+      const customEvt = e as CustomEvent<GeoFeature>;
+      if (customEvt.detail) {
+        setActiveDetailFeature(customEvt.detail);
+        setActiveDetailTab('overview');
+      }
+    };
+    window.addEventListener('geovision:openFeatureDetails', handleOpenDetails);
+    return () => {
+      window.removeEventListener('geovision:openFeatureDetails', handleOpenDetails);
+    };
+  }, []);
 
   const handleStartEdit = (msgId: string, currentText: string) => {
     setEditingMsgId(msgId);
@@ -577,7 +600,10 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
           <div className="p-3 px-4 bg-white/95 dark:bg-slate-900/95 border-b border-slate-200/80 dark:border-slate-800 backdrop-blur-md flex items-center justify-between gap-3 shrink-0 shadow-2xs z-10">
             <button
               type="button"
-              onClick={() => setActiveDetailFeature(null)}
+              onClick={() => {
+                setActiveDetailFeature(null);
+                setSelectedFeature(null);
+              }}
               className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-geovision-blue hover:bg-[#063360] text-white text-xs font-black transition-all cursor-pointer shadow-md shadow-blue-500/20 active:scale-95"
             >
               <ArrowLeft className="w-4 h-4 rtl:rotate-180 text-white" />
