@@ -639,8 +639,51 @@ export function isPointInsidePolygon(pt: [number, number], polygon: [number, num
 }
 
 /**
- * Universal boundary resolution applicable for ANY type of question the user asks.
- * Always guarantees that a single, continuous, elegant boundary is highlighted around the results.
+ * Determines whether the user's question explicitly or contextually requested
+ * a geographic boundary, sector perimeter, or district area polygon.
+ */
+export function isBoundaryRequestedInQuery(queryContext?: string): boolean {
+  if (!queryContext) return false;
+  const q = queryContext.toLowerCase();
+
+  // 1. Explicit boundary keywords in English or Arabic
+  const explicitBoundaryTerms = [
+    'boundary',
+    'boundaries',
+    'border',
+    'borders',
+    'perimeter',
+    'sector boundary',
+    'district boundary',
+    'zone boundary',
+    'حدود',
+    'نطاق جغرافي',
+    'مخطط',
+    'قطاع جغرافي',
+  ];
+  if (explicitBoundaryTerms.some((term) => q.includes(term))) {
+    return true;
+  }
+
+  // 2. Specific recognized district/community queries where a boundary is designated
+  // (e.g. "nurseries in alreef", "nurseries with in 2km in alreef", "al reef boundary", "khalifa city boundary")
+  if (
+    ((q.includes('alreef') || q.includes('al reef') || q.includes('الريف')) && !q.includes('coral')) ||
+    (q.includes('khalifa city') && (q.includes('boundary') || q.includes('sector') || q.includes('حدود') || q.includes('in khalifa city') || q.includes('في مدينة خليفة'))) ||
+    (q.includes('yas island') && (q.includes('boundary') || q.includes('zone') || q.includes('حدود') || q.includes('in yas') || q.includes('في جزيرة ياس'))) ||
+    (q.includes('reem island') && (q.includes('boundary') || q.includes('حدود') || q.includes('in reem') || q.includes('في جزيرة الريم'))) ||
+    (q.includes('saadiyat') && (q.includes('boundary') || q.includes('حدود') || q.includes('in saadiyat') || q.includes('في السعديات'))) ||
+    (q.includes('musaffah') && (q.includes('boundary') || q.includes('حدود') || q.includes('in musaffah') || q.includes('في مصفح')))
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Resolves a location boundary ONLY when the user's question requests one.
+ * Prevents unsolicited boundary polygons from rendering when the user only asked for POIs.
  */
 export function resolveBoundaryForFeatures(
   features: { lat: number; lng: number; nameEn?: string; nameAr?: string; addressEn?: string }[],
@@ -652,9 +695,17 @@ export function resolveBoundaryForFeatures(
 
   if (validFeats.length === 0) return null;
 
+  // STRICT REQUIREMENT: Boundaries must ONLY be displayed when based on the user's question
+  if (!isBoundaryRequestedInQuery(queryContext)) {
+    return null;
+  }
+
   const q = (queryContext || '').toLowerCase();
 
   // 1. Explicit query district intent (checking both English & Arabic)
+  if ((q.includes('alreef') || q.includes('al reef') || q.includes('الريف')) && !q.includes('coral')) {
+    return ABU_DHABI_DISTRICT_BOUNDARIES.al_reef;
+  }
   if (
     (q.includes('khalifa city') || q.includes('مدينة خليفة')) &&
     !q.includes('medical') &&
@@ -677,9 +728,6 @@ export function resolveBoundaryForFeatures(
   if (q.includes('zayed city') || q.includes('مدينة زايد')) {
     return ABU_DHABI_DISTRICT_BOUNDARIES.zayed_city;
   }
-  if ((q.includes('alreef') || q.includes('reef') || q.includes('الريف')) && !q.includes('coral')) {
-    return ABU_DHABI_DISTRICT_BOUNDARIES.al_reef;
-  }
 
   // 2. Spatial matching: Find if an official district boundary naturally encloses >= 70% of the results
   const districtEntries = Object.entries(ABU_DHABI_DISTRICT_BOUNDARIES);
@@ -697,8 +745,7 @@ export function resolveBoundaryForFeatures(
     }
   }
 
-  // 3. Universal Fallback: Continuous enclosing boundary around 100% of result features
-  // Guarantees that for ANY question the user asks, a boundary is NEVER missing!
+  // 3. Fallback enclosing perimeter ONLY when the user explicitly asked for a boundary
   return generateUnifiedResultBoundary(validFeats);
 }
 

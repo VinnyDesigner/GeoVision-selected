@@ -721,12 +721,11 @@ export const MapWorkspace: React.FC = () => {
     const activeFeat = hoveredFeature || selectedFeature;
 
     const lastUserMsg = [...aiMessages].reverse().find(m => m.sender === 'user');
-    const lastAiMsg = [...aiMessages].reverse().find(m => m.matchedFeatures && m.matchedFeatures.length > 0);
-    const queryContext = `${lastUserMsg?.textEn || ''} ${lastAiMsg?.textEn || ''} ${(lastAiMsg as any)?.customUnderstanding?.locationEn || ''}`.toLowerCase();
+    const userQuery = `${lastUserMsg?.textEn || ''} ${lastUserMsg?.textAr || ''}`.trim();
 
-    // Universal single location boundary applicable to ANY question the user asks
+    // Boundaries should ONLY be displayed when requested based on the question
     const targetFeatures = displayFeatures.length > 0 ? displayFeatures : (activeFeat ? [activeFeat] : []);
-    const singleBoundary: LocationBoundary | null = resolveBoundaryForFeatures(targetFeatures, queryContext);
+    const singleBoundary: LocationBoundary | null = resolveBoundaryForFeatures(targetFeatures, userQuery);
 
     // Render the Single Unified Location Boundary
     if (singleBoundary && singleBoundary.coordinates && singleBoundary.coordinates.length > 0) {

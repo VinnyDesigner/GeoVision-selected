@@ -742,15 +742,16 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
       lowerQ.includes('buffer') ||
       lowerQ.includes('radius') ||
       lowerQ.includes('within') ||
-      lowerQ.includes('with') ||
+      lowerQ.includes('with in') ||
       lowerQ.includes('2km') ||
       lowerQ.includes('3km') ||
       lowerQ.includes('5km') ||
       lowerQ.includes('1km') ||
-      lowerQ.includes('km') ||
-      lowerQ.includes('كم') ||
-      lowerQ.includes('near') ||
-      lowerQ.includes('نطاق') ||
+      lowerQ.includes('2 km') ||
+      lowerQ.includes('3 km') ||
+      lowerQ.includes('5 km') ||
+      lowerQ.includes('1 km') ||
+      lowerQ.includes('نطاق عازل') ||
       lowerQ.includes('نصف قطر') ||
       lowerQ.includes('على بعد') ||
       lowerQ.includes('نصف القطر');
@@ -1381,7 +1382,11 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             matchedFeats = [...schools.slice(0, 5), ...busStations.slice(0, 3)];
             newCenter = [24.4300, 54.5800];
             newZoom = 14;
-            setBufferRadiusKm(2);
+            if (lower.includes('within') || lower.includes('buffer') || lower.includes('radius') || lower.includes('2km') || lower.includes('2 km')) {
+              setBufferRadiusKm(2);
+            } else {
+              setBufferRadiusKm(0);
+            }
             setSelectedCategoryIds(['education', 'transport']);
             responseEn = `Cross-Layer Proximity Analysis: Identified ${schools.length} accredited schools located within a 2 km public transit catchment radius of active bus stations in Abu Dhabi.\n\nAccessibility Index: 92% of schools have direct access to scheduled Abu Dhabi Mobility (ITC) bus corridors.`;
             responseAr = `تحليل التقارب المكاني متعدد الطبقات: تم تحديد ${schools.length} مدارس معتمدة تقع ضمن نطاق خدمة النقل العام بمقدار 2 كم من محطات الحافلات النشطة.\n\nمؤشر الوصول: 92% من المدارس تتصل مباشرة بمسارات حافلات أبوظبي للتنقل (ITC).`;
@@ -2139,7 +2144,11 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             responseAr = `عثرت على ${matchedFeats.length} حدائق عامة ومساحات خضراء في أبوظبي بما في ذلك حديقة الريم سنترال وحديقة أم الإمارات وحديقة مدينة خليفة.`;
             newCenter = [24.4552, 54.3821];
             newZoom = 13;
-            setBufferRadiusKm(5);
+            if (lower.includes('within') || lower.includes('buffer') || lower.includes('radius') || lower.includes('5km') || lower.includes('5 km')) {
+              setBufferRadiusKm(5);
+            } else {
+              setBufferRadiusKm(0);
+            }
             setSelectedCategoryIds(['parks']);
             recsEn = ['Parks near Yas Island', 'Parks in Bani Yas', 'Filter by Open 24 Hours', 'Find nearby bus stations'];
             recsAr = ['حدائق بالقرب من جزيرة ياس', 'حدائق في بني ياس', 'تصفية حسب مفتوح 24 ساعة', 'البحث عن محطات الحافلات القريبة'];
@@ -2154,7 +2163,11 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             responseAr = `نظرة عامة على الخدمات الحكومية في جزيرة الريم: عثرت على ${matchedFeats.length} مراكز خدمات عامة بما في ذلك مركز تم وحديقة الريم سنترال ضمن 3 كم.`;
             newCenter = [24.4965, 54.3986];
             newZoom = 14;
-            setBufferRadiusKm(3);
+            if (lower.includes('within') || lower.includes('buffer') || lower.includes('radius') || lower.includes('3km') || lower.includes('3 km')) {
+              setBufferRadiusKm(3);
+            } else {
+              setBufferRadiusKm(0);
+            }
             setSelectedCategoryIds(['government']);
             recsEn = ['TAMM Customer Happiness Center - Khalifa City', 'Which one is closest?', 'Show hospitals on Al Maryah Island', 'Bus stops near Al Reem'];
             recsAr = ['مركز تم لخدمة المتعاملين - مدينة خليفة', 'أيها الأقرب؟', 'عرض المستشفيات في جزيرة الماريه', 'محطات الحافلات بالقرب من الريم'];
@@ -2534,7 +2547,11 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             responseAr = `عثرت على ${matchedFeats.length} مستشفيات ضمن نطاق 5 كم من موقعك.\n\nأقرب المستشفيات:\n${nearestListAr}\n\nمصدر البيانات:\nالبنية التحتية للبيانات المكانية لأبوظبي (SDI)`;
             newCenter = [refLat, refLng];
             newZoom = 13;
-            setBufferRadiusKm(5);
+            if (lower.includes('within') || lower.includes('5km') || lower.includes('5 km') || query.includes('على بعد 5 كم')) {
+              setBufferRadiusKm(5);
+            } else {
+              setBufferRadiusKm(0);
+            }
             setSelectedCategoryIds(['healthcare']);
 
             customUnderstanding = {
