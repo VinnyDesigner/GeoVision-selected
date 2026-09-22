@@ -344,26 +344,12 @@ export const SearchResultDetailsModal: React.FC<SearchResultDetailsModalProps> =
                   <button
                     onClick={() => {
                       const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${currentFeature.lat},${currentFeature.lng}`;
-                      window.open(gmapsUrl, '_blank');
+                      window.open(gmapsUrl, '_blank', 'noopener,noreferrer');
                     }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-[#063360] text-white text-xs font-black transition-all shadow-md shadow-blue-600/20 cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-black transition-all shadow-md shadow-blue-600/20 cursor-pointer"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    <span>{language === 'ar' ? 'التنقل عبر خرائط جوجل' : 'Navigate via Google Maps'}</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      handleClose();
-                      appState.setSelectedFeature(currentFeature);
-                      appState.setMapCenterAndZoom([currentFeature.lat + 0.003, currentFeature.lng], 16);
-                      appState.setCurrentView('map');
-                      appState.showToast(`Zoomed to ${currentFeature.nameEn} on map workspace`);
-                    }}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-geovision-blue hover:bg-[#063360] text-white text-xs font-black transition-all shadow-md shadow-blue-500/20 cursor-pointer"
-                  >
-                    <Navigation className="w-4 h-4" />
-                    <span>{language === 'ar' ? 'التركيز في الخريطة' : 'Focus on Map Workspace'}</span>
+                    <span>{language === 'ar' ? 'الاتجاهات عبر خرائط جوجل' : 'Directions on Google Maps'}</span>
                   </button>
 
                   <button

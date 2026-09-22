@@ -779,15 +779,13 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                   <button
                     type="button"
                     onClick={() => {
-                      setSelectedFeature(detailFeat);
-                      setMapCenterAndZoom([detailFeat.lat, detailFeat.lng], 16);
-                      if (currentView !== 'map') setCurrentView('map');
-                      showToast(`Zoomed to ${detailFeat.nameEn} on map`);
+                      const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${detailFeat.lat},${detailFeat.lng}`;
+                      window.open(gmapsUrl, '_blank', 'noopener,noreferrer');
                     }}
-                    className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-geovision-blue text-white text-xs font-black hover:bg-blue-600 shadow-md cursor-pointer transition-all"
+                    className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-black hover:bg-blue-700 shadow-md cursor-pointer transition-all"
                   >
-                    <ZoomIn className="w-4 h-4 text-white" />
-                    <span className="text-white">{language === 'ar' ? 'تركيز في الخريطة' : 'Focus on Map'}</span>
+                    <ExternalLink className="w-4 h-4 text-white" />
+                    <span className="text-white">{language === 'ar' ? 'الاتجاهات عبر خرائط جوجل' : 'Directions on Google Maps'}</span>
                   </button>
 
                   <button
@@ -797,10 +795,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                       setMapCenterAndZoom([detailFeat.lat, detailFeat.lng], 15);
                       setExpandedDirectionsId(detailFeat.id);
                     }}
-                    className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 text-geovision-blue dark:text-white text-xs font-black hover:bg-geovision-blue hover:text-white shadow-2xs cursor-pointer transition-all"
+                    className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black hover:bg-emerald-700 shadow-2xs cursor-pointer transition-all"
                   >
-                    <Navigation className="w-4 h-4" />
-                    <span>{language === 'ar' ? 'الاتجاهات' : 'Directions'}</span>
+                    <Navigation className="w-4 h-4 text-white" />
+                    <span className="text-white">{language === 'ar' ? 'الاتجاهات' : 'Directions'}</span>
                   </button>
                 </div>
               </div>
@@ -1231,15 +1229,13 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        setSelectedFeature(detailFeat);
-                        setMapCenterAndZoom([detailFeat.lat, detailFeat.lng], 16);
-                        if (currentView !== 'map') setCurrentView('map');
-                        showToast(`Zoomed to ${detailFeat.nameEn} on map`);
+                        const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${detailFeat.lat},${detailFeat.lng}`;
+                        window.open(gmapsUrl, '_blank', 'noopener,noreferrer');
                       }}
-                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-geovision-blue text-white text-xs font-black hover:bg-blue-600 shadow-md cursor-pointer transition-all"
+                      className="flex-1 min-w-[130px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-600 text-white text-xs font-black hover:bg-blue-700 shadow-md cursor-pointer transition-all"
                     >
-                      <ZoomIn className="w-4 h-4" />
-                      <span>{language === 'ar' ? 'تركيز في الخريطة' : 'Focus on Map'}</span>
+                      <ExternalLink className="w-4 h-4 text-white" />
+                      <span className="text-white">{language === 'ar' ? 'الاتجاهات عبر خرائط جوجل' : 'Directions on Google Maps'}</span>
                     </button>
 
                     <button
@@ -1249,10 +1245,10 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                         setMapCenterAndZoom([detailFeat.lat, detailFeat.lng], 15);
                         setExpandedDirectionsId(detailFeat.id);
                       }}
-                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 dark:bg-slate-800 border border-blue-200 dark:border-slate-700 text-geovision-blue dark:text-white text-xs font-black hover:bg-geovision-blue hover:text-white shadow-2xs cursor-pointer transition-all"
+                      className="flex-1 min-w-[120px] flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 text-white text-xs font-black hover:bg-emerald-700 shadow-2xs cursor-pointer transition-all"
                     >
-                      <Navigation className="w-4 h-4" />
-                      <span>{language === 'ar' ? 'الاتجاهات' : 'Directions'}</span>
+                      <Navigation className="w-4 h-4 text-white" />
+                      <span className="text-white">{language === 'ar' ? 'الاتجاهات' : 'Directions'}</span>
                     </button>
                   </div>
                 </div>

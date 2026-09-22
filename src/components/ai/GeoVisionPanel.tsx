@@ -31,10 +31,10 @@ import {
   LayoutGrid,
   Clock,
   Phone,
-  ZoomIn,
   Navigation,
   FileText,
   Crop,
+  ExternalLink,
 } from 'lucide-react';
 import { AIMessageSearchResults } from './AIMessageSearchResults';
 import { buildSpatialSnapshot } from '../../utils/spatialSnapshotUtils';
@@ -797,15 +797,13 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        setSelectedFeature(activeDetailFeature);
-                        setMapCenterAndZoom([activeDetailFeature.lat, activeDetailFeature.lng], 16);
-                        if (currentView !== 'map') setCurrentView('map');
-                        showToast(`Zoomed to ${activeDetailFeature.nameEn} on map`);
+                        const gmapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${activeDetailFeature.lat},${activeDetailFeature.lng}`;
+                        window.open(gmapsUrl, '_blank', 'noopener,noreferrer');
                       }}
-                      className="flex-1 min-w-[130px] py-3 px-4 rounded-2xl bg-linear-to-r from-[#063360] to-[#215A9E] hover:from-[#08427b] hover:to-[#2b6ebf] text-white font-black text-xs shadow-md shadow-blue-600/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="flex-1 min-w-[130px] py-3 px-4 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black text-xs shadow-md shadow-blue-600/20 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
                     >
-                      <ZoomIn className="w-4 h-4 text-white" />
-                      <span className="text-white">{language === 'ar' ? 'تركيز في الخريطة' : 'Focus on Map'}</span>
+                      <ExternalLink className="w-4 h-4 text-white" />
+                      <span className="text-white">{language === 'ar' ? 'الاتجاهات عبر خرائط جوجل' : 'Directions on Google Maps'}</span>
                     </button>
 
                     <button
