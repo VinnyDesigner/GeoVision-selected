@@ -674,120 +674,200 @@ export const MapWorkspace: React.FC = () => {
     }
   }, [activeTool, aoiResult]);
 
-  // Highlight Geographic Community/District & Facility Parcel Boundaries Based on Location
+  // Highlight Geographic Community/District & Facility Parcel Boundaries Based on Location / Results
   useEffect(() => {
     if (!mapInstanceRef.current || !boundaryGroupRef.current) return;
     const boundaryGroup = boundaryGroupRef.current;
     boundaryGroup.clearLayers();
 
-    // Prioritize selected feature for persistent boundary overlay & banner info
-    const targetFeat = selectedFeature || hoveredFeature;
+    // 1. Prioritize explicitly selected or hovered feature
+    const activeFeat = selectedFeature || hoveredFeature;
 
-    if (!targetFeat) {
-      setActiveBoundary(null);
+    if (activeFeat) {
+      const { districtBoundary, parcelBoundary } = resolveLocationBoundary(activeFeat);
+
+      if (districtBoundary || parcelBoundary) {
+        setActiveBoundary({
+          district: districtBoundary,
+          parcel: parcelBoundary,
+          feature: activeFeat,
+        });
+
+        if (districtBoundary && districtBoundary.coordinates.length > 0) {
+          const districtPolygon = L.polygon(districtBoundary.coordinates, {
+            color: districtBoundary.strokeColor || '#2563EB',
+            fillColor: districtBoundary.fillColor || '#3B82F6',
+            fillOpacity: 0.16,
+            weight: 3.5,
+            dashArray: '8, 6',
+            className: 'geovision-boundary-district-polygon',
+          });
+
+          const districtName = language === 'ar' ? districtBoundary.nameAr : districtBoundary.nameEn;
+          districtPolygon.bindTooltip(
+            `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse"></span>
+              <span>${districtName}</span>
+              <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${districtBoundary.areaKm2} km²)</span>
+            </div>`,
+            {
+              permanent: false,
+              sticky: true,
+              direction: 'auto',
+              className: 'geovision-boundary-tooltip',
+            }
+          );
+
+          districtPolygon.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.flyToBounds(L.latLngBounds(districtBoundary.coordinates), {
+                padding: [70, 70],
+                maxZoom: 15,
+                duration: 1.0,
+              });
+            }
+          });
+
+          boundaryGroup.addLayer(districtPolygon);
+        }
+
+        if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
+          const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
+            color: parcelBoundary.strokeColor || '#0284C7',
+            fillColor: parcelBoundary.fillColor || '#38BDF8',
+            fillOpacity: 0.25,
+            weight: 2.5,
+            className: 'geovision-boundary-parcel-polygon',
+          });
+
+          const parcelName = language === 'ar' ? parcelBoundary.nameAr : parcelBoundary.nameEn;
+          parcelPolygon.bindTooltip(
+            `<div class="px-2.5 py-1 text-[11px] font-extrabold text-sky-900 dark:text-sky-100 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+              <span>${parcelName}</span>
+            </div>`,
+            {
+              permanent: false,
+              sticky: true,
+              direction: 'top',
+              className: 'geovision-boundary-tooltip',
+            }
+          );
+
+          parcelPolygon.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            if (mapInstanceRef.current) {
+              mapInstanceRef.current.flyTo([activeFeat.lat, activeFeat.lng], 16.5, {
+                animate: true,
+                duration: 1.0,
+              });
+            }
+          });
+
+          boundaryGroup.addLayer(parcelPolygon);
+        }
+      }
       return;
     }
 
-    const { districtBoundary, parcelBoundary } = resolveLocationBoundary(targetFeat);
+    // 2. When neither selected nor hovered, render boundaries based on the result list
+    if (displayFeatures.length > 0) {
+      const uniqueDistricts = new Map<string, LocationBoundary>();
 
-    if (!districtBoundary && !parcelBoundary) {
-      if (!selectedFeature) setActiveBoundary(null);
+      displayFeatures.forEach((feat) => {
+        const { districtBoundary } = resolveLocationBoundary(feat);
+        if (districtBoundary && !uniqueDistricts.has(districtBoundary.id)) {
+          uniqueDistricts.set(districtBoundary.id, districtBoundary);
+        }
+      });
+
+      const primaryFeat = displayFeatures[0];
+      const primaryRes = resolveLocationBoundary(primaryFeat);
+
+      if (uniqueDistricts.size > 0 || primaryRes.parcelBoundary) {
+        setActiveBoundary({
+          district: primaryRes.districtBoundary || Array.from(uniqueDistricts.values())[0] || null,
+          parcel: primaryRes.parcelBoundary,
+          feature: primaryFeat,
+        });
+
+        // Render all unique district boundaries matching the results
+        uniqueDistricts.forEach((distBoundary) => {
+          if (distBoundary.coordinates.length > 0) {
+            const districtPolygon = L.polygon(distBoundary.coordinates, {
+              color: distBoundary.strokeColor || '#2563EB',
+              fillColor: distBoundary.fillColor || '#3B82F6',
+              fillOpacity: 0.16,
+              weight: 3.5,
+              dashArray: '8, 6',
+              className: 'geovision-boundary-district-polygon',
+            });
+
+            const districtName = language === 'ar' ? distBoundary.nameAr : distBoundary.nameEn;
+            districtPolygon.bindTooltip(
+              `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse"></span>
+                <span>${districtName}</span>
+                <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${distBoundary.areaKm2} km²)</span>
+              </div>`,
+              {
+                permanent: false,
+                sticky: true,
+                direction: 'auto',
+                className: 'geovision-boundary-tooltip',
+              }
+            );
+
+            districtPolygon.on('click', (e) => {
+              L.DomEvent.stopPropagation(e);
+              if (mapInstanceRef.current) {
+                mapInstanceRef.current.flyToBounds(L.latLngBounds(distBoundary.coordinates), {
+                  padding: [70, 70],
+                  maxZoom: 15,
+                  duration: 1.0,
+                });
+              }
+            });
+
+            boundaryGroup.addLayer(districtPolygon);
+          }
+        });
+
+        // Also render primary feature parcel boundary
+        if (primaryRes.parcelBoundary && primaryRes.parcelBoundary.coordinates.length > 0) {
+          const parcelPolygon = L.polygon(primaryRes.parcelBoundary.coordinates, {
+            color: primaryRes.parcelBoundary.strokeColor || '#0284C7',
+            fillColor: primaryRes.parcelBoundary.fillColor || '#38BDF8',
+            fillOpacity: 0.25,
+            weight: 2.5,
+            className: 'geovision-boundary-parcel-polygon',
+          });
+
+          const parcelName = language === 'ar' ? primaryRes.parcelBoundary.nameAr : primaryRes.parcelBoundary.nameEn;
+          parcelPolygon.bindTooltip(
+            `<div class="px-2.5 py-1 text-[11px] font-extrabold text-sky-900 dark:text-sky-100 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+              <span>${parcelName}</span>
+            </div>`,
+            {
+              permanent: false,
+              sticky: true,
+              direction: 'top',
+              className: 'geovision-boundary-tooltip',
+            }
+          );
+
+          boundaryGroup.addLayer(parcelPolygon);
+        }
+      } else {
+        setActiveBoundary(null);
+      }
       return;
     }
 
-    if (selectedFeature) {
-      setActiveBoundary({
-        district: districtBoundary,
-        parcel: parcelBoundary,
-        feature: selectedFeature,
-      });
-    } else if (hoveredFeature) {
-      setActiveBoundary({
-        district: districtBoundary,
-        parcel: parcelBoundary,
-        feature: hoveredFeature,
-      });
-    }
-
-    // Render a single clean boundary (District Boundary first, or Parcel Boundary as fallback) to avoid nested highlights
-    if (districtBoundary && districtBoundary.coordinates.length > 0) {
-      const districtPolygon = L.polygon(districtBoundary.coordinates, {
-        color: districtBoundary.strokeColor || '#2563EB',
-        fillColor: districtBoundary.fillColor || '#3B82F6',
-        fillOpacity: 0.16,
-        weight: 3.5,
-        dashArray: '8, 6',
-        className: 'geovision-boundary-district-polygon',
-      });
-
-      const districtName = language === 'ar' ? districtBoundary.nameAr : districtBoundary.nameEn;
-
-      districtPolygon.bindTooltip(
-        `<div class="px-3 py-1.5 text-xs font-black text-slate-800 dark:text-slate-100 flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-sm shadow-blue-500/50 animate-pulse"></span>
-          <span>${districtName}</span>
-          <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">(${districtBoundary.areaKm2} km²)</span>
-        </div>`,
-        {
-          permanent: false,
-          sticky: true,
-          direction: 'auto',
-          className: 'geovision-boundary-tooltip',
-        }
-      );
-
-      districtPolygon.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyToBounds(L.latLngBounds(districtBoundary.coordinates), {
-            padding: [70, 70],
-            maxZoom: 15,
-            duration: 1.0,
-          });
-        }
-      });
-
-      boundaryGroup.addLayer(districtPolygon);
-    }
-    
-    if (parcelBoundary && parcelBoundary.coordinates.length > 0) {
-      // Render parcel plot boundary perimeter around feature location
-      const parcelPolygon = L.polygon(parcelBoundary.coordinates, {
-        color: parcelBoundary.strokeColor || '#0284C7',
-        fillColor: parcelBoundary.fillColor || '#38BDF8',
-        fillOpacity: 0.25,
-        weight: 2.5,
-        className: 'geovision-boundary-parcel-polygon',
-      });
-
-      const parcelName = language === 'ar' ? parcelBoundary.nameAr : parcelBoundary.nameEn;
-
-      parcelPolygon.bindTooltip(
-        `<div class="px-2.5 py-1 text-[11px] font-extrabold text-sky-900 dark:text-sky-100 flex items-center gap-1.5">
-          <span class="w-2 h-2 rounded-full bg-sky-400"></span>
-          <span>${parcelName}</span>
-        </div>`,
-        {
-          permanent: false,
-          sticky: true,
-          direction: 'top',
-          className: 'geovision-boundary-tooltip',
-        }
-      );
-
-      parcelPolygon.on('click', (e) => {
-        L.DomEvent.stopPropagation(e);
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.flyTo([targetFeat.lat, targetFeat.lng], 16.5, {
-            animate: true,
-            duration: 1.0,
-          });
-        }
-      });
-
-      boundaryGroup.addLayer(parcelPolygon);
-    }
-  }, [selectedFeature, hoveredFeature, language]);
+    setActiveBoundary(null);
+  }, [selectedFeature, hoveredFeature, displayFeatures, language]);
 
   const tempShapeRef = useRef<L.Layer | null>(null);
   const tempPointsRef = useRef<L.LatLng[]>([]);
