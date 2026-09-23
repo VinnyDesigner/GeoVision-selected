@@ -1280,11 +1280,13 @@ export const MapWorkspace: React.FC = () => {
           className="absolute bottom-3 sm:bottom-4 right-4 rtl:right-auto rtl:left-4 z-[600] flex items-center gap-2 px-4 py-2.5 rounded-full bg-geovision-blue text-white shadow-xl shadow-blue-500/35 hover:bg-blue-600 active:scale-95 transition-all cursor-pointer border border-white/30 text-xs font-black tracking-tight"
           title="Open GeoVision AI Assistant"
         >
-          <img
-            src={getAssetUrl('globe-logo.png')}
-            alt="GeoVision AI"
-            className="w-5 h-5 object-contain shrink-0 filter drop-shadow-xs"
-          />
+          <div className="w-6 h-6 rounded-full overflow-hidden flex items-center justify-center shrink-0 border border-white/40 bg-white/10">
+            <img
+              src={getAssetUrl('GioVision Loading Gif without gradient.gif')}
+              alt="GeoVision AI"
+              className="w-full h-full object-cover object-center scale-[2.3] pointer-events-none select-none"
+            />
+          </div>
           <span>{language === 'ar' ? 'مساعد GeoVision AI' : 'GeoVision AI'}</span>
         </button>
       )}

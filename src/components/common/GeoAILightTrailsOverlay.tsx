@@ -24,7 +24,7 @@ export const GeoAILightTrailsOverlay: React.FC<GeoAILightTrailsOverlayProps> = (
 
           {/* Node Glow Filter */}
           <filter id="nodeGlow" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="3" result="blur" />
+            <feGaussianBlur stdDeviation="1" result="blur" />
             <feMerge>
               <feMergeNode in="blur" />
               <feMergeNode in="SourceGraphic" />

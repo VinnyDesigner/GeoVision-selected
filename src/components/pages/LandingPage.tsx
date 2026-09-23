@@ -134,7 +134,7 @@ export const LandingPage: React.FC = () => {
       
       {/* Dynamic Time-Based Abu Dhabi Background Image Layer */}
       <img
-        src={getAssetUrl(activeTheme.bgImage)}
+        src={getAssetUrl(theme === 'dark' ? 'bg3dark.png' : 'bg3white.png')}
         alt="GeoVision Abu Dhabi Spatial Canvas"
         className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-1000 pointer-events-none z-0 opacity-100 ${
           language === 'ar' ? '-scale-x-100' : ''
@@ -151,7 +151,7 @@ export const LandingPage: React.FC = () => {
       <GeoAILightTrailsOverlay theme={activeTheme} />
 
       {/* Smooth Legibility Scrim Gradient for Hero Content */}
-      <div className={`absolute inset-y-0 ${language === 'ar' ? 'right-0 bg-gradient-to-l' : 'left-0 bg-gradient-to-r'} w-full sm:w-3/4 md:w-3/5 lg:w-[55%] ${activeTheme.scrimGradient} pointer-events-none z-0 transition-all duration-1000`} />
+      <div className={`absolute inset-y-0 ${language === 'ar' ? 'right-0 bg-gradient-to-l' : 'left-0 bg-gradient-to-r'} w-full sm:w-1/2 md:w-[45%] lg:w-[42%] ${activeTheme.scrimGradient} pointer-events-none z-0 transition-all duration-1000`} />
 
       {/* Hero & Search Launchpad */}
       <div className="relative z-10 w-full max-w-5xl text-left rtl:text-right space-y-3 sm:space-y-4 my-auto flex flex-col items-start rtl:items-start">
