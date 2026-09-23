@@ -206,31 +206,13 @@ export const LandingPage: React.FC = () => {
 
         {/* Try an example Section with Expandable Options */}
         <div className="w-full space-y-1.5 pt-0.5">
-          <div className="flex items-center justify-between gap-2 text-xs font-bold text-[#063360] dark:text-slate-200">
+          <div className="flex items-center gap-2 text-xs font-bold text-[#063360] dark:text-slate-200">
             <span className="flex items-center gap-1.5">
               <span>{language === 'ar' ? 'جرب مثالاً:' : 'Try an example:'}</span>
               <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-blue-100/80 dark:bg-blue-900/60 text-[#215A9E] dark:text-sky-300">
                 {examplesExpanded ? EXAMPLE_QUESTIONS.length : `3 of ${EXAMPLE_QUESTIONS.length}`}
               </span>
             </span>
-
-            <button
-              type="button"
-              onClick={() => setExamplesExpanded(prev => !prev)}
-              className="inline-flex items-center gap-1 text-[11px] font-bold text-[#215A9E] dark:text-sky-300 hover:text-[#063360] dark:hover:text-white transition-colors cursor-pointer"
-            >
-              {examplesExpanded ? (
-                <>
-                  <span>{language === 'ar' ? 'عرض أقل' : 'Show less'}</span>
-                  <ChevronUp className="w-3.5 h-3.5" />
-                </>
-              ) : (
-                <>
-                  <span>{language === 'ar' ? 'المزيد' : 'More'}</span>
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </>
-              )}
-            </button>
           </div>
 
           <div className={`flex flex-wrap items-center gap-1.5 sm:gap-2 transition-all duration-300 ${
