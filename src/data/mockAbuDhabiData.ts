@@ -2625,7 +2625,7 @@ export const GEO_FEATURES: GeoFeature[] = [
     category: 'government',
     subcategory: 'tamm_centers',
     lat: 24.4530,
-    lng: 24.4530 > 50 ? 54.3460 : 54.3460,
+    lng: 54.3460,
     addressEn: 'Al Bateen Municipality Complex, Abu Dhabi',
     addressAr: 'مجمع بلدية البطين، أبوظبي',
     rating: 4.9,

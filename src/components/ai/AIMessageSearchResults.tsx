@@ -1454,19 +1454,19 @@ export const AIMessageSearchResults: React.FC<AIMessageSearchResultsProps> = ({
                 </div>
 
                 {/* Compact Bottom Bar (Metadata + Quick Action Buttons) */}
-                <div className="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px]">
-                  <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold min-w-0 truncate">
+                <div className="flex flex-wrap items-center justify-between gap-1.5 pt-1 border-t border-slate-100 dark:border-slate-800 text-[10px]">
+                  <div className="flex items-center gap-1 text-slate-500 dark:text-slate-400 font-semibold min-w-0 flex-1">
                     <span className="flex items-center gap-0.5 text-geovision-blue dark:text-blue-300 font-black shrink-0">
                       <MapPin className="w-3 h-3" />
                       <span>{dist} km</span>
                     </span>
                     <span className="text-slate-300 dark:text-slate-700">•</span>
-                    <span className="truncate text-slate-600 dark:text-slate-300 font-bold">
+                    <span className="truncate text-slate-600 dark:text-slate-300 font-bold min-w-0">
                       {language === 'ar' ? (feat.openStatusAr || feat.openStatusEn || 'مفتوح') : (feat.openStatusEn || 'Open 24/7')}
                     </span>
                   </div>
 
-                  <div className="flex items-center gap-1 shrink-0">
+                  <div className="flex items-center gap-1 shrink-0 flex-wrap">
 
                     <button
                       type="button"

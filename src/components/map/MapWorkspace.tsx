@@ -458,7 +458,7 @@ export const MapWorkspace: React.FC = () => {
     }
   }, [hoveredFeature, selectedFeature, language]);
 
-  // Single Unified Map Camera Control Effect with Frame Coalescing
+  // Single Unified Map Camera Control Effect with Frame Coalescing & Boundary Auto-Fit
   const flyToTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -478,21 +478,44 @@ export const MapWorkspace: React.FC = () => {
         const destination: [number, number] = [selectedFeature.lat, selectedFeature.lng];
         const routeBounds = L.latLngBounds([origin, destination]);
         mapInst.flyToBounds(routeBounds, { padding: [90, 90], maxZoom: 15, duration: 1.2 });
-      } else if (selectedFeature) {
-        // Smoothly pan camera slightly to feature location without zooming out
-        mapInst.panTo([selectedFeature.lat, selectedFeature.lng], { animate: true, duration: 0.6 });
       } else if (displayFeatures.length > 0) {
-        // Automatically zoom out and fit bounds to frame ALL result locations at once on the map canvas
-        const validCoords = displayFeatures
-          .filter(f => typeof f.lat === 'number' && typeof f.lng === 'number' && !isNaN(f.lat) && !isNaN(f.lng))
-          .map(f => [f.lat, f.lng] as [number, number]);
+        // Collect ALL coordinates for pointers AND location boundary polygon to ensure zoom out effect frames EVERYTHING at once
+        const allPoints: [number, number][] = [];
 
-        if (validCoords.length > 0) {
-          const featureBounds = L.latLngBounds(validCoords);
-          if (featureBounds.isValid()) {
-            mapInst.fitBounds(featureBounds, { padding: [70, 70], maxZoom: 14 });
+        // 1. Add all feature pointer coordinates
+        displayFeatures.forEach(f => {
+          if (typeof f.lat === 'number' && typeof f.lng === 'number' && !isNaN(f.lat) && !isNaN(f.lng)) {
+            allPoints.push([f.lat, f.lng]);
+          }
+        });
+
+        // 2. Add boundary polygon coordinates if a location boundary is resolved for the current query/features
+        const lastUserMsg = [...aiMessages].reverse().find(m => m.sender === 'user');
+        const userQuery = `${lastUserMsg?.textEn || ''} ${lastUserMsg?.textAr || ''}`.trim();
+        const boundary = resolveBoundaryForFeatures(displayFeatures, userQuery);
+
+        if (boundary && boundary.coordinates && boundary.coordinates.length > 0) {
+          boundary.coordinates.forEach(coord => {
+            if (typeof coord[0] === 'number' && typeof coord[1] === 'number') {
+              allPoints.push(coord);
+            }
+          });
+        }
+
+        if (allPoints.length > 0) {
+          const combinedBounds = L.latLngBounds(allPoints);
+          if (combinedBounds.isValid()) {
+            // Smooth zoom-out / fit bounds effect so that ALL pointers and boundary polygon are 100% visible at once
+            mapInst.fitBounds(combinedBounds, {
+              padding: [85, 85],
+              maxZoom: 14,
+              animate: true,
+              duration: 1.2,
+            });
           }
         }
+      } else if (selectedFeature) {
+        mapInst.flyTo([selectedFeature.lat, selectedFeature.lng], 15, { animate: true, duration: 0.8 });
       } else if (mapCenter && mapCenter.length === 2) {
         mapInst.flyTo(mapCenter, mapZoom || 12, { animate: true, duration: 1.2 });
       }
@@ -503,7 +526,7 @@ export const MapWorkspace: React.FC = () => {
         clearTimeout(flyToTimeoutRef.current);
       }
     };
-  }, [selectedFeature, navigationTarget, userLocation, mapCenter, mapZoom, displayFeatures]);
+  }, [selectedFeature, navigationTarget, userLocation, mapCenter, mapZoom, displayFeatures, aiMessages]);
 
   // Draw Dashed Navigation Route Polyline
   useEffect(() => {
@@ -696,7 +719,7 @@ export const MapWorkspace: React.FC = () => {
         // ignore bounds fit error
       }
     }
-  }, [bufferRadiusKm, bufferCenter, selectedFeature, activeTool, userLocation, mapCenter, language]);
+  }, [bufferRadiusKm, bufferCenter, selectedFeature, activeTool, userLocation, mapCenter, language, displayFeatures, aiMessages]);
 
   // Render AOI Polygon geometry
   useEffect(() => {
@@ -759,7 +782,7 @@ export const MapWorkspace: React.FC = () => {
           ${singleBoundary.areaKm2 ? `<span class="text-[10px] ${isRed ? 'text-red-600 dark:text-red-400' : 'text-blue-600 dark:text-blue-400'} font-bold">(${singleBoundary.areaKm2} km²)</span>` : ''}
         </div>`,
         {
-          permanent: false,
+          permanent: true,
           sticky: true,
           direction: 'auto',
           className: 'geovision-boundary-tooltip',
@@ -1139,7 +1162,7 @@ export const MapWorkspace: React.FC = () => {
 
         {/* Floating Data & Filter Drawer */}
         {!pureMapMode && filterDrawerOpen && (
-          <div className="absolute top-4 sm:top-6 left-[72px] sm:left-[80px] z-[600] w-64 sm:w-72 h-[408px] max-h-[calc(100vh-160px)] glass-level-3 rounded-3xl p-3 sm:p-3.5 shadow-2xl border border-white/80 dark:border-slate-800 animate-slide-in flex flex-col overflow-hidden pointer-events-auto">
+          <div className="absolute top-16 sm:top-6 left-3 sm:left-[80px] z-[600] w-[calc(100%-24px)] sm:w-72 max-w-xs h-[408px] max-h-[calc(100vh-160px)] glass-level-3 rounded-3xl p-3 sm:p-3.5 shadow-2xl border border-white/80 dark:border-slate-800 animate-slide-in flex flex-col overflow-hidden pointer-events-auto">
             <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-2 mb-2 shrink-0">
               <h3 className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
                 <Layers className="w-4 h-4 text-geovision-blue" />

@@ -592,15 +592,15 @@ export function generateUnifiedResultBoundary(
   const pMaxLng = maxLng + lngPad;
 
   const coordinates: [number, number][] = [
-    [pMaxLat, centerLng],
-    [pMaxLat - latPad * 0.4, pMaxLng - lngPad * 0.4],
-    [centerLat, pMaxLng],
-    [pMinLat + latPad * 0.4, pMaxLng - lngPad * 0.4],
-    [pMinLat, centerLng],
-    [pMinLat + latPad * 0.4, pMinLng + lngPad * 0.4],
-    [centerLat, pMinLng],
-    [pMaxLat - latPad * 0.4, pMinLng + lngPad * 0.4],
-    [pMaxLat, centerLng],
+    [pMaxLat, pMinLng + lngPad * 0.5],
+    [pMaxLat, pMaxLng - lngPad * 0.5],
+    [pMaxLat - latPad * 0.5, pMaxLng],
+    [pMinLat + latPad * 0.5, pMaxLng],
+    [pMinLat, pMaxLng - lngPad * 0.5],
+    [pMinLat, pMinLng + lngPad * 0.5],
+    [pMinLat + latPad * 0.5, pMinLng],
+    [pMaxLat - latPad * 0.5, pMinLng],
+    [pMaxLat, pMinLng + lngPad * 0.5],
   ];
 
   const widthKm = (pMaxLng - pMinLng) * 111 * Math.cos(centerLat * (Math.PI / 180));
@@ -683,7 +683,8 @@ export function isBoundaryRequestedInQuery(queryContext?: string): boolean {
 
 /**
  * Resolves a location boundary based on the location and results.
- * Guarantees that for any location or search results, the appropriate location boundary is displayed.
+ * Guarantees that for any location or search results, the appropriate location boundary
+ * enclosing ALL returned feature pointers is displayed.
  */
 export function resolveBoundaryForFeatures(
   features: { lat: number; lng: number; nameEn?: string; nameAr?: string; addressEn?: string }[],
@@ -697,50 +698,61 @@ export function resolveBoundaryForFeatures(
 
   const q = (queryContext || '').toLowerCase();
 
-  // 1. Explicit query district intent (checking both English & Arabic)
-  if ((q.includes('alreef') || q.includes('al reef') || q.includes('الريف')) && !q.includes('coral')) {
-    return ABU_DHABI_DISTRICT_BOUNDARIES.al_reef;
-  }
-  if (
-    (q.includes('khalifa city') || q.includes('مدينة خليفة')) &&
-    !q.includes('medical') &&
-    !q.includes('hospital')
-  ) {
-    return ABU_DHABI_DISTRICT_BOUNDARIES.khalifa_city;
-  }
-  if (q.includes('yas island') || q.includes('جزيرة ياس')) {
-    return ABU_DHABI_DISTRICT_BOUNDARIES.yas_island;
-  }
-  if (q.includes('reem island') || q.includes('جزيرة الريم')) {
-    return ABU_DHABI_DISTRICT_BOUNDARIES.al_reem_island;
-  }
-  if (q.includes('saadiyat') || q.includes('سعديات')) {
-    return ABU_DHABI_DISTRICT_BOUNDARIES.saadiyat_island;
-  }
-  if (q.includes('mussafah') || q.includes('musaffah') || q.includes('مصفح')) {
-    return ABU_DHABI_DISTRICT_BOUNDARIES.musaffah;
-  }
-  if (q.includes('zayed city') || q.includes('مدينة زايد')) {
-    return ABU_DHABI_DISTRICT_BOUNDARIES.zayed_city;
-  }
-
-  // 2. Spatial matching: Find if an official district boundary naturally encloses >= 70% of the results
+  // 1. Check if an official district boundary naturally encloses >= 80% of the results
   const districtEntries = Object.entries(ABU_DHABI_DISTRICT_BOUNDARIES);
+  let bestDistrictMatch: LocationBoundary | null = null;
+  let maxRatio = 0;
+
   for (const [, district] of districtEntries) {
     if (!district.coordinates || district.coordinates.length < 3) continue;
     const insideCount = validFeats.filter((f) =>
       isPointInsidePolygon([f.lat, f.lng], district.coordinates)
     ).length;
 
-    if (
-      insideCount === validFeats.length ||
-      (validFeats.length >= 3 && insideCount / validFeats.length >= 0.7)
-    ) {
-      return district;
+    const ratio = insideCount / validFeats.length;
+    if (ratio >= 0.80 && ratio > maxRatio) {
+      maxRatio = ratio;
+      bestDistrictMatch = district;
     }
   }
 
-  // 3. Continuous enclosing boundary around the location results
+  if (bestDistrictMatch) {
+    return bestDistrictMatch;
+  }
+
+  // 2. Check if query explicitly requested a single specific district AND at least 50% of results are in it
+  const checkExplicitQueryMatch = (key: string, termEn: string, termAr: string): LocationBoundary | null => {
+    if (q.includes(termEn) || q.includes(termAr)) {
+      const dist = ABU_DHABI_DISTRICT_BOUNDARIES[key];
+      if (dist && dist.coordinates) {
+        const insideCount = validFeats.filter((f) =>
+          isPointInsidePolygon([f.lat, f.lng], dist.coordinates)
+        ).length;
+        if (insideCount / validFeats.length >= 0.50 || validFeats.length <= 2) {
+          return dist;
+        }
+      }
+    }
+    return null;
+  };
+
+  const explicitMatch =
+    checkExplicitQueryMatch('al_reef', 'alreef', 'الريف') ||
+    checkExplicitQueryMatch('al_reef', 'al reef', 'الريف') ||
+    checkExplicitQueryMatch('khalifa_city', 'khalifa city', 'مدينة خليفة') ||
+    checkExplicitQueryMatch('yas_island', 'yas island', 'جزيرة ياس') ||
+    checkExplicitQueryMatch('al_reem_island', 'reem island', 'جزيرة الريم') ||
+    checkExplicitQueryMatch('saadiyat_island', 'saadiyat', 'سعديات') ||
+    checkExplicitQueryMatch('musaffah', 'mussafah', 'مصفح') ||
+    checkExplicitQueryMatch('musaffah', 'musaffah', 'مصفح') ||
+    checkExplicitQueryMatch('zayed_city', 'zayed city', 'مدينة زايد');
+
+  if (explicitMatch) {
+    return explicitMatch;
+  }
+
+  // 3. For multi-district or wide-spread search result sets (like results across Downtown + Khalifa City),
+  // generate a unified continuous boundary enclosing 100% of ALL result pointers returned by the question!
   return generateUnifiedResultBoundary(validFeats);
 }
 

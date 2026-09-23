@@ -1028,7 +1028,7 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
                       </div>
                     )}
 
-                    <div className="w-full p-3.5 rounded-2xl bg-geovision-blue text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 rounded-tr-none">
+                    <div className="w-full p-3.5 rounded-2xl bg-geovision-blue text-white text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 rounded-tr-none break-words">
                       {textToDisplay}
                     </div>
                   </div>
@@ -1053,10 +1053,10 @@ export const GeoVisionPanel: React.FC<GeoVisionPanelProps> = ({
               </div>
 
               {/* AI Response Bubble */}
-              <div className="max-w-[95%] sm:max-w-[90%] p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm font-semibold leading-relaxed shadow-sm bg-white dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-200/80 dark:border-slate-800 space-y-3">
+              <div className="max-w-[95%] sm:max-w-[90%] p-3.5 sm:p-4 rounded-2xl text-xs sm:text-sm font-semibold leading-relaxed shadow-sm bg-white dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 rounded-tl-none border border-slate-200/80 dark:border-slate-800 space-y-3 break-words">
                 
                 {/* Main Text Response */}
-                <div className="whitespace-pre-line leading-relaxed text-slate-800 dark:text-slate-100 font-bold">
+                <div className="whitespace-pre-line leading-relaxed text-slate-800 dark:text-slate-100 font-bold break-words">
                   {isMsgAr ? (msg.textAr || msg.textEn) : (msg.textEn || msg.textAr)}
                 </div>
 

@@ -3103,7 +3103,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             recsEn = [];
             recsAr = [];
           }
-          else if (lower.includes('yas island') || lower.includes('yasat west') || lower.includes('al yasat')) {
+          else if (lower.includes('parks near yas island') || lower.includes('yasat west') || lower.includes('al yasat')) {
             matchedFeats = GEO_FEATURES.filter(f => f.category === 'parks');
             responseEn = `Searching for parks near Yas Island... Found ${matchedFeats.length} public parks and green spaces on Yas Island.`;
             responseAr = `جاري البحث عن حدائق بالقرب من جزيرة ياس... عثرت على ${matchedFeats.length} حدائق ومساحات خضراء في جزيرة ياس.`;
@@ -3114,7 +3114,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             recsEn = ['Explore Yas Island with AOI sketch', 'Healthcare facilities nearby'];
             recsAr = ['استكشاف جزيرة ياس برسم الخريطة', 'مرافق الرعاية الصحية القريبة'];
           }
-          else if (lower.includes('bani yas')) {
+          else if (lower.includes('parks near bani yas') || lower.includes('bani yas district')) {
             matchedFeats = GEO_FEATURES.filter(f => f.category === 'parks');
             responseEn = `Searching for parks near Bani Yas... Found ${matchedFeats.length} public parks and green spaces in Bani Yas.`;
             responseAr = `جاري البحث عن حدائق بالقرب من بني ياس... عثرت على ${matchedFeats.length} حدائق ومساحات خضراء في بني ياس.`;
@@ -3907,7 +3907,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             responseAr = `تجميع التعليم بالحي: إجمالي ${matchedFeats.length} مدرسة نشطة في حدود هذا الحي.`;
             countData = { count: matchedFeats.length, titleEn: 'Schools in District', titleAr: 'المدارس في الحي', scopeEn: 'Khalifa City Sector', scopeAr: 'قطاع مدينة خليفة' };
           }
-          else if (lower.includes('schools within 500 m of bus') || lower.includes('schools within 500m of bus')) {
+          else if (lower.includes('schools within 500 meters of bus') || lower.includes('schools within 500m of bus stops')) {
             matchedFeats = GEO_FEATURES.filter(f => f.category === 'education' || f.category === 'transport');
             responseEn = `Cross-Layer Query: Found 18 schools located within 500 m of public bus stops.`;
             responseAr = `استعلام متداخل الطبقات: عثرت على 18 مدرسة تقع ضمن 500 م من محطات الحافلات العامة.`;
@@ -4369,7 +4369,7 @@ export const AppStateProvider: React.FC<{ children: ReactNode }> = ({ children }
             responseEn = `District Hierarchy: Khalifa City District encompasses Sectors 1 through 36, Al Raha Gardens, and Masdar City.`;
             responseAr = `الهيكل الإداري للقطاع: يشمل قطاع مدينة خليفة الحصص من 1 إلى 36، حدائق الراحة، ومدينة مصدر.`;
           }
-          else if (lower.includes('count schools by community')) {
+          else if (lower.includes('count schools by community sector')) {
             responseEn = `Community School Aggregation: Khalifa Sector 12 (6 schools), Sector 15 (4 schools), Sector 3 (5 schools).`;
             responseAr = `إحصاء المدارس حسب المجمع: القطاع 12 (6 مدارس)، القطاع 15 (4 مدارس)، القطاع 3 (5 مدارس).`;
             countData = { count: 42, titleEn: 'Schools in Communities', titleAr: 'المدارس في المجمعات', scopeEn: 'Khalifa Sectors', scopeAr: 'قطاعات مدينة خليفة' };

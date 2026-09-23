@@ -87,11 +87,11 @@ export const AppHeader: React.FC = () => {
       <header className="relative w-full h-[56px] sm:h-[62px] glass-level-2 rounded-2xl px-3 sm:px-6 flex items-center justify-between shadow-xl border border-white/80 dark:border-white/10">
         
         {/* Left: First Logo — Department of Government Enablement Brandmark */}
-        <div className="flex items-center cursor-pointer shrink-0" onClick={() => handleNavClick('home')}>
+        <div className="flex items-center cursor-pointer shrink-0 min-w-0" onClick={() => handleNavClick('home')}>
           <img
             src={getAssetUrl(theme === 'dark' ? 'assets/logos/dge-logo-dark.png' : 'assets/logos/dge-logo.png')}
             alt="Department of Government Enablement"
-            className="h-7 sm:h-9 md:h-10 max-w-[130px] sm:max-w-none object-contain shrink-0 transition-transform hover:scale-105"
+            className="h-6 xs:h-7 sm:h-9 md:h-10 max-w-[95px] xs:max-w-[125px] sm:max-w-none object-contain shrink-0 transition-transform hover:scale-105"
           />
         </div>
 
@@ -135,7 +135,7 @@ export const AppHeader: React.FC = () => {
         </nav>
 
         {/* Right: Controls & Last Logo — Abu Dhabi Spatial Data */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <div className="flex items-center gap-1 sm:gap-2.5 shrink-0 max-w-full">
           
           {/* Mobile Hamburger Navigation Button */}
           <button
@@ -143,7 +143,7 @@ export const AppHeader: React.FC = () => {
               setMobileMenuOpen(!mobileMenuOpen);
               setUserDropdownOpen(false);
             }}
-            className="md:hidden p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer"
+            className="md:hidden p-1.5 sm:p-2 rounded-xl text-slate-700 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer shrink-0"
             title="Toggle Menu"
           >
             {mobileMenuOpen ? <X className="w-4 h-4 text-geovision-blue dark:text-white" /> : <Menu className="w-4 h-4 text-geovision-blue dark:text-white" />}
@@ -152,26 +152,27 @@ export const AppHeader: React.FC = () => {
           {/* Language Switcher */}
           <button
             onClick={toggleLanguage}
-            className="flex items-center gap-1 px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-100 border border-white/60 dark:border-slate-700 hover:border-geovision-blue hover:text-geovision-blue dark:hover:text-white transition-all glass-level-1"
+            className="flex items-center gap-1 px-2 sm:px-3 py-1.5 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-100 border border-white/60 dark:border-slate-700 hover:border-geovision-blue hover:text-geovision-blue dark:hover:text-white transition-all glass-level-1 shrink-0"
             title="Switch Language"
           >
-            <Globe className="w-3.5 h-3.5 text-geovision-blue dark:text-white" />
-            <span className="text-[11px] sm:text-xs">{t('nav.language')}</span>
+            <Globe className="w-3.5 h-3.5 text-geovision-blue dark:text-white shrink-0" />
+            <span className="hidden sm:inline text-[11px] sm:text-xs">{t('nav.language')}</span>
+            <span className="sm:hidden text-[10px] font-black uppercase text-geovision-blue dark:text-white">{language === 'en' ? 'AR' : 'EN'}</span>
           </button>
 
           {/* Theme Switcher */}
           <button
             onClick={toggleTheme}
-            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1 cursor-pointer shrink-0"
             title="Toggle Light/Dark Theme"
           >
-            {theme === 'light' ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#215A9E] dark:text-blue-400" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-500 dark:text-amber-400" />}
+            {theme === 'light' ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-geovision-blue dark:text-white" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-geovision-blue dark:text-white" />}
           </button>
 
           {/* Help Icon Button */}
           <button
             onClick={() => handleNavClick('help')}
-            className={`p-1.5 sm:p-2 rounded-xl transition-colors glass-level-1 cursor-pointer ${
+            className={`hidden sm:flex p-1.5 sm:p-2 rounded-xl transition-colors glass-level-1 cursor-pointer shrink-0 ${
               currentView === 'help'
                 ? 'bg-[#215A9E]/15 text-geovision-blue dark:bg-white/15 dark:text-white font-extrabold ring-1 ring-geovision-blue/30'
                 : 'text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-white'
@@ -187,7 +188,7 @@ export const AppHeader: React.FC = () => {
               setFeedbackModalOpen(true);
               setUserDropdownOpen(false);
             }}
-            className="p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-white transition-colors glass-level-1 cursor-pointer"
+            className="hidden sm:flex p-1.5 sm:p-2 rounded-xl text-slate-600 dark:text-slate-200 hover:bg-white/60 dark:hover:bg-slate-800 hover:text-geovision-blue dark:hover:text-white transition-colors glass-level-1 cursor-pointer shrink-0"
             title={t('nav.feedback')}
           >
             <FeedbackStarIcon className="w-4 h-4 text-geovision-blue dark:text-white" />
@@ -200,13 +201,13 @@ export const AppHeader: React.FC = () => {
                 setLoginModalOpen(true);
                 setUserDropdownOpen(false);
               }}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-geovision-blue text-white hover:bg-blue-600 shadow-md shadow-blue-500/25 transition-all shrink-0 cursor-pointer"
+              className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs font-bold bg-geovision-blue text-white hover:bg-blue-600 shadow-md shadow-blue-500/25 transition-all shrink-0 cursor-pointer"
             >
               <UserIcon className="w-3.5 h-3.5" />
               <span className="hidden xs:inline">{t('nav.signIn')}</span>
             </button>
           ) : (
-            <div className="relative" ref={userDropdownRef}>
+            <div className="relative shrink-0" ref={userDropdownRef}>
               <button
                 onClick={() => setUserDropdownOpen(!userDropdownOpen)}
                 className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3 py-1.5 rounded-xl border border-white/60 dark:border-slate-700 hover:bg-white/60 dark:hover:bg-slate-800 transition-colors glass-level-1"

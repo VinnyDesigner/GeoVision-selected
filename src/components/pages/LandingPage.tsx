@@ -127,7 +127,7 @@ export const LandingPage: React.FC = () => {
   };
 
   return (
-    <div className="relative w-full h-screen max-h-screen pt-16 sm:pt-20 lg:pt-22 pb-4 sm:pb-6 px-4 sm:px-8 md:px-12 lg:px-16 flex flex-col items-start justify-between bg-spatial-canvas dark:bg-[#041F3B] overflow-hidden">
+    <div className="relative w-full min-h-screen pt-16 sm:pt-20 lg:pt-22 pb-8 sm:pb-12 px-4 sm:px-8 md:px-12 lg:px-16 flex flex-col items-start justify-between bg-spatial-canvas dark:bg-[#041F3B] overflow-y-auto overflow-x-hidden">
       
       {/* Crisp Homepage Background Image Layer */}
       <img
@@ -139,14 +139,14 @@ export const LandingPage: React.FC = () => {
       />
 
       {/* Hero & Search Launchpad */}
-      <div className="relative z-10 w-full max-w-5xl text-left rtl:text-right space-y-2.5 sm:space-y-3.5 my-auto flex flex-col items-start rtl:items-start">
+      <div className="relative z-10 w-full max-w-5xl text-left rtl:text-right space-y-3 sm:space-y-4 my-auto flex flex-col items-start rtl:items-start">
         
         {/* GeoVision Hero Brand Logo with Dynamic Animated Globe & Tagline */}
         <div className="flex flex-col items-start w-full py-1">
           {/* Main GeoVision Title with Exact Reference Gradient Color Palette */}
-          <div className="flex items-center text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-black font-sans tracking-tight select-none leading-none">
+          <div className="flex items-center flex-nowrap text-3xl xs:text-4xl sm:text-7xl md:text-8xl lg:text-9xl font-black font-sans tracking-tight select-none leading-none min-w-0">
             {/* "Ge" text */}
-            <span className="geovision-title-ge relative z-10">
+            <span className="geovision-title-ge relative z-10 shrink-0">
               Ge
             </span>
 
@@ -160,17 +160,17 @@ export const LandingPage: React.FC = () => {
             </div>
 
             {/* "Vision" text */}
-            <span className="geovision-title-vision">
+            <span className="geovision-title-vision shrink-0">
               Vision
             </span>
           </div>
 
           {/* Tagline Strip in vibrant blue color with white glow blur effect */}
-          <div className="flex items-center gap-2 sm:gap-3 w-full max-w-xl sm:max-w-2xl mt-2 sm:mt-3">
+          <div className="flex items-center gap-1.5 sm:gap-3 w-full max-w-xl sm:max-w-2xl mt-2 sm:mt-3">
             <div
               className="flex-1 h-[2px] rounded-full opacity-90 bg-gradient-to-r from-transparent via-[#012661] to-[#215A9E] dark:via-[#38BDF8] dark:to-[#60A5FA]"
             />
-            <span className="shrink-0 text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-[0.22em] sm:tracking-[0.28em] text-[#012661] dark:text-[#38BDF8] drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]">
+            <span className="shrink-0 text-[9px] xs:text-[10px] sm:text-xs md:text-sm font-black uppercase tracking-[0.14em] xs:tracking-[0.20em] sm:tracking-[0.28em] text-[#012661] dark:text-[#38BDF8] drop-shadow-[0_0_10px_rgba(255,255,255,0.95)]">
               {language === 'ar' ? 'الذكاء المكاني لغدٍ أكثر ذكاءً' : 'SPATIAL INTELLIGENCE FOR A SMARTER TOMORROW'}
             </span>
             <div
@@ -180,7 +180,7 @@ export const LandingPage: React.FC = () => {
         </div>
 
         {/* Small Elegant Sub-Headline */}
-        <h2 className="text-base sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-[#063360] dark:text-white tracking-tight drop-shadow-sm">
+        <h2 className="text-sm xs:text-base sm:text-xl md:text-2xl lg:text-3xl font-extrabold text-[#063360] dark:text-white tracking-tight drop-shadow-sm mt-1 sm:mt-2">
           {language === 'ar' ? (
             <>
               استكشف البيانات المكانية في <span className="text-[#215A9E] dark:text-[#38BDF8] font-black underline underline-offset-4 decoration-[#7DA1C4]">أبوظبي</span>

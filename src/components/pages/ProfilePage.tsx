@@ -146,7 +146,7 @@ export const ProfilePage: React.FC = () => {
         {/* Theme Preference Card */}
         <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-200/80 dark:border-slate-800/80 shadow-lg space-y-5">
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/80 text-amber-500 flex items-center justify-center font-black shadow-md">
+            <div className="w-12 h-12 rounded-2xl bg-[#215A9E]/10 dark:bg-white/10 text-geovision-blue dark:text-white flex items-center justify-center font-black shadow-md">
               {theme === 'light' ? <Sun className="w-6 h-6" /> : <Moon className="w-6 h-6" />}
             </div>
             <div>
