@@ -716,6 +716,13 @@ export function resolveBoundaryForFeatures(
     }
   }
 
+  // Boundaries should only be displayed when explicitly requested by user query
+  const askedBoundary = isBoundaryRequestedInQuery(q);
+
+  if (!askedBoundary) {
+    return null;
+  }
+
   if (bestDistrictMatch) {
     return bestDistrictMatch;
   }
@@ -751,8 +758,6 @@ export function resolveBoundaryForFeatures(
     return explicitMatch;
   }
 
-  // 3. For multi-district or wide-spread search result sets (like results across Downtown + Khalifa City),
-  // generate a unified continuous boundary enclosing 100% of ALL result pointers returned by the question!
   return generateUnifiedResultBoundary(validFeats);
 }
 

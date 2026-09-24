@@ -767,10 +767,9 @@ export const MapWorkspace: React.FC = () => {
       const isRed = singleBoundary.id === 'al_reef' || singleBoundary.strokeColor?.toLowerCase().includes('dc') || singleBoundary.strokeColor?.toLowerCase().includes('ef');
       const boundaryPolygon = L.polygon(singleBoundary.coordinates, {
         color: singleBoundary.strokeColor || '#2563EB',
-        fillColor: singleBoundary.fillColor || '#3B82F6',
-        fillOpacity: isRed ? 0.24 : 0.16,
-        weight: isRed ? 4 : 3.5,
-        dashArray: '8, 6',
+        fillColor: 'transparent',
+        fillOpacity: 0,
+        weight: isRed ? 3 : 2.5,
         className: `geovision-boundary-district-polygon active-boundary ${isRed ? 'alreef-red-boundary' : ''}`,
       });
 

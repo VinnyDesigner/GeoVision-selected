@@ -712,39 +712,26 @@ html {
 }
 
 /* Dynamic Geographic Location Boundary Highlight Styles */
-@keyframes boundaryDashAnimation {
-  to {
-    stroke-dashoffset: -28;
-  }
-}
-
 .geovision-boundary-district-polygon {
-  stroke-dasharray: 8, 6;
-  animation: boundaryDashAnimation 3.5s linear infinite;
-  filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.45));
   transition: all 0.3s ease-in-out;
   cursor: pointer;
 }
 
 .geovision-boundary-district-polygon:hover {
-  stroke-width: 4.5px !important;
-  fill-opacity: 0.28 !important;
+  stroke-width: 3.5px !important;
 }
 
 .geovision-boundary-district-polygon.active-boundary {
-  filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.75));
-  stroke-width: 4px !important;
+  stroke-width: 3px !important;
 }
 
 .geovision-boundary-parcel-polygon {
-  filter: drop-shadow(0 0 8px rgba(2, 132, 199, 0.55));
   transition: all 0.3s ease-in-out;
   cursor: pointer;
 }
 
 .geovision-boundary-parcel-polygon:hover {
-  stroke-width: 3.5px !important;
-  fill-opacity: 0.38 !important;
+  stroke-width: 3px !important;
 }
 
 .geovision-boundary-tooltip {
