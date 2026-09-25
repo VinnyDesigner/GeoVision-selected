@@ -134,7 +134,7 @@ export const LandingPage: React.FC = () => {
       
       {/* Dynamic Time-Based Abu Dhabi Background Image Layer */}
       <img
-        src={getAssetUrl(theme === 'dark' ? 'bg3dark.png' : 'bg3white.png')}
+        src={getAssetUrl(activeTheme.bgImage || (theme === 'dark' ? 'bg4dark(3).png' : 'bg4white.png'))}
         alt="GeoVision Abu Dhabi Spatial Canvas"
         className={`absolute inset-0 w-full h-full object-cover object-center transition-all duration-1000 pointer-events-none z-0 opacity-100 ${
           language === 'ar' ? '-scale-x-100' : ''
